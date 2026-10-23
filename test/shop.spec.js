@@ -231,7 +231,8 @@ test('design controls, cart, and Stripe checkout', async ({ page }, testInfo) =>
   expect(tried).toContain('🌈');
   await expect(page.locator('#try button[data-emoji="🌈"]')).toHaveAttribute('aria-pressed', 'true');
   await expect(page.locator('#showcase')).toContainText('Not customer photos');
-  await expect(page.locator('#showtrack article')).toHaveCount(5);
+  await expect(page.locator('#showtrack article')).toHaveCount(4);
+  await expect(page.locator('#showtrack .garment.mug')).toHaveCount(0);
   const looks = await page.locator('#showtrack').evaluate((el) => {
     const cards = [...el.querySelectorAll('.ex')];
     const boxes = cards.map((card) => card.getBoundingClientRect());
@@ -271,20 +272,7 @@ test('design controls, cart, and Stripe checkout', async ({ page }, testInfo) =>
   for (const logo of chest.filter((logo) => logo.kind === 'hat')) {
     expect(logo.width, logo.kind).toBeGreaterThan(0.4);
   }
-  const mug = chest.find((logo) => logo.kind === 'mug');
-  const mugFrame = await page.locator('#showtrack .garment.mug').evaluate((el) => {
-    const photo = getComputedStyle(el.querySelector(':scope > img'));
-    const trio = getComputedStyle(el.querySelector('.trio'));
-    return { fit: photo.objectFit, dir: trio.flexDirection };
-  });
-  expect(mugFrame.fit).toBe('contain');
-  expect(mugFrame.dir).toBe('row');
-  expect(mug.width).toBeGreaterThan(0.28);
-  expect(mug.width).toBeLessThan(0.34);
-  expect(mug.cy).toBeGreaterThan(0.45);
-  expect(mug.cy).toBeLessThan(0.53);
-  expect(mug.cx).toBeGreaterThan(0.45);
-  expect(mug.cx).toBeLessThan(0.52);
+  expect(chest.some((logo) => logo.kind === 'mug')).toBeFalsy();
   expect(looks.height).toBeLessThan(2);
   expect(looks.buttons).toBeLessThan(2);
   expect(looks.tops).toBeLessThan(2);
