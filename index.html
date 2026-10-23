@@ -6,63 +6,59 @@
 @font-face{font-family:Fraunces;src:url('assets/fonts/fraunces.woff2') format('woff2');font-weight:500 700;font-display:swap;font-style:normal}
 @font-face{font-family:Outfit;src:url('assets/fonts/outfit.woff2') format('woff2');font-weight:400 700;font-display:swap;font-style:normal}
 :root{
- --ink:#1c1424;--muted:#5e5868;--bg:#f3eee6;--paper:#fffcf8;--line:#e3dcd2;
- --hot:#e23b78;--sun:#ffe56a;--lime:#d6f25c;
+ --ink:#16161d;--muted:#5c5c68;--bg:#f3f2ef;--paper:#fffcf9;--line:#e6e2da;
+ --hot:#4f46e5;--sun:#ece9ff;--lime:#e7e4ff;
  --display:Fraunces, "Iowan Old Style", Palatino, Georgia, serif;
  --sans:Outfit, "Avenir Next", "Segoe UI", system-ui, sans-serif;
- --shadow:0 16px 40px #1c142414
+ --shadow:0 12px 32px #16161d10;
+ --dock:84px
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth;scroll-padding-top:8rem}
-body{margin:0;font-family:var(--sans);font-weight:420;color:var(--ink);background:
- radial-gradient(880px 380px at 100% -12%, #ffd9ea 0%, transparent 58%),
- radial-gradient(640px 320px at -12% 0%, #fff0b8 0%, transparent 52%),
- var(--bg);line-height:1.5}
+body{margin:0;font-family:var(--sans);font-weight:430;color:var(--ink);background:var(--bg);line-height:1.5}
 img.em{width:1em;height:1em;vertical-align:-.12em}
-h1,h2,h3,.logo{font-family:var(--display);font-weight:680;letter-spacing:-.03em}
-.topbar{position:sticky;top:0;z-index:30;background:#f7f2ea}
-header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px 16px;padding:14px 6vw;position:static;background:#f7f2ea;border-bottom:1px solid var(--line)}
+h1,h2,.logo,.price{font-family:var(--display);font-weight:620;letter-spacing:-.03em}
+h3{font-family:var(--sans);font-weight:620;letter-spacing:-.02em}
+.topbar{position:sticky;top:0;z-index:30;background:#f7f6f3}
+header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px 16px;padding:12px 6vw;position:static;background:#f7f6f3;border-bottom:1px solid var(--line)}
 header>*{min-width:0;max-width:100%}
-button,.slot,input,a.btn,a.go,.try button{touch-action:manipulation}
+button,.slot,input,a.btn,a.go,.try button,.flow button{touch-action:manipulation}
 a.btn,a.go{display:inline-block;text-decoration:none;text-align:center;max-width:100%}
-.logo{font-size:clamp(1.2rem, 2vw, 1.55rem);line-height:1.15}.logo span{color:var(--hot)}
+.logo{font-size:clamp(1.2rem, 2vw, 1.5rem);line-height:1.15}.logo span{color:var(--hot)}
 button{font:inherit;cursor:pointer}
-.btn,.go{border:1px solid var(--ink);border-radius:999px;padding:14px 22px;font-weight:560;background:var(--ink);color:#fff;box-shadow:none;max-width:100%;line-height:1.25;transition:transform .16s ease, background .16s ease}
+.btn,.go{border:1px solid var(--ink);border-radius:999px;padding:14px 22px;font-weight:580;background:var(--ink);color:#fff;box-shadow:none;max-width:100%;line-height:1.2;transition:transform .16s ease, background .16s ease}
 .go{background:transparent;color:var(--ink)}
 .ghost{background:transparent;color:var(--ink)}
-.btn:active,.go:active{transform:translateY(1px)}
+.btn:active,.go:active,.flow button:active{transform:translateY(1px)}
 .skip{position:absolute;left:-999px;top:8px;background:var(--paper);color:var(--ink);padding:8px 12px;z-index:80;border:1px solid var(--ink);border-radius:999px}
 .skip:focus{left:8px}
-.hero{position:relative;padding:36px 6vw 48px;overflow:visible}
-.floats{display:none;position:absolute;inset:0;pointer-events:none;z-index:0}
-.floats img{position:absolute;width:36px;height:36px;animation:floaty 5.5s ease-in-out infinite}
-@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
-.hero-grid{position:relative;z-index:1;display:grid;gap:18px;min-width:0}
-.kicker{margin:0;font-family:var(--sans);font-weight:560;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;line-height:1.45;color:var(--muted)}
-.hero h1{font-size:clamp(2rem, 8vw, 3.4rem);line-height:1.5;margin:0;max-width:100%;overflow-wrap:break-word}
+.hero{position:relative;padding:18px 6vw 32px;overflow:visible}
+.floats,.floats img{display:none;position:absolute;inset:0;pointer-events:none;z-index:0}
+.hero-grid{position:relative;z-index:1;display:flex;flex-direction:column;gap:8px;min-width:0}
+.kicker{margin:0;font-family:var(--sans);font-weight:580;font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;line-height:1.4;color:var(--muted)}
+.hero h1{font-size:clamp(1.9rem, 7vw, 3.4rem);line-height:1.5;margin:0;max-width:16ch;overflow-wrap:break-word}
 .mark{background:var(--lime);box-decoration-break:clone;-webkit-box-decoration-break:clone;padding:0 .08em}
-.lede{margin:0;font-size:clamp(1rem, 2vw, 1.15rem);line-height:1.5;max-width:36rem;overflow-wrap:break-word;color:var(--muted)}
-.trylabel{margin:0 0 10px;font-weight:560;line-height:1.4}
+.lede{margin:0;font-size:.98rem;line-height:1.45;max-width:34rem;overflow-wrap:break-word;color:var(--muted)}
+.trylabel{margin:0 0 8px;font-weight:580;line-height:1.4}
 .try{display:flex;flex-wrap:wrap;gap:8px}
-.try button{width:52px;height:52px;border-radius:16px;border:1px solid var(--line);background:var(--paper);font-size:28px;padding:0;box-shadow:var(--shadow);transition:transform .16s ease, background .16s ease}
+.try button{width:48px;height:48px;border-radius:14px;border:1px solid var(--line);background:#fff;font-size:26px;padding:0;transition:transform .16s ease, background .16s ease, border-color .16s ease}
 .try button.on{background:var(--sun);border-color:var(--ink)}
-.try button img{width:30px;height:30px}
+.try button img{width:28px;height:28px}
 .hero-stage,.hero-actions,.try-wrap{min-width:0}
 .hero-stage{container-type:inline-size}
-.heroart{font-size:clamp(2.75rem, 22cqi, 5.25rem);background:var(--paper);border:1px solid var(--ink);border-radius:28px;box-shadow:var(--shadow);display:flex;gap:6px;align-items:center;justify-content:center;padding:22px 16px;max-width:100%;animation:bob 3.2s ease-in-out infinite}
+.heroart{font-size:clamp(2rem, 14cqi, 3.6rem);background:var(--paper);border:1px solid var(--line);border-radius:28px;box-shadow:var(--shadow);display:flex;gap:8px;align-items:center;justify-content:center;padding:14px 12px;max-width:100%}
 .heroart img{width:1em;height:1em}
-.heroart.flash{animation:flash .45s cubic-bezier(.2,1.6,.3,1)}
-@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-@keyframes flash{0%{transform:scale(.92)}60%{transform:scale(1.06)}100%{transform:scale(1)}}
-.live-note{margin:1rem 0 0;font-size:.85rem;font-weight:560;line-height:1.45;overflow-wrap:break-word;color:var(--muted)}
-.names{margin-top:14px;font-size:.95rem;line-height:1.45;display:flex;flex-wrap:wrap;gap:8px;align-items:center;min-width:0}
-.hero-actions{display:flex;flex-direction:column;align-items:flex-start;gap:8px;min-width:0}
-.trust{list-style:none;display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 0;padding:0}
-.trust li{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:12px 14px;line-height:1.45;min-width:0;max-width:100%;overflow-wrap:break-word}
-.trust b{display:block;font-family:var(--sans);font-size:.78rem;font-weight:560;letter-spacing:.06em;text-transform:uppercase}
-.show,.ideas,.how,.close,main{padding:12px 6vw 56px}
-#builder,#showcase,.ideas,.how,.close{scroll-margin-top:.5rem}
-.showhead h2,.ideas h2,.close h2{font-size:clamp(1.7rem, 2vw + 1rem, 2.6rem);line-height:1.45;margin:0 0 .6rem;overflow-wrap:break-word}
+.heroart.flash{animation:flash .4s cubic-bezier(.2,1.4,.3,1)}
+@keyframes flash{0%{transform:scale(.96)}60%{transform:scale(1.04)}100%{transform:scale(1)}}
+.live-note{margin:.4rem 0 0;font-size:.82rem;font-weight:560;line-height:1.4;overflow-wrap:break-word;color:var(--muted)}
+.names{margin:0;font-size:.95rem;line-height:1.45;display:flex;flex-wrap:wrap;gap:8px;align-items:center;min-width:0}
+.hero-actions{display:flex;flex-direction:column;align-items:flex-start;gap:10px;min-width:0}
+.trust{list-style:none;display:flex;flex-wrap:wrap;gap:10px;margin:0;padding:0;width:fit-content;max-width:100%}
+.trust li{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:10px 12px;line-height:1.4;min-width:0;max-width:100%;overflow-wrap:break-word}
+.trust b{display:block;font-family:var(--sans);font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.show,.ideas,.close,main{padding:8px 6vw 64px}
+#builder,#showcase,.ideas,.close{scroll-margin-top:.5rem}
+.showhead h2,.ideas h2,.close h2{font-size:clamp(1.6rem, 2vw + 1rem, 2.4rem);line-height:1.25;margin:0 0 .6rem;overflow-wrap:break-word}
 .showhead p,.disclaimer,.close p{margin:0 0 16px;max-width:40rem;line-height:1.5;overflow-wrap:break-word;color:var(--muted)}
 .disclaimer{font-weight:560;background:var(--paper);display:inline-block;border:1px solid var(--line);border-radius:12px;padding:8px 12px;max-width:100%;color:var(--ink)}
 .showtrack{display:flex;align-items:stretch;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 2px 18px}
@@ -80,73 +76,66 @@ button{font:inherit;cursor:pointer}
 .garment.tee .trio,.garment.hoodie .trio{top:39%;max-width:none;font-size:8.8cqi;gap:.3cqi}
 .garment.hoodie .trio{top:42%;left:53.9%}
 .garment.mug .trio{left:48.5%;top:48.7%;max-width:none;font-size:9.73cqi;gap:.49cqi}
-.ex h3{margin:12px 0 4px;font-size:1.25rem;line-height:1.45;overflow-wrap:break-word}
+.ex h3{margin:12px 0 4px;font-size:1.15rem;line-height:1.35;overflow-wrap:break-word}
 .ex p{flex:1 1 auto;margin:0 0 12px;font-size:.92rem;line-height:1.5;overflow-wrap:break-word;color:var(--muted)}
 .ex button{margin-top:auto;width:100%;min-height:44px;max-width:100%;border:1px solid var(--ink);background:var(--ink);color:#fff;border-radius:999px;padding:8px 14px;font-weight:560}
 .showctrl{display:flex;gap:8px;flex-wrap:wrap}
 .showctrl .opt{min-height:44px;max-width:100%}
-.how,.idea-grid{display:grid;grid-template-columns:1fr;gap:12px}
-.how div,.idea{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:18px;min-width:0;line-height:1.5;overflow-wrap:break-word}
-.idea h3{margin:0 0 8px;font-size:1.25rem;line-height:1.45}
+.idea-grid{display:grid;grid-template-columns:1fr;gap:12px}
+.idea{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:18px;min-width:0;line-height:1.5;overflow-wrap:break-word}
+.idea h3{margin:0 0 8px;font-size:1.15rem;line-height:1.35}
 .idea p{margin:0;color:var(--muted)}
 .close{text-align:left}
-main.studio{display:flex;flex-direction:column;gap:14px;min-width:0;align-items:stretch}
-.product-card{display:flex;flex-direction:column;gap:12px;min-width:0}
-.product-controls > h2{margin-bottom:8px}
-.product-controls > #prods{margin:0}
-.studio-stage{min-width:0;position:relative}
-.stage-pin{position:relative;min-width:0}
-.stage-pin.is-floating{position:fixed;width:96px;z-index:28;margin:0;pointer-events:none}
-.stage-pin.is-floating .mockcap{display:none}
-.stage-pin.is-floating .mock{box-shadow:0 12px 28px #1c142433}
+main.studio{display:flex;flex-direction:column;gap:12px;min-width:0;align-items:stretch}
+.studio-head{display:flex;flex-direction:column;gap:8px;min-width:0}
+.studio-head h2{margin:0;font-size:clamp(1.45rem, 2vw, 1.9rem);line-height:1.25}
+.flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.flow button{min-height:44px;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:12px;padding:8px 4px;font-size:clamp(.72rem, 2.5vw, .86rem);font-weight:600;line-height:1.2;white-space:normal;transition:background .16s ease, color .16s ease, border-color .16s ease}
+.flow button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.studio-layout{display:flex;flex-direction:column;gap:12px;min-width:0}
+.studio-stage{min-width:0;display:flex;flex-direction:column;align-items:center;gap:8px}
+.stage-pin{position:relative;min-width:0;width:100%;display:flex;flex-direction:column;align-items:center}
 .mini-slot{display:none}
-.mini-slot.on{display:block;position:fixed;top:calc(var(--bar, 76px) + 6px);right:max(8px, 4vw);z-index:24;width:136px;margin:0;padding:0;pointer-events:none}
-.miniview{width:136px;filter:drop-shadow(0 10px 18px #1c142433)}
-.mini-mock{position:relative;border-radius:16px;overflow:hidden;background:var(--swatch,#fff);aspect-ratio:520/640;box-shadow:inset 0 0 0 1px #1c142212}
-.mini-mock[data-product="hoodie"]{aspect-ratio:520/680}
-.mini-mock[data-product="mug"]{aspect-ratio:640/520}
-.mini-mock[data-product="hat"]{aspect-ratio:560/520}
-.mini-mock img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center;display:block}
-.mini-print{position:absolute;left:var(--px);top:var(--py);width:var(--pw);height:var(--ph);transform:perspective(680px) rotateX(var(--rx)) rotateY(var(--ry));transform-origin:center;mix-blend-mode:multiply;overflow:visible}
-.mini-mock[data-ink="dark"] .mini-print{mix-blend-mode:hard-light;opacity:.92}
-.mini-print svg{width:100%;height:100%;display:block}
-.mockcap{margin:10px 0 0;color:var(--muted);font-size:.85rem;line-height:1.45}
-.card{background:var(--paper);border:1px solid var(--line);border-radius:22px;padding:20px;box-shadow:0 10px 28px #1c14240c;min-width:0}
-h2{margin:0 0 8px;font-size:clamp(1.35rem, 1.5vw + .8rem, 1.8rem);line-height:1.45;overflow-wrap:break-word}
-.step{display:inline-grid;place-items:center;width:1.6rem;height:1.6rem;border-radius:50%;background:var(--sun);color:var(--ink);font-family:var(--sans);font-size:.8rem;margin-right:8px;vertical-align:middle}
-.slots{display:flex;gap:10px;margin:12px 0}
-.slot{flex:1;height:72px;border:1px dashed #c8bfb4;border-radius:16px;display:grid;place-items:center;font-size:40px;position:relative;cursor:pointer;background:#fff;padding:0;color:inherit;min-width:0}
+.mockcap{margin:8px 0 0;color:var(--muted);font-size:.82rem;line-height:1.45;text-align:center;max-width:36rem}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:16px;box-shadow:0 8px 24px #16161d0a;min-width:0}
+.card h3{margin:0 0 4px;font-size:1.15rem;line-height:1.35}
+[hidden]{display:none !important}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.steps [data-panel]{animation:rise .18s ease}
+.slots{display:flex;gap:8px;margin:12px 0}
+.slot{flex:1;height:72px;border:1px dashed #d0cbc2;border-radius:16px;display:grid;place-items:center;font-size:40px;position:relative;cursor:pointer;background:#fff;padding:0;color:inherit;min-width:0;transition:border-color .16s ease, background .16s ease}
 .slot.f{border-style:solid;border-color:var(--ink);background:var(--sun)}
 .slot.pop{animation:flash .35s cubic-bezier(.2,1.5,.3,1)}
 .slot small{position:absolute;top:0;right:0;width:44px;height:44px;display:grid;place-items:center;font-size:20px;line-height:1;color:var(--muted)}
-.kb{background:#f6f1ea;border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.kb{background:#f6f5f2;border:1px solid var(--line);border-radius:16px;overflow:hidden}
 .kb input{width:calc(100% - 16px);margin:8px;padding:12px;border-radius:12px;border:1px solid var(--line);font-size:16px;background:#fff}
-.cat{font-size:.7rem;font-weight:560;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:8px 10px 2px;position:static;background:#f6f1ea;line-height:1.4}
+.cat{font-size:.7rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:8px 10px 2px;position:static;background:#f6f5f2;line-height:1.4}
 .grid{height:312px;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain}.cells{display:grid;grid-template-columns:repeat(auto-fill, minmax(44px, 1fr));padding:0 4px 4px}
-.cells button{border:0;background:none;font-size:26px;min-height:44px;padding:2px 0;border-radius:8px}.cells button.sel{background:#fff;box-shadow:inset 0 0 0 1.5px var(--ink)}
+.cells button{border:0;background:none;font-size:26px;min-height:44px;padding:2px 0;border-radius:8px;transition:background .12s ease}.cells button.sel{background:#fff;box-shadow:inset 0 0 0 1.5px var(--ink)}
 .cells button img{width:26px;height:26px}
 @media (hover:hover) and (pointer:fine){
  .cells button:hover{background:#fff}
  .btn:hover,.go:hover,.ex button:hover{transform:translateY(-1px)}
- .try button:hover{transform:translateY(-2px)}
+ .try button:hover,.flow button:hover{transform:translateY(-1px)}
  .opt:hover:not(.on){background:#fff}
 }
 .tabs{display:flex;flex-wrap:wrap;align-items:center;gap:2px;border-top:1px solid var(--line);padding:4px 2px;overflow-x:auto;overscroll-behavior-x:contain;position:relative;scrollbar-width:thin}
-.tabs button{border:0;background:none;font-size:18px;opacity:.55;min-height:44px;min-width:44px;padding:6px 8px;border-radius:8px;flex:0 0 auto}
+.tabs button{border:0;background:none;font-size:18px;opacity:.55;min-height:44px;min-width:44px;padding:6px 8px;border-radius:8px;flex:0 0 auto;transition:background .12s ease, opacity .12s ease}
 .tabs button.on{opacity:1;background:var(--sun);box-shadow:inset 0 0 0 1.5px var(--ink)}
-.opts{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 16px}
-#prods{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0}
+.opts{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 14px}
+#prods{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0 0}
 #prods .opt{width:100%;text-align:center}
 #bgs,#cols{display:grid;gap:8px;justify-content:start}
 #bgs{grid-template-columns:repeat(3, 44px)}
 #cols{grid-template-columns:repeat(4, 44px)}
 #cols:has(> button:nth-child(5):last-child){grid-template-columns:repeat(5, 44px)}
-.opt{border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:8px 14px;font-weight:560;min-height:44px;max-width:100%;line-height:1.3;color:var(--ink)}
+.opt{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;font-weight:580;min-height:44px;max-width:100%;line-height:1.3;color:var(--ink);transition:background .16s ease, border-color .16s ease}
 .opt.on{background:var(--sun);border-color:var(--ink)}
-.sw{width:44px;height:44px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--ink);padding:0;flex:0 0 auto}
+.sw{width:44px;height:44px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--ink);padding:0;flex:0 0 auto;transition:box-shadow .16s ease}
 .sw.on{box-shadow:0 0 0 2px var(--hot)}
-label{font-size:.85rem;font-weight:560;color:var(--muted);display:block;line-height:1.4;overflow-wrap:break-word}
-.mock{position:relative;aspect-ratio:520/640;--aw:520;--ah:640;border-radius:28px;overflow:hidden;min-width:0;background:var(--swatch,#fff);box-shadow:inset 0 0 0 1px #1c142212}
+label{font-size:.85rem;font-weight:580;color:var(--muted);display:block;line-height:1.4;overflow-wrap:break-word}
+.next{width:100%;margin-top:8px}
+.mock{position:relative;aspect-ratio:520/640;--aw:520;--ah:640;border-radius:24px;overflow:hidden;min-width:0;background:var(--swatch,#fff);box-shadow:inset 0 0 0 1px #16161d14;width:min(100%, 420px)}
 .mock[data-product="hoodie"]{aspect-ratio:520/680;--aw:520;--ah:680}
 .mock[data-product="mug"]{aspect-ratio:640/520;--aw:640;--ah:520}
 .mock[data-product="hat"]{aspect-ratio:560/520;--aw:560;--ah:520}
@@ -156,15 +145,18 @@ label{font-size:.85rem;font-weight:560;color:var(--muted);display:block;line-hei
 .mock.waiting::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,#0000 28%,#ffffff99 50%,#0000 72%);background-size:220% 100%;animation:sheen 1s linear infinite;pointer-events:none}
 .mock[data-ink="dark"] .print{mix-blend-mode:hard-light;opacity:.92}
 .mock .print svg{width:100%;height:100%;display:block}
-.mock.bump .print svg{animation:bump .4s cubic-bezier(.2,1.5,.3,1)}
-@keyframes bump{0%{transform:scale(.96)}55%{transform:scale(1.03)}100%{transform:scale(1)}}
+.mock.bump .print svg{animation:bump .35s cubic-bezier(.2,1.4,.3,1)}
+@keyframes bump{0%{transform:scale(.98)}55%{transform:scale(1.025)}100%{transform:scale(1)}}
 @keyframes sheen{from{background-position:120% 0}to{background-position:-120% 0}}
-.price{font-family:var(--display);font-size:clamp(1.8rem, 4vw, 2.4rem);font-weight:680;margin:8px 0;line-height:1.45;overflow-wrap:break-word}
-.price .note{display:block;margin-top:.35rem;font-family:var(--sans);font-weight:420}
+.dock{display:flex;align-items:center;gap:12px;width:min(100%, 420px);padding-top:4px}
+.price{font-family:var(--display);font-size:clamp(1.6rem, 3vw, 2rem);font-weight:640;margin:0;line-height:1.2;overflow-wrap:break-word;font-variant-numeric:tabular-nums}
+.price .note{display:block;margin-top:.25rem;font-family:var(--sans);font-weight:430}
 .note{font-size:.85rem;color:var(--muted);line-height:1.45;overflow-wrap:break-word}
-#addbtn,#pay{width:100%;max-width:100%}
-#drawer{position:fixed;top:0;right:0;bottom:0;height:100dvh;width:min(420px, 100%);background:var(--paper);z-index:50;transform:translateX(100%);transition:transform .28s cubic-bezier(.2,.7,.2,1);padding:22px;display:flex;flex-direction:column;border-left:1px solid var(--line);overflow:hidden}
-#drawer.open{transform:none;box-shadow:-24px 0 60px #1c142422}
+#addbtn{flex:1 1 auto;min-height:48px}
+#pay{width:100%;max-width:100%}
+#unavail{margin:0}
+#drawer{position:fixed;top:0;right:0;bottom:0;height:100dvh;width:min(420px, 100%);background:var(--paper);z-index:60;transform:translateX(100%);transition:transform .28s cubic-bezier(.2,.7,.2,1);padding:22px;display:flex;flex-direction:column;border-left:1px solid var(--line);overflow:hidden}
+#drawer.open{transform:none;box-shadow:-24px 0 60px #16161d22}
 .drawer-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
 .item{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;border-bottom:1px solid var(--line);padding:14px 0}
 .item .e{font-size:1.35rem;line-height:1;flex:0 0 auto}
@@ -180,12 +172,12 @@ label{font-size:.85rem;font-weight:560;color:var(--muted);display:block;line-hei
 .sum{margin-top:auto;padding-top:12px;flex:0 0 auto}
 #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:14px 18px;border-radius:16px;display:none;z-index:80;max-width:min(92vw, 420px);font-weight:560;pointer-events:none;line-height:1.4;overflow-wrap:break-word;text-align:center}
 #fx{position:fixed;inset:0;pointer-events:none;z-index:70;overflow:hidden}
-.bit{position:fixed;width:9px;height:9px;border-radius:2px;animation:popbit .7s ease-out forwards}
+.bit{position:fixed;width:8px;height:8px;border-radius:2px;animation:popbit .65s ease-out forwards}
 @keyframes popbit{to{transform:translate(var(--dx), var(--dy)) rotate(40deg) scale(.2);opacity:0}}
 footer{color:var(--muted);font-size:.9rem;line-height:1.5;padding:36px 6vw 48px;border-top:1px solid var(--line);overflow-wrap:break-word}
 .footgrid{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:22px 48px;margin-bottom:28px}
 .footgrid > div{flex:0 1 auto;min-width:0;max-width:min(100%, 36rem)}
-.footgrid h2{font-size:1.15rem;margin:0 0 8px}
+.footgrid h2{font-size:1.05rem;margin:0 0 8px;font-family:var(--sans);font-weight:640;letter-spacing:0}
 .footgrid p{margin:0 0 8px}
 footer a{color:var(--ink)}
 .legal{margin:0;font-size:.8rem}
@@ -193,40 +185,45 @@ footer a{color:var(--ink)}
 #testmode{background:var(--sun);color:var(--ink);text-align:center;font-size:.85rem;font-weight:560;line-height:1.4;padding:8px 16px;overflow-wrap:anywhere}
 button:disabled{opacity:.55;cursor:not-allowed}
 :focus-visible{outline:2px solid var(--hot);outline-offset:3px}
-input[type=range]{width:100%;accent-color:var(--ink)}
-@media(max-width:899px){
- main.studio{padding-left:0;padding-right:0}
- main.studio > .card,.product-controls,.product-details{margin-left:6vw;margin-right:6vw}
- #step-pick{padding-top:200px}
- .studio-stage{width:100%}
- .mock{border-radius:0}
+input[type=range]{width:100%;height:44px;accent-color:var(--ink)}
+.review-list{list-style:none;margin:12px 0;padding:0;display:grid;gap:8px}
+.review-list li{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);line-height:1.4}
+.review-list b{font-weight:600}
+@media(max-width:899px) and (min-height:700px){
+ .hero{min-height:calc(100dvh - var(--bar, 72px));padding:16px 6vw 112px}
+ main.studio{height:calc(100dvh - var(--bar, 72px) - var(--dock));max-height:calc(100dvh - var(--bar, 72px) - var(--dock));overflow:hidden;padding:10px 4vw 8px}
+ .studio-layout{flex:1 1 auto;min-height:0}
+ .studio-stage{flex:0 0 auto;height:min(34vh, 300px)}
+ .stage-pin{height:100%;justify-content:center}
+ .mock{height:calc(100% - 42px);width:auto;max-width:100%}
+ .steps{flex:1 1 auto;min-height:0;overflow:auto;overscroll-behavior:contain;padding-bottom:36px}
+ .dock{position:fixed;left:0;right:0;bottom:0;z-index:36;width:auto;padding:10px 16px calc(10px + env(safe-area-inset-bottom));background:var(--paper);border-top:1px solid var(--line)}
+ body{padding-bottom:var(--dock)}
+}
+@media(max-width:899px) and (max-height:699px){
+ .mock{width:min(100%, 360px)}
+ .dock{position:static;width:100%}
 }
 @media(min-width:900px){
- .hero{padding:56px 6vw 64px}
- .hero-grid{grid-template-columns:minmax(0, 1.1fr) minmax(0, .9fr);grid-template-areas:"kicker stage" "title stage" "try stage" "lede stage" "actions stage";gap:18px 48px;align-items:center}
- .kicker{grid-area:kicker}.hero h1{grid-area:title;font-size:clamp(2.4rem, 3.2vw, 4.2rem)}.try-wrap{grid-area:try}.lede{grid-area:lede} .hero-actions{grid-area:actions}.hero-stage{grid-area:stage}
- .how{grid-template-columns:repeat(4, minmax(0, 1fr))}
+ .hero{padding:48px 6vw 28px}
+ .heroart{font-size:clamp(3.4rem, 7vw, 5.2rem);padding:32px 18px}
+ .hero-grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(280px,.95fr);grid-template-areas:"kicker stage" "title stage" "lede stage" "actions stage";gap:12px 48px;align-items:center}
+ .kicker{grid-area:kicker}.hero h1{grid-area:title;font-size:clamp(2.6rem, 3.4vw, 4rem);max-width:12ch}.lede{grid-area:lede}.hero-actions{grid-area:actions}.hero-stage{grid-area:stage}
  .idea-grid{grid-template-columns:repeat(3, minmax(0, 1fr))}
- main.studio{display:grid;grid-template-columns:minmax(0, 1.05fr) minmax(260px, .9fr);column-gap:28px;row-gap:14px;align-items:start}
- #step-pick{grid-column:1;grid-row:1}#step-arrange{grid-column:1;grid-row:2}
- #step-product{display:contents}
- .product-controls{grid-column:1;grid-row:3}.product-details{grid-column:1;grid-row:4}#step-buy{grid-column:1;grid-row:5}
- .studio-stage{grid-column:2;grid-row:1 / span 5;align-self:stretch}
- .stage-pin{position:sticky;top:calc(var(--bar, 76px) + 12px);display:flex;flex-direction:column;align-items:flex-start;max-height:calc(100dvh - var(--bar, 76px) - 16px)}
- .stage-pin.is-floating{position:sticky;width:auto;pointer-events:auto;top:calc(var(--bar, 76px) + 12px)}
- .stage-pin.is-floating .mockcap{display:block}
- .stage-pin.is-floating .mock{box-shadow:none}
- .mock{width:min(100%, calc((100dvh - var(--bar, 76px) - 72px) * var(--aw) / var(--ah)));max-height:calc(100dvh - var(--bar, 76px) - 72px)}
- .mini-slot,.mini-slot.on{display:none}
+ main.studio{display:block;padding-top:20px}
+ .studio-layout{display:grid;grid-template-columns:minmax(280px,.9fr) minmax(320px,1.1fr);gap:28px;align-items:start}
+ .studio-stage{position:sticky;top:calc(var(--bar, 72px) + 12px);align-items:flex-start;align-self:start}
+ .stage-pin{align-items:flex-start}
+ .mockcap{text-align:left}
+ .mock{width:min(100%, calc((100dvh - var(--bar, 72px) - 248px) * var(--aw) / var(--ah)));max-height:calc(100dvh - var(--bar, 72px) - 248px);height:auto}
+ .dock{width:100%;max-width:none}
+ .mini-slot{display:none}
 }
 @media(min-width:560px){
  #bgs{grid-template-columns:repeat(6, 44px)}
 }
 @media(min-width:700px){
  #prods{grid-template-columns:repeat(4, minmax(0, 1fr))}
-}
-@media(min-width:1100px){
- .floats{display:block}
 }
 @media (prefers-reduced-motion: reduce){
  html{scroll-behavior:auto}
@@ -242,24 +239,83 @@ input[type=range]{width:100%;accent-color:var(--ink)}
 <section class="hero">
 <div class="floats" id="floats" aria-hidden="true"></div>
 <div class="hero-grid">
-<p class="kicker">No blank page. Start tapping.</p>
-<h1>Tap 3 emojis.<br>Get a logo.<br><span class="mark">Wear it today.</span></h1>
-<div class="try-wrap"><p class="trylabel" id="trylabel">Try it right here</p><div class="try" id="try" role="group" aria-labelledby="trylabel"></div></div>
+<p class="kicker">Three emojis. One logo.</p>
+<h1>Design a trio.<br><span class="mark">Put it on merch.</span></h1>
+<p class="lede">Pick three emojis, choose a product, and the preview updates before you pay.</p>
 <div class="hero-stage"><div class="heroart" id="heroart">🔥😎🍕</div><p class="live-note">Your trio, live. It updates as you tap.</p><p class="sr" id="triosay" aria-live="polite"></p></div>
-<p class="lede">Those buttons are the design. Tap them and the sticker changes. Then put that logo on a tee, hoodie, mug, or printed trucker hat.</p>
-<div class="hero-actions"><a class="btn" href="#builder">Build it for real →</a>
+<div class="hero-actions"><a class="btn" href="#builder">Design your trio</a>
 <div class="names">Brand name: <b id="bn">Trimoji</b> <button class="opt" type="button" id="suggest">✨ Suggest another</button></div>
 <ul class="trust" aria-label="Shipping and checkout">
 <li><b>US shipping</b> $5.99 flat, free over $60</li>
 </ul></div>
 </div></section>
+<main id="builder" class="studio" data-step="pick">
+<div class="studio-head">
+<p class="kicker" id="stepnow">Step 1 of 4 · Emojis</p>
+<h2>Design your trio</h2>
+<div class="flow" id="flow" role="tablist" aria-label="Design steps">
+<button type="button" role="tab" data-step="pick" class="on" aria-selected="true">1 Pick</button>
+<button type="button" role="tab" data-step="product" aria-selected="false">2 Product</button>
+<button type="button" role="tab" data-step="make" aria-selected="false">3 Color &amp; size</button>
+<button type="button" role="tab" data-step="review" aria-selected="false">4 Review</button>
+</div>
+</div>
+<div class="studio-layout">
+<div class="studio-stage" id="stage">
+<div class="stage-pin" id="stagepin">
+<div class="mock" id="mock" data-fit="panel" data-product="tee" data-ink="light" style="--px:30.2%;--py:23.5%;--pw:38.5%;--ph:31.3%;--rx:4deg;--ry:-3deg;--swatch:#ffffff"><img class="blank" alt="White T-shirt" data-key="tee:White" src="assets/products/tee/white-520.webp" srcset="assets/products/tee/white-360.webp 360w, assets/products/tee/white-520.webp 520w" sizes="(min-width: 900px) 460px, 100vw" width="520" height="640" decoding="async" fetchpriority="high"><div class="print"></div></div>
+<p class="mockcap" id="sizecap">Scales the trio on the product and on the print. It stops at the edge of the print area.</p>
+</div>
+<div class="dock">
+<div class="price" id="price"></div>
+<p class="note" id="unavail" hidden></p>
+<button class="btn" id="addbtn" type="button">Add to cart</button>
+</div>
+</div>
+<div class="steps">
+<section class="card" id="step-pick" data-panel="pick">
+<h3>Pick 3 emojis</h3>
+<p class="note">Choose exactly three. Search, or browse one category at a time.</p>
+<div class="slots" id="slots"></div>
+<div class="try-wrap"><p class="trylabel" id="trylabel">Quick picks</p><div class="try" id="try" role="group" aria-labelledby="trylabel"></div></div>
+<div class="kb"><input id="q" placeholder="Search emoji" autocomplete="off" aria-label="Search emoji"><div class="grid" id="grid"></div><div class="tabs" id="tabs"></div></div>
+<button type="button" class="btn next" data-next="product">Continue to product</button>
+</section>
+<section class="card product-controls" id="step-product" data-panel="product" hidden>
+<h3>Choose a product</h3>
+<p class="note">The price updates with the product. Colors and sizes change on the next step.</p>
+<div class="opts" id="prods"></div>
+<button type="button" class="btn next" data-next="make">Continue to color and size</button>
+</section>
+<section class="card" id="step-arrange" data-panel="make" hidden>
+<h3>Color, size, and logo</h3>
+<label>Color</label><div class="opts" id="cols"></div>
+<label>Size</label><div class="opts" id="sizes"></div>
+<label>Layout</label><div class="opts" id="lay"></div>
+<label>Logo size <span id="szv"></span></label><input type="range" id="sz" min="60" max="140" value="100" aria-label="Logo size">
+<label style="margin-top:10px">Logo background</label><div class="opts" id="bgs"></div>
+<button type="button" class="btn next" data-next="review">Review</button>
+</section>
+<section class="card buy" id="step-buy" data-panel="review" hidden>
+<h3>Review</h3>
+<ul class="review-list">
+<li><span>Product</span><b id="reviewprod"></b></li>
+<li><span>Color</span><b id="reviewcol"></b></li>
+<li><span>Size</span><b id="reviewsize"></b></li>
+<li><span>Layout</span><b id="reviewlay"></b></li>
+</ul>
+<p class="note">Printed on demand by Printful. Shipping is totaled in the cart.</p>
+</section>
+</div>
+</div>
+<div class="mini-slot" id="minislot"><div class="miniview" id="miniview" aria-hidden="true"><div class="mini-mock"><img alt="" width="136" height="168" decoding="async"><div class="mini-print"></div></div></div></div>
+</main>
 <section class="show" id="showcase" aria-roledescription="carousel" aria-label="Example designs on products">
-<div class="showhead"><h2>Example looks. Steal one.</h2>
-<p>Sample trios we made up so you can see them on products. Not customer photos, reviews, or results.</p></div>
+<div class="showhead"><h2>Example looks</h2>
+<p>Sample trios on products. Not customer photos, reviews, or results.</p></div>
 <div class="showtrack" id="showtrack" tabindex="0" aria-live="off"></div>
 <div class="showctrl"><button type="button" class="opt" id="showprev">Previous</button><button type="button" class="opt" id="showpause" aria-pressed="false">Pause</button><button type="button" class="opt" id="shownext">Next</button></div>
 </section>
-<section class="how"><div><b>1. Pick</b><br><span class="note">Three emojis, in the hero or the full keyboard.</span></div><div><b>2. Arrange</b><br><span class="note">Row, triangle, or stacked. Then the size and the circle.</span></div><div><b>3. Choose product</b><br><span class="note">Tee, hoodie, mug, or a printed trucker hat.</span></div><div><b>4. Checkout</b><br><span class="note">Stripe takes payment. Printful prints and ships.</span></div></section>
 <section class="ideas" aria-labelledby="ideas-title">
 <h2 id="ideas-title">Example ways to start</h2>
 <p class="disclaimer">Not reviews, not quotes, and not statistics. Just prompts.</p>
@@ -270,27 +326,6 @@ input[type=range]{width:100%;accent-color:var(--ink)}
 </div>
 <p style="margin-top:14px"><a class="go" href="#builder">Open the builder</a></p>
 </section>
-<main id="builder" class="studio">
-<div class="mini-slot" id="minislot"><div class="miniview" id="miniview" aria-hidden="true"><div class="mini-mock"><img alt="" width="136" height="168" decoding="async"><div class="mini-print"></div></div></div></div>
-<section class="card" id="step-pick"><h2><span class="step">1</span>Pick</h2>
-<p class="note">Choose exactly three.</p>
-<div class="slots" id="slots"></div>
-<div class="kb"><input id="q" placeholder="Search emoji" autocomplete="off" aria-label="Search emoji"><div class="grid" id="grid"></div><div class="tabs" id="tabs"></div></div></section>
-<section class="card" id="step-arrange"><h2><span class="step">2</span>Arrange</h2><label>Layout</label><div class="opts" id="lay"></div>
-<label>Logo size <span id="szv"></span></label><input type="range" id="sz" min="60" max="140" value="100" aria-label="Logo size">
-<p class="note" id="sizecap">Scales the trio on the product and on the print. It stops at the edge of the print area.</p>
-<label style="margin-top:10px">Logo background</label><div class="opts" id="bgs"></div></section>
-<section class="product-card" id="step-product">
-<div class="card product-controls"><h2><span class="step">3</span>Choose product</h2>
-<div class="opts" id="prods"></div></div>
-<div class="studio-stage" id="stage"><div class="stage-pin" id="stagepin"><div class="mock" id="mock" data-fit="panel" data-product="tee" data-ink="light" style="--px:30.2%;--py:23.5%;--pw:38.5%;--ph:31.3%;--rx:4deg;--ry:-3deg;--swatch:#ffffff"><img class="blank" alt="White T-shirt" data-key="tee:White" src="assets/products/tee/white-520.webp" srcset="assets/products/tee/white-360.webp 360w, assets/products/tee/white-520.webp 520w" sizes="(min-width: 900px) 460px, 100vw" width="520" height="640" decoding="async" fetchpriority="high"><div class="print"></div></div><p class="mockcap">Live preview on the Printful blank.</p></div></div>
-<div class="card product-details"><label>Color</label><div class="opts" id="cols"></div><label>Size</label><div class="opts" id="sizes"></div></div>
-</section>
-<section class="card buy" id="step-buy"><h2><span class="step">4</span>Checkout</h2>
-<div class="price" id="price"></div><button class="btn" id="addbtn" type="button">Add to cart</button>
-<p class="note" id="unavail" hidden></p>
-<p class="note">Printed on demand by Printful.</p></section>
-</main>
 <section class="close"><h2>That trio looks good on you.</h2><p>Finish the logo, pick a color, and send it to print.</p><a class="go" href="#builder">Start creating</a></section>
 <div id="drawer"><div class="drawer-head"><div><p class="kicker">Step 4</p><h2>Your cart</h2></div><button class="opt" type="button" id="closecart" aria-label="Close cart">Close</button></div>
 <div id="items"></div>
@@ -451,13 +486,17 @@ function controls(){ensureOpts('lay',[['row','Row'],['triangle','Triangle'],['st
  bgs.querySelectorAll('button').forEach(b=>b.classList.toggle('on',Number(b.dataset.bg)===bgi))}
 function syncProduct(){const p=PRODS[S.prod];const add=document.getElementById('addbtn');
  if(add){add.disabled=!p.available;add.textContent=p.available?'Add to cart':'Unavailable'}
- const note=document.getElementById('unavail');if(note){note.hidden=!!p.available;note.textContent=p.available?'':p.reason}}
+ const note=document.getElementById('unavail');if(note){note.hidden=!!p.available;note.textContent=p.available?'':p.reason}
+ const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v};
+ set('reviewprod',p.n);set('reviewcol',COLS[S.col][0]);set('reviewsize',S.size);set('reviewlay',S.lay)}
 function all(){slots();controls();draw();syncProduct()}
 function toast(t){const el=document.getElementById('toast');el.innerHTML=twx(t);el.style.display='block';placeToast();clearTimeout(el._t);el._t=setTimeout(()=>{el.style.display='none';el.style.bottom='20px'},3200)}
+function dockOffset(){const dock=document.querySelector('.dock');if(!dock)return 0;if(getComputedStyle(dock).position!=='fixed')return 0;return Math.ceil(dock.getBoundingClientRect().height)}
 function placeToast(){const el=document.getElementById('toast');const drawer=document.getElementById('drawer');if(!el||!drawer)return;
- if(el.style.display==='none'||!drawer.classList.contains('open')){el.style.bottom='20px';return}
+ const base=20+dockOffset();
+ if(el.style.display==='none'||!drawer.classList.contains('open')){el.style.bottom=base+'px';return}
  const sum=drawer.querySelector('.sum').getBoundingClientRect();
- el.style.bottom=Math.max(16,Math.round(innerHeight-sum.top+12))+'px'}
+ el.style.bottom=Math.max(base,Math.round(innerHeight-sum.top+12))+'px'}
 function money(n){return '$'+n.toFixed(2)}
 function lineBackground(){const bg=BGS[bgi];return bg[0]==='none'?{shape:'none'}:{shape:'circle',color:bg[1]}}
 function sameDesign(x,background){return x.product===S.prod&&x.color===COLS[S.col][0]&&x.size===S.size&&x.layout===S.lay&&x.logoSize===Number(sz.value)&&x.emojis.join('\0')===S.pick.join('\0')&&x.background.shape===background.shape&&(x.background.color||'')===(background.color||'')}
@@ -494,21 +533,10 @@ function syncMini(){const slot=document.getElementById('minislot');if(!slot||!sl
    if(i>=0){const old=live.splice(i,1)[0];for(const attr of ['x','y','width','height']){const v=child.getAttribute(attr);if(v!=null)old.setAttribute(attr,v)}next.push(old);continue}}
   next.push(document.importNode(child,true))}
  svg.replaceChildren(...next)}
-function placePreview(){const stage=document.getElementById('stage'),pin=document.getElementById('stagepin'),slot=document.getElementById('minislot');
+function placePreview(){const pin=document.getElementById('stagepin'),slot=document.getElementById('minislot'),stage=document.getElementById('stage');
  if(pin){pin.classList.remove('is-floating');pin.style.top='';pin.style.left=''}
  if(stage)stage.style.minHeight='';
- if(!slot||!stage)return;
- if(matchMedia('(min-width:900px)').matches){slot.classList.remove('on');return}
- const bar=document.querySelector('.topbar').getBoundingClientRect().bottom;
- const stageR=stage.getBoundingClientRect();
- const builder=document.getElementById('builder').getBoundingClientRect();
- const cartOpen=document.getElementById('drawer').classList.contains('open');
- const visiblePx=Math.min(stageR.bottom,innerHeight)-Math.max(stageR.top,bar);
- const seenRatio=stageR.height>0?Math.max(0,visiblePx)/Math.min(stageR.height,innerHeight):0;
- const onNow=slot.classList.contains('on');
- const seen=onNow?seenRatio>0.3:seenRatio>0.5;
- const active=!cartOpen&&builder.bottom>innerHeight*0.55&&builder.top<innerHeight*0.8;
- slot.classList.toggle('on',active&&!seen);syncMini()}
+ if(slot)slot.classList.remove('on')}
 let previewFrame=0;
 function schedulePreview(){if(previewFrame)return;previewFrame=requestAnimationFrame(()=>{previewFrame=0;placePreview()})}
 async function checkout(){if(!S.cart.length)return toast('Your cart is empty');
@@ -528,7 +556,13 @@ function setupFloats(){const spots=[['✨','left:max(10px,1vw);top:18%','0s'],['
 function setupTry(){document.getElementById('try').innerHTML=TRY.map(([e,name])=>`<button type="button" data-emoji="${esc(e)}" title="${esc(name)}" aria-pressed="false">${img(e)}</button>`).join('')}
 function showGo(n){const track=document.getElementById('showtrack');showI=(n+EXAMPLES.length)%EXAMPLES.length;[...track.children].forEach((el,i)=>el.classList.toggle('on',i===showI));const card=track.children[showI];if(!card)return;const left=card.getBoundingClientRect().left-track.getBoundingClientRect().left+track.scrollLeft-(track.clientWidth-card.clientWidth)/2;track.scrollTo({left:Math.max(0,left),behavior:reduceMotion?'auto':'smooth'})}
 function showArm(){clearInterval(showTimer);if(showPaused||reduceMotion)return;showTimer=setInterval(()=>showGo(showI+1),3600)}
-function applyExample(ex){S.pick=ex.emojis.slice();S.lay=ex.layout;bgi=ex.bgi;S.prod=ex.product;const p=PRODS[ex.product];const idx=COLS.findIndex(c=>c[0]===ex.color);S.col=idx>=0&&p.colors.includes(ex.color)?idx:0;if(!p.sizes.includes(S.size))S.size=p.sizes[Math.min(1,p.sizes.length-1)];all();markSelected();flash(heroart);burst(heroart,true);document.getElementById('builder').scrollIntoView({behavior:reduceMotion?'auto':'smooth',block:'start'})}
+function showFlow(id){const root=document.getElementById('builder');if(root)root.dataset.step=id;
+ document.querySelectorAll('[data-panel]').forEach(panel=>{panel.hidden=panel.dataset.panel!==id});
+ document.querySelectorAll('#flow [data-step]').forEach(btn=>{const on=btn.dataset.step===id;btn.classList.toggle('on',on);btn.setAttribute('aria-selected',on?'true':'false')});
+ const labels={pick:'Step 1 of 4 · Emojis',product:'Step 2 of 4 · Product',make:'Step 3 of 4 · Color and size',review:'Step 4 of 4 · Review'};
+ const now=document.getElementById('stepnow');if(now&&labels[id])now.textContent=labels[id];
+ const steps=document.querySelector('.steps');if(steps)steps.scrollTop=0}
+function applyExample(ex){S.pick=ex.emojis.slice();S.lay=ex.layout;bgi=ex.bgi;S.prod=ex.product;const p=PRODS[ex.product];const idx=COLS.findIndex(c=>c[0]===ex.color);S.col=idx>=0&&p.colors.includes(ex.color)?idx:0;if(!p.sizes.includes(S.size))S.size=p.sizes[Math.min(1,p.sizes.length-1)];all();markSelected();flash(heroart);burst(heroart,true);showFlow('review');document.getElementById('builder').scrollIntoView({behavior:reduceMotion?'auto':'smooth',block:'start'})}
 function setupShowcase(){const track=document.getElementById('showtrack');track.innerHTML=EXAMPLES.map((ex,i)=>{const hex=COLS.find(c=>c[0]===ex.color)[1];const spec=PHOTO[ex.product];const dark=ex.color==='Black'||ex.color==='Navy'||ex.color==='Charcoal';const photo=spec&&spec.colors.includes(ex.color)?`assets/products/${ex.product}/${ex.color.toLowerCase()}-${spec.w[0]}.webp`:'';const pic=photo?`<img alt="" src="${photo}" loading="lazy" decoding="async" width="${spec.w[0]}" height="${spec.w[0]}">`:'';return `<article class="ex${i===0?' on':''}"><div class="garment ${ex.product}${dark?' ink-dark':''}" style="background:${hex}">${pic}<span class="trio">${ex.emojis.map(img).join('')}</span></div><h3>${esc(ex.title)}</h3><p>${esc(ex.blurb)} <span class="note">Example · ${esc(PRODS[ex.product].n)}</span></p><button type="button" data-example="${i}">Try this trio</button></article>`}).join('');
  const pause=document.getElementById('showpause');if(showPaused){pause.setAttribute('aria-pressed','true');pause.textContent='Play'}
  document.getElementById('showprev').addEventListener('click',()=>{showGo(showI-1);showArm()});
@@ -544,6 +578,8 @@ function bindTap(id,fn){const root=document.getElementById(id);let swallow=0,tra
  root.addEventListener('pointerup',e=>{if(e.pointerType==='mouse')return;const btn=e.target.closest('button');const moved=!!(track&&track.id===e.pointerId&&track.moved);track=null;if(!btn||!root.contains(btn)){if(moved)swallow=Date.now()+700;return}swallow=Date.now()+700;if(!moved)fn(btn)});
  root.addEventListener('pointercancel',e=>{if(e.pointerType==='mouse')return;track=null;swallow=Date.now()+700});
  root.addEventListener('click',e=>{const btn=e.target.closest('button');if(!btn||!root.contains(btn))return;if(Date.now()<swallow){e.preventDefault();return}fn(btn)})}
+bindTap('flow',b=>{if(b.dataset.step)showFlow(b.dataset.step)});
+document.querySelector('.steps').addEventListener('click',e=>{const btn=e.target.closest('[data-next]');if(btn)showFlow(btn.dataset.next)});
 bindTap('lay',b=>setLay(b.dataset.value));
 bindTap('prods',b=>setProd(b.dataset.value));
 bindTap('sizes',b=>setSize(b.dataset.value));

@@ -29,10 +29,30 @@ function track(page) {
   return errors;
 }
 
+async function reveal(locator) {
+  await locator.evaluate((el) => {
+    let node = el;
+    while (node && node !== document.body) {
+      if (node.dataset && node.dataset.panel && node.hidden) {
+        const tab = document.querySelector(`#flow button[data-step="${node.dataset.panel}"]`);
+        if (tab) tab.click();
+      }
+      node = node.parentElement;
+    }
+  });
+}
+
 async function press(locator, testInfo) {
+  await reveal(locator);
   await locator.scrollIntoViewIfNeeded();
   if (testInfo.project.use.hasTouch) await locator.tap();
   else await locator.click();
+}
+
+async function clickReady(page, selector) {
+  const locator = page.locator(selector);
+  await reveal(locator);
+  await locator.click();
 }
 
 async function logoImages(page) {
@@ -93,7 +113,8 @@ test('design controls, cart, and Stripe checkout', async ({ page }, testInfo) =>
   await expect(page.locator('.trust')).toHaveCount(1);
   await expect(page.locator('.trust[aria-label="Shipping and checkout"] li')).toHaveCount(1);
   await expect(page.locator('.trust[aria-label="Shipping and checkout"]')).toContainText('$5.99 flat, free over $60');
-  await expect(page.locator('#step-buy')).not.toContainText('$5.99');
+  const buyCopy = await page.locator('#step-buy').evaluate((el) => el.textContent || '');
+  expect(buyCopy).not.toContain('$5.99');
   await expect(page.locator('#price')).not.toContainText('free shipping');
   await expect(page.locator('#sizecap')).toContainText('Scales the trio');
   const shippingCopies = await page.locator('body').evaluate((el) => (el.innerText.match(/\$5\.99 flat, free over \$60/g) || []).length);
@@ -354,6 +375,7 @@ test('design controls, cart, and Stripe checkout', async ({ page }, testInfo) =>
   await expect(page.locator('#price')).toContainText('$19.00');
   await expect(page.locator('#cols button')).toHaveCount(1);
   await expect(page.locator('#cols button')).toHaveAttribute('title', 'White');
+  await page.locator('#flow button[data-step="make"]').click();
   await expect(page.locator('#sizes button')).toHaveText('11 oz');
 
   await press(page.locator('#prods button[data-value="hat"]'), testInfo);
@@ -361,6 +383,7 @@ test('design controls, cart, and Stripe checkout', async ({ page }, testInfo) =>
   await expect(page.locator('#addbtn')).toBeEnabled();
   await expect(page.locator('#unavail')).toBeHidden();
   await expect(page.locator('#price')).toContainText('$33.00');
+  await page.locator('#flow button[data-step="make"]').click();
   await expect(page.locator('#sizes button')).toHaveText('One size');
   const hatColors = await page.locator('#cols button').evaluateAll((els) => els.map((el) => el.title));
   expect(hatColors).toEqual(['White', 'Black', 'Navy', 'Charcoal']);
@@ -586,8 +609,8 @@ test('trucker logo fills the front panel', async ({ page }) => {
   }
 
   for (const product of ['tee', 'hoodie', 'mug']) {
-    await page.locator(`#prods button[data-value="${product}"]`).click();
-    await page.locator('#lay button[data-value="row"]').click();
+    await clickReady(page, `#prods button[data-value="${product}"]`);
+    await clickReady(page, '#lay button[data-value="row"]');
     await setSize(100);
     const placed = await logoBox();
     expect(placed.cx, product).toBeGreaterThan(0.42);
@@ -598,9 +621,9 @@ test('trucker logo fills the front panel', async ({ page }) => {
     expect(placed.bottom, product).toBeLessThan(0.78);
   }
 
-  await page.locator('#prods button[data-value="hat"]').click();
-  await page.locator('#cols button[title="Navy"]').click();
-  await page.locator('#lay button[data-value="row"]').click();
+  await clickReady(page, '#prods button[data-value="hat"]');
+  await clickReady(page, '#cols button[title="Navy"]');
+  await clickReady(page, '#lay button[data-value="row"]');
   await setSize(100);
   const row = await logoBox();
   expect(row.printAspect).toBeGreaterThan(2.05);
@@ -621,14 +644,14 @@ test('trucker logo fills the front panel', async ({ page }) => {
   expect(small.cy).toBeLessThan(0.52);
 
   await setSize(100);
-  await page.locator('#lay button[data-value="stacked"]').click();
+  await clickReady(page, '#lay button[data-value="stacked"]');
   const stacked = await logoBox();
   expect(stacked.height).toBeGreaterThan(0.28);
   expect(stacked.cy).toBeGreaterThan(0.4);
   expect(stacked.cy).toBeLessThan(0.52);
   expect(stacked.bottom).toBeLessThan(0.72);
 
-  await page.locator('#lay button[data-value="triangle"]').click();
+  await clickReady(page, '#lay button[data-value="triangle"]');
   const triangle = await logoBox();
   expect(triangle.height).toBeGreaterThan(0.26);
   expect(triangle.width).toBeGreaterThan(0.28);
@@ -659,7 +682,7 @@ test('trucker logo fills the front panel', async ({ page }) => {
     });
   }
   for (const layout of ['row', 'stacked', 'triangle']) {
-    await page.locator(`#lay button[data-value="${layout}"]`).click();
+    await clickReady(page, `#lay button[data-value="${layout}"]`);
     await setSize(140);
     const inset = await insidePrint();
     expect(inset.left, `hat ${layout}`).toBeGreaterThan(1);
@@ -672,9 +695,9 @@ test('trucker logo fills the front panel', async ({ page }) => {
     expect(onHat.right, `hat mock ${layout}`).toBeGreaterThan(2);
     expect(onHat.bottom, `hat mock ${layout}`).toBeGreaterThan(2);
   }
-  await page.locator('#prods button[data-value="mug"]').click();
+  await clickReady(page, '#prods button[data-value="mug"]');
   for (const layout of ['stacked', 'triangle']) {
-    await page.locator(`#lay button[data-value="${layout}"]`).click();
+    await clickReady(page, `#lay button[data-value="${layout}"]`);
     await setSize(140);
     const inset = await insidePrint();
     expect(inset.left, `mug ${layout}`).toBeGreaterThan(-1);
@@ -690,83 +713,65 @@ test('product preview stays beside the choices and inside the builder', async ({
   await page.goto('/');
   await expect(page.locator('#mock img.blank')).toBeVisible();
   const mobile = testInfo.project.use.isMobile === true;
+  await page.locator('#flow button[data-step="product"]').click();
   if (mobile) {
-    const gap = await page.evaluate(() => {
-      const prods = document.querySelector('#prods').getBoundingClientRect();
+    const frame = await page.evaluate(() => {
       const stage = document.querySelector('#stage').getBoundingClientRect();
-      return stage.top - prods.bottom;
+      const mock = document.querySelector('#mock').getBoundingClientRect();
+      const steps = document.querySelector('.steps').getBoundingClientRect();
+      const prods = document.querySelector('#prods').getBoundingClientRect();
+      return {
+        stageTop: stage.top,
+        stepsTop: steps.top,
+        mockH: mock.height,
+        mockW: mock.width,
+        vw: window.innerWidth,
+        prodsTop: prods.top,
+        photo: document.querySelector('#mock img.blank').currentSrc || document.querySelector('#mock img.blank').src,
+      };
     });
-    expect(gap).toBeGreaterThan(4);
-    expect(gap).toBeLessThan(48);
-    const bleed = await page.locator('#stage').evaluate((el) => {
-      const box = el.getBoundingClientRect();
-      return { left: box.left, width: box.width, vw: window.innerWidth, height: box.height };
+    expect(frame.stepsTop).toBeGreaterThan(frame.stageTop + 40);
+    expect(frame.prodsTop).toBeGreaterThan(frame.stageTop);
+    expect(frame.mockH).toBeGreaterThan(frame.vw * 0.35);
+    expect(frame.mockW).toBeGreaterThan(120);
+    expect(frame.photo).toContain('/tee/');
+    await page.evaluate(() => { document.querySelector('.steps').scrollTop = 240; });
+    const stayed = await page.evaluate(() => {
+      const mock = document.querySelector('#mock').getBoundingClientRect();
+      const grid = document.querySelector('#grid');
+      return { top: mock.top, bottom: mock.bottom, vh: window.innerHeight, gridTop: grid ? grid.getBoundingClientRect().top : 0 };
     });
-    expect(bleed.left).toBeLessThan(2);
-    expect(bleed.width).toBeGreaterThan(bleed.vw - 4);
-    expect(bleed.height).toBeGreaterThan(bleed.vw * 0.7);
+    expect(stayed.top).toBeGreaterThan(0);
+    expect(stayed.bottom).toBeLessThan(stayed.vh);
+    await expect(page.locator('#minislot')).not.toHaveClass(/on/);
+    await expect(page.locator('#stagepin')).not.toHaveClass(/is-floating/);
   } else {
-    await page.locator('#prods').scrollIntoViewIfNeeded();
     const gap = await page.evaluate(() => {
       const card = document.querySelector('.product-controls').getBoundingClientRect();
-      const prods = document.querySelector('#prods').getBoundingClientRect();
       const mock = document.querySelector('#mock').getBoundingClientRect();
       return {
-        hGap: mock.left - card.right,
-        besideButtons: mock.top < prods.bottom && mock.bottom > prods.top,
+        hGap: card.left - mock.right,
+        beside: mock.top < card.bottom && mock.bottom > card.top,
       };
     });
-    expect(gap.besideButtons).toBeTruthy();
+    expect(gap.beside).toBeTruthy();
     expect(gap.hGap).toBeGreaterThan(12);
-    expect(gap.hGap).toBeLessThan(40);
-  }
-
-  if (mobile) {
+    expect(gap.hGap).toBeLessThan(280);
     await page.evaluate(() => { document.documentElement.style.scrollBehavior = 'auto'; });
-    await page.locator('#step-pick').scrollIntoViewIfNeeded();
-    await expect(page.locator('#minislot')).toHaveClass(/on/);
-    await expect(page.locator('#stagepin')).not.toHaveClass(/is-floating/);
-    const chip = await page.locator('#miniview').evaluate((el) => {
-      const pin = el.getBoundingClientRect();
-      const grid = document.querySelector('#grid').getBoundingClientRect();
-      const bar = document.querySelector('.topbar').getBoundingClientRect();
-      const buttons = [...document.querySelectorAll('#grid button')].map((button) => button.getBoundingClientRect());
-      const hit = (box) => {
-        const iw = Math.min(pin.right, box.right) - Math.max(pin.left, box.left);
-        const ih = Math.min(pin.bottom, box.bottom) - Math.max(pin.top, box.top);
-        return iw > 0 && ih > 0 ? Math.min(iw, ih) : 0;
-      };
-      return {
-        width: pin.width,
-        top: pin.top,
-        bottom: pin.bottom,
-        bar: bar.bottom,
-        overlap: buttons.reduce((max, box) => Math.max(max, hit(box)), 0),
-        right: pin.right,
-        vw: window.innerWidth,
-        photo: el.querySelector('img').currentSrc || el.querySelector('img').src,
-      };
-    });
-    expect(chip.width).toBeGreaterThan(120);
-    expect(chip.width).toBeLessThan(170);
-    expect(chip.top).toBeGreaterThan(chip.bar - 2);
-    expect(chip.bottom).toBeGreaterThan(chip.top + 40);
-    expect(chip.overlap).toBeLessThan(8);
-    expect(chip.right).toBeLessThanOrEqual(chip.vw + 1);
-    expect(chip.photo).toContain('/tee/');
-  } else {
-    await page.locator('#step-arrange').scrollIntoViewIfNeeded();
+    await page.locator('#flow button[data-step="pick"]').click();
+    await page.locator('#builder').evaluate((el) => el.scrollIntoView({ block: 'start' }));
+    await page.evaluate(() => window.scrollBy(0, 180));
     const stuck = await page.evaluate(() => {
       const mock = document.querySelector('#mock').getBoundingClientRect();
       const bar = document.querySelector('.topbar').getBoundingClientRect().bottom;
-      const arrange = document.querySelector('#step-arrange').getBoundingClientRect();
-      return { mockTop: mock.top, bar, arrangeTop: arrange.top, mockBottom: mock.bottom };
+      const pick = document.querySelector('#step-pick').getBoundingClientRect();
+      return { mockTop: mock.top, bar, pickTop: pick.top, mockBottom: mock.bottom };
     });
-    expect(stuck.arrangeTop).toBeLessThan(stuck.mockBottom);
+    expect(stuck.pickTop).toBeLessThan(stuck.mockBottom);
     expect(stuck.mockTop).toBeGreaterThan(stuck.bar - 2);
-    expect(stuck.mockTop).toBeLessThan(stuck.bar + 40);
-    await page.locator('#prods button[data-value="hoodie"]').click();
-    await page.locator('#step-arrange').scrollIntoViewIfNeeded();
+    expect(stuck.mockTop).toBeLessThan(stuck.bar + 80);
+    await clickReady(page, '#prods button[data-value="hoodie"]');
+    await page.locator('#builder').evaluate((el) => el.scrollIntoView({ block: 'start' }));
     const capped = await page.evaluate(() => {
       const mock = document.querySelector('#mock').getBoundingClientRect();
       const cap = document.querySelector('.mockcap').getBoundingClientRect();
