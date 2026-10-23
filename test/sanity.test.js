@@ -333,6 +333,25 @@ test('print file is a transparent PNG from Twemoji SVG', async () => {
   const triangle = glyphBounds(hatArt('triangle', 100));
   assert.ok(triangle.height > HAT_PRINT_H * 0.8, `triangle height ${triangle.height}`);
   assert.ok(Math.abs((triangle.top + triangle.bottom) / 2 - HAT_PRINT_H / 2) < 8);
+  function inside(box, width, height, label) {
+    assert.ok(box.left > 4, `${label} left ${box.left}`);
+    assert.ok(box.top > 4, `${label} top ${box.top}`);
+    assert.ok(box.right < width - 4, `${label} right ${box.right}`);
+    assert.ok(box.bottom < height - 4, `${label} bottom ${box.bottom}`);
+  }
+  for (const layout of ['stacked', 'triangle', 'row']) {
+    inside(glyphBounds(hatArt(layout, 140)), HAT_PRINT_W, HAT_PRINT_H, `hat ${layout}`);
+    for (const product of ['tee', 'mug']) {
+      const art = composeSvg({
+        product,
+        emojis: ['🔥', '😎', '🍕'],
+        layout,
+        logoSize: 140,
+        background: { shape: 'none' },
+      }, [SVG, SVG, SVG]);
+      inside(glyphBounds(art), PRINT_PX, PRINT_PX, `${product} ${layout}`);
+    }
+  }
 });
 
 test('HTTP handlers: checkout redirect, webhook, and print file', async () => {

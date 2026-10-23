@@ -12,22 +12,37 @@ export default defineConfig({
   retries: process.env.QA_LIVE === '1' ? 1 : 0,
   use: {
     baseURL,
-    channel: 'chrome',
     actionTimeout: 20_000,
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
-    launchOptions: {
-      args: ['--no-sandbox', '--disable-dev-shm-usage'],
-    },
   },
   projects: [
     {
       name: 'desktop',
-      use: { viewport: { width: 1280, height: 800 }, hasTouch: false, isMobile: false },
+      use: {
+        channel: 'chrome',
+        viewport: { width: 1280, height: 800 },
+        hasTouch: false,
+        isMobile: false,
+        launchOptions: { args: ['--no-sandbox', '--disable-dev-shm-usage'] },
+      },
     },
     {
       name: 'mobile',
       use: {
+        channel: 'chrome',
+        viewport: { width: 390, height: 844 },
+        hasTouch: true,
+        isMobile: true,
+        deviceScaleFactor: 2,
+        userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1',
+        launchOptions: { args: ['--no-sandbox', '--disable-dev-shm-usage'] },
+      },
+    },
+    {
+      name: 'webkit-mobile',
+      use: {
+        browserName: 'webkit',
         viewport: { width: 390, height: 844 },
         hasTouch: true,
         isMobile: true,
