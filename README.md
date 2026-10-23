@@ -87,6 +87,6 @@ npm install
 npm test
 ```
 
-The test mocks Stripe and Printful. It does not call either service.
+The API checks mock Stripe and Printful. They do not call either service. `npm test` then runs Playwright against the system Chrome install, once at desktop size and once in an iPhone-sized touch viewport. That pass uses a local stub of Stripe, so it does not create a Checkout Session.
 
 Emoji graphics are [Twemoji](https://github.com/jdecked/twemoji) by Twitter, Inc. and other contributors, [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/).

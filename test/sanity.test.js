@@ -348,6 +348,14 @@ test('the static shop asks the server for checkout and test mode', () => {
   assert.match(html, /fetch\('\/api\/config'/);
   assert.match(html, /fetch\('\/api\/checkout'/);
   assert.match(html, /stripeTestMode===true/);
+  assert.match(html, /assets\/72x72\//);
+  assert.match(html, /touch-action:manipulation/);
+  assert.match(html, /DOMParser/);
+  assert.match(html, /xlink:href/);
+  assert.match(html, /function all\(\)\{slots\(\);controls\(\);draw\(\);syncProduct\(\)\}/);
+  assert.doesNotMatch(html, /backdrop-filter/);
+  assert.doesNotMatch(html, /assets\/svg\//);
+  assert.doesNotMatch(html, /<a href="#builder"><button/);
   const readme = readFileSync(new URL('../README.md', import.meta.url), 'utf8');
   assert.match(readme, /sk_test_/);
   assert.match(readme, /\/api\/stripe-webhook/);

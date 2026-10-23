@@ -6,10 +6,15 @@
     "node": ">=20"
   },
   "scripts": {
-    "test": "node --test test/sanity.test.js"
+    "test": "node --test test/sanity.test.js && playwright test",
+    "test:unit": "node --test test/sanity.test.js",
+    "test:browser": "playwright test"
   },
   "dependencies": {
     "@resvg/resvg-js": "^2.6.2",
     "stripe": "^18.5.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1"
   }
 }
