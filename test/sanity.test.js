@@ -463,10 +463,9 @@ test('the static shop asks the server for checkout and test mode', () => {
   assert.match(html, /Trucker hat/);
   assert.match(html, /setAttribute\('data-hat','trucker'\)/);
   assert.match(html, /assets\/products\//);
-  assert.match(html, /id="try"/);
-  assert.match(html, /id="showcase"/);
   assert.match(html, /prefers-reduced-motion/);
-  assert.match(html, /Not reviews, not quotes, and not statistics/);
+  assert.doesNotMatch(html, /id="showcase"/);
+  assert.doesNotMatch(html, /mug example/);
   assert.doesNotMatch(html, /Dad hat/);
   assert.doesNotMatch(html, /backdrop-filter/);
   assert.doesNotMatch(html, /assets\/svg\//);
