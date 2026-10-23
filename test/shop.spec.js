@@ -247,9 +247,23 @@ test('design controls, cart, and Stripe checkout', async ({ page }, testInfo) =>
   expect(chest.find((logo) => logo.kind === 'tee').cx).toBeLessThan(0.54);
   expect(chest.find((logo) => logo.kind === 'hoodie').cx).toBeGreaterThan(0.5);
   expect(chest.find((logo) => logo.kind === 'hoodie').cx).toBeLessThan(0.58);
-  for (const logo of chest.filter((logo) => logo.kind === 'hat' || logo.kind === 'mug')) {
+  for (const logo of chest.filter((logo) => logo.kind === 'hat')) {
     expect(logo.width, logo.kind).toBeGreaterThan(0.4);
   }
+  const mug = chest.find((logo) => logo.kind === 'mug');
+  const mugFrame = await page.locator('#showtrack .garment.mug').evaluate((el) => {
+    const photo = getComputedStyle(el.querySelector(':scope > img'));
+    const trio = getComputedStyle(el.querySelector('.trio'));
+    return { fit: photo.objectFit, dir: trio.flexDirection };
+  });
+  expect(mugFrame.fit).toBe('contain');
+  expect(mugFrame.dir).toBe('row');
+  expect(mug.width).toBeGreaterThan(0.28);
+  expect(mug.width).toBeLessThan(0.34);
+  expect(mug.cy).toBeGreaterThan(0.45);
+  expect(mug.cy).toBeLessThan(0.53);
+  expect(mug.cx).toBeGreaterThan(0.45);
+  expect(mug.cx).toBeLessThan(0.52);
   expect(looks.height).toBeLessThan(2);
   expect(looks.buttons).toBeLessThan(2);
   expect(looks.tops).toBeLessThan(2);
