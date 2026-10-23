@@ -227,6 +227,29 @@ test('design controls, cart, and Stripe checkout', async ({ page }, testInfo) =>
       overflow: el.scrollWidth - el.clientWidth,
     };
   });
+  const chest = await page.locator('#showtrack .garment').evaluateAll((els) => els.map((el) => {
+    const box = el.getBoundingClientRect();
+    const trio = el.querySelector('.trio').getBoundingClientRect();
+    return {
+      kind: [...el.classList].find((name) => ['tee', 'hoodie', 'hat', 'mug'].includes(name)),
+      width: trio.width / box.width,
+      cx: ((trio.left + trio.right) / 2 - box.left) / box.width,
+      cy: ((trio.top + trio.bottom) / 2 - box.top) / box.height,
+    };
+  }));
+  for (const logo of chest.filter((logo) => logo.kind === 'tee' || logo.kind === 'hoodie')) {
+    expect(logo.width, logo.kind).toBeGreaterThan(0.25);
+    expect(logo.width, logo.kind).toBeLessThan(0.3);
+    expect(logo.cy, logo.kind).toBeGreaterThan(0.34);
+    expect(logo.cy, logo.kind).toBeLessThan(0.48);
+  }
+  expect(chest.find((logo) => logo.kind === 'tee').cx).toBeGreaterThan(0.46);
+  expect(chest.find((logo) => logo.kind === 'tee').cx).toBeLessThan(0.54);
+  expect(chest.find((logo) => logo.kind === 'hoodie').cx).toBeGreaterThan(0.5);
+  expect(chest.find((logo) => logo.kind === 'hoodie').cx).toBeLessThan(0.58);
+  for (const logo of chest.filter((logo) => logo.kind === 'hat' || logo.kind === 'mug')) {
+    expect(logo.width, logo.kind).toBeGreaterThan(0.4);
+  }
   expect(looks.height).toBeLessThan(2);
   expect(looks.buttons).toBeLessThan(2);
   expect(looks.tops).toBeLessThan(2);
