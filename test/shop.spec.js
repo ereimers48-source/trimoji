@@ -65,6 +65,9 @@ test('design controls, cart, and Stripe checkout', async ({ page }, testInfo) =>
   await expect(page.locator('body')).not.toContainText('sk_');
   await expect(page.locator('a.btn[href="#builder"]')).toHaveCount(1);
   await expect(page.locator('a[href="#builder"] button')).toHaveCount(0);
+  await expect(page.locator('#try button')).toHaveCount(10);
+  const tryBox = await page.locator('#try button').first().boundingBox();
+  expect(tryBox.height).toBeGreaterThanOrEqual(44);
 
   const touchAction = await page.locator('#lay button').first().evaluate((el) => getComputedStyle(el).touchAction);
   expect(touchAction).toBe('manipulation');
@@ -131,6 +134,15 @@ test('design controls, cart, and Stripe checkout', async ({ page }, testInfo) =>
   await expect(page.locator('#heroart img')).toHaveCount(3);
   const picked = await page.locator('#heroart img').evaluateAll((els) => els.map((el) => el.alt));
   expect(picked).toEqual(['🔥', '😎', '😂']);
+  await press(page.locator('#try button[data-emoji="🌈"]'), testInfo);
+  await expect(page.locator('#heroart img')).toHaveCount(3);
+  const tried = await page.locator('#heroart img').evaluateAll((els) => els.map((el) => el.alt));
+  expect(tried).toContain('🌈');
+  await expect(page.locator('#try button[data-emoji="🌈"]')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#showcase')).toContainText('Not customer photos');
+  await expect(page.locator('#showtrack article')).toHaveCount(5);
+  await expect(page.locator('#showpause')).toBeVisible();
+  await expect(page.locator('.disclaimer')).toContainText('Not reviews, not quotes, and not statistics');
   await page.locator('#grid').scrollIntoViewIfNeeded();
   await shot(page, testInfo, 'mobile-picker');
 
@@ -237,5 +249,17 @@ test('design controls, cart, and Stripe checkout', async ({ page }, testInfo) =>
   if (!live) await expect(page.locator('h1')).toHaveText('Stripe test checkout');
   else expect(page.url()).toContain('cs_test');
 
+  expect(errors, errors.join('\n')).toEqual([]);
+});
+
+test('reduced motion keeps the page still and tappable', async ({ page }) => {
+  const errors = track(page);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+  await expect(page.locator('#heroart img')).toHaveCount(3);
+  const motion = await page.locator('#heroart').evaluate((el) => getComputedStyle(el).animationName);
+  expect(motion).toBe('none');
+  await expect(page.locator('#try button')).toHaveCount(10);
+  await expect(page.locator('a.btn[href="#builder"]')).toHaveCount(1);
   expect(errors, errors.join('\n')).toEqual([]);
 });

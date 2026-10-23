@@ -2,67 +2,174 @@
 <title>Trimoji — Your 3 emojis. Your logo. Your merch.</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7' fill='%237c3aed'/%3E%3C/svg%3E">
 <style>
-:root{--ink:#1d1b2f;--muted:#6b6880;--bg:#fbf8ff;--card:#fff;--pri:#7c3aed;--pri2:#ec4899;--line:#ebe6f5}
-*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);background:var(--bg)}
+:root{--ink:#1b1030;--muted:#3f3a52;--bg:#fff6ea;--card:#fff;--hot:#ff3d8a;--sun:#ffe14a;--lime:#c6f54e;--line:#1b1030}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);background:
+ radial-gradient(820px 420px at 100% -10%,#ffd0ea 0%,transparent 60%),
+ radial-gradient(720px 420px at -15% 8%,#ffe08a 0%,transparent 55%),
+ radial-gradient(680px 460px at 90% 110%,#d9ff8f 0%,transparent 50%),
+ var(--bg)}
 img.em{width:1em;height:1em;vertical-align:-.12em}
-header{display:flex;justify-content:space-between;align-items:center;padding:14px 5vw;position:sticky;top:0;background:#fbf8ff;z-index:20;border-bottom:1px solid var(--line)}
-button,.slot,input,a.btn{touch-action:manipulation}a.btn{display:inline-block;text-decoration:none;text-align:center}
-.logo{font-weight:900;font-size:22px;letter-spacing:-.5px}.logo span{background:linear-gradient(90deg,var(--pri),var(--pri2));-webkit-background-clip:text;color:transparent}
-button{font:inherit;cursor:pointer}.btn{border:0;border-radius:999px;padding:12px 22px;font-weight:700;background:linear-gradient(90deg,var(--pri),var(--pri2));color:#fff}
-.ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}
-.hero{padding:60px 5vw 40px;display:grid;grid-template-columns:1.2fr 1fr;gap:30px;align-items:center}
-.hero h1{font-size:clamp(34px,5.5vw,64px);line-height:1.02;margin:0 0 14px;letter-spacing:-1.5px}.hero p{color:var(--muted);font-size:18px;max-width:520px}
-.heroart{font-size:clamp(60px,10vw,120px);text-align:center;filter:drop-shadow(0 10px 20px #7c3aed33)}
-.names{margin-top:18px;font-size:14px;color:var(--muted)}.names b{color:var(--ink)}
-main{padding:10px 5vw 60px;display:grid;grid-template-columns:minmax(300px,420px) 1fr;gap:24px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px;box-shadow:0 6px 24px #2a1a5a0d}
-h2{margin:0 0 10px;font-size:18px}.step{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--pri);color:#fff;font-size:13px;margin-right:6px}
-.slots{display:flex;gap:10px;margin-bottom:12px}.slot{flex:1;height:64px;border:2px dashed var(--line);border-radius:14px;display:grid;place-items:center;font-size:38px;position:relative;cursor:pointer;background:#fff;padding:0;color:inherit;min-width:0}
-.slot.f{border-style:solid;border-color:var(--pri)}.slot small{position:absolute;top:2px;right:6px;font-size:12px;color:var(--muted)}
-.kb{background:#d1d3d9;border-radius:14px;overflow:hidden}
-.kb input{width:calc(100% - 16px);margin:8px;padding:9px 12px;border-radius:10px;border:0;font-size:15px}
-.cat{font-size:11px;font-weight:700;color:#6b6d75;text-transform:uppercase;padding:6px 10px 2px;position:sticky;top:0;background:#d1d3d9}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 5vw;position:sticky;top:0;background:#fff6ea;z-index:20;border-bottom:3px solid var(--ink)}
+button,.slot,input,a.btn,a.go,.try button{touch-action:manipulation}
+a.btn,a.go{display:inline-block;text-decoration:none;text-align:center}
+.logo{font-weight:900;font-size:26px;letter-spacing:-.6px}.logo span{background:var(--hot);border-radius:8px;padding:0 5px}
+button{font:inherit;cursor:pointer}
+.btn,.go{border:3px solid var(--ink);border-radius:999px;padding:14px 22px;font-weight:800;background:var(--sun);color:var(--ink);box-shadow:4px 4px 0 var(--ink)}
+.go{background:var(--lime)}
+.ghost{background:#fff}
+.btn:active,.go:active{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--ink)}
+.skip{position:absolute;left:-999px;top:8px;background:#fff;color:var(--ink);padding:8px 12px;z-index:80;border:3px solid var(--ink)}
+.skip:focus{left:8px}
+.hero{position:relative;padding:22px 5vw 28px;overflow:hidden}
+.floats{display:none;position:absolute;inset:0;pointer-events:none;z-index:0}
+.floats img{position:absolute;width:36px;height:36px;animation:floaty 5.5s ease-in-out infinite}
+@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+.hero-grid{position:relative;z-index:1;display:grid;gap:12px}
+.kicker{margin:0;font-weight:800;font-size:13px;letter-spacing:.08em;text-transform:uppercase}
+.hero h1{font-size:clamp(42px,12vw,88px);line-height:.9;margin:0;letter-spacing:-1.8px}
+.mark{background:var(--lime);box-decoration-break:clone;-webkit-box-decoration-break:clone;padding:0 .12em}
+.lede{margin:0;font-size:17px;line-height:1.35;max-width:38rem}
+.trylabel{margin:0 0 8px;font-weight:800}
+.try{display:flex;flex-wrap:wrap;gap:8px}
+.try button{width:52px;height:52px;border-radius:16px;border:3px solid var(--ink);background:#fff;font-size:28px;padding:0;box-shadow:3px 3px 0 var(--ink)}
+.try button.on{background:var(--sun);transform:translate(1px,1px);box-shadow:1px 1px 0 var(--ink)}
+.try button img{width:30px;height:30px}
+.heroart{font-size:clamp(64px,16vw,104px);background:#fff;border:3px solid var(--ink);border-radius:28px;box-shadow:10px 10px 0 var(--hot);min-height:168px;display:flex;gap:6px;align-items:center;justify-content:center;padding:22px 12px;animation:bob 3.2s ease-in-out infinite}
+.heroart.flash{animation:flash .45s cubic-bezier(.2,1.6,.3,1)}
+@keyframes bob{0%,100%{transform:rotate(-2deg) translateY(0)}50%{transform:rotate(1.5deg) translateY(-8px)}}
+@keyframes flash{0%{transform:scale(.92) rotate(-2deg)}60%{transform:scale(1.06) rotate(2deg)}100%{transform:scale(1) rotate(-2deg)}}
+.live-note{margin:8px 0 0;font-size:13px;font-weight:700}
+.names{margin-top:12px;font-size:14px}.names b{color:var(--ink)}
+.show,.ideas,.how,.close,main{padding:8px 5vw 28px}
+.showhead h2,.ideas h2,.close h2{font-size:clamp(26px,6vw,40px);letter-spacing:-.8px;margin:0 0 6px}
+.showhead p,.disclaimer,.close p{margin:0 0 12px;max-width:40rem}
+.disclaimer{font-weight:800;background:#fff;display:inline-block;border:3px solid var(--ink);border-radius:12px;padding:8px 10px}
+.showtrack{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 2px 16px}
+.ex{scroll-snap-align:center;flex:0 0 min(280px,82vw);background:#fff;border:3px solid var(--ink);border-radius:22px;box-shadow:6px 6px 0 var(--ink);padding:12px}
+.ex.on{box-shadow:6px 6px 0 var(--hot)}
+.garment{border:3px solid var(--ink);border-radius:18px;min-height:148px;display:grid;place-items:center}
+.garment.tee{border-bottom-left-radius:46px 20px;border-bottom-right-radius:46px 20px}
+.garment.hoodie{border-radius:40px 40px 18px 18px}
+.garment.mug{border-radius:12px 28px 18px 18px}
+.garment.hat{border-radius:80px 80px 16px 16px}
+.trio{font-size:44px;display:flex;gap:2px}
+.ex h3{margin:10px 0 4px;font-size:18px}
+.ex p{margin:0 0 10px;font-size:14px}
+.ex button,.showctrl .opt{min-height:44px}
+.showctrl{display:flex;gap:8px;flex-wrap:wrap}
+.how,.idea-grid{display:grid;grid-template-columns:1fr;gap:12px}
+.how div,.idea{background:#fff;border:3px solid var(--ink);border-radius:18px;padding:14px;box-shadow:5px 5px 0 var(--lime)}
+.idea h3{margin:0 0 6px}
+.idea p{margin:0}
+.close{text-align:left}
+main{display:grid;grid-template-columns:1fr;gap:16px}
+.card{background:var(--card);border:3px solid var(--ink);border-radius:22px;padding:16px;box-shadow:7px 7px 0 var(--ink)}
+h2{margin:0 0 10px;font-size:20px}
+.step{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--sun);color:var(--ink);font-size:13px;margin-right:6px;border:2px solid var(--ink)}
+.slots{display:flex;gap:10px;margin-bottom:12px}
+.slot{flex:1;height:72px;border:3px dashed #b9aec8;border-radius:16px;display:grid;place-items:center;font-size:40px;position:relative;cursor:pointer;background:#fff;padding:0;color:inherit;min-width:0}
+.slot.f{border-style:solid;border-color:var(--ink);background:var(--sun)}
+.slot.pop{animation:flash .35s cubic-bezier(.2,1.5,.3,1)}
+.slot small{position:absolute;top:2px;right:6px;font-size:12px;color:var(--muted)}
+.kb{background:#efe7da;border:3px solid var(--ink);border-radius:16px;overflow:hidden}
+.kb input{width:calc(100% - 16px);margin:8px;padding:12px;border-radius:12px;border:3px solid var(--ink);font-size:16px}
+.cat{font-size:11px;font-weight:800;color:#4c465c;text-transform:uppercase;padding:6px 10px 2px;position:sticky;top:0;background:#efe7da}
 .grid{height:280px;overflow-y:auto}.cells{display:grid;grid-template-columns:repeat(8,1fr);padding:0 4px}
-.cells button{border:0;background:none;font-size:28px;padding:4px 0;border-radius:8px}.cells button.sel{background:#fff}
-@media (hover:hover) and (pointer:fine){.cells button:hover{background:#ffffff88}}
-.tabs{display:flex;justify-content:space-around;border-top:1px solid #b9bbc2;padding:4px 2px}.tabs button{border:0;background:none;font-size:18px;opacity:.5;padding:6px 4px;border-radius:8px}.tabs button.on{opacity:1;background:#ffffff88}
-.opts{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 14px}.opt{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;font-weight:600}.opt.on{border-color:var(--pri);background:#f3ecff;color:var(--pri)}
-.sw{width:40px;height:40px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px #ccc;padding:0}.sw.on{box-shadow:0 0 0 3px var(--pri)}
-label{font-size:13px;font-weight:700;color:var(--muted);display:block}
-.stage{display:grid;grid-template-columns:1fr 280px;gap:20px}.mock{background:radial-gradient(circle at 50% 40%,#fff,#efe9fa);border-radius:20px;display:grid;place-items:center;min-height:440px}
-.mock svg{width:min(100%,460px)}.price{font-size:34px;font-weight:900;margin:6px 0}.note{font-size:12px;color:var(--muted)}
-#drawer{position:fixed;top:0;right:0;height:100%;width:min(380px,100%);background:#fff;z-index:50;transform:translateX(100%);transition:.3s;padding:20px;display:flex;flex-direction:column}
-#drawer.open{transform:none;box-shadow:-10px 0 40px #0002}.item{display:flex;gap:10px;align-items:center;border-bottom:1px solid var(--line);padding:10px 0}.item .e{font-size:22px}
-#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:12px;display:none;z-index:60;max-width:90%}
-footer{text-align:center;color:var(--muted);font-size:12px;padding:30px 5vw;border-top:1px solid var(--line)}footer a{color:var(--muted)}
-.how{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;padding:0 5vw 40px}.how div{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px}
-@media(max-width:900px){.hero,main,.stage{grid-template-columns:1fr}.hero{padding-top:30px}.how{grid-template-columns:1fr}.mock{min-height:300px}}
-#testmode{background:#fef3c7;color:#78350f;text-align:center;font-size:13px;font-weight:700;padding:8px 16px}
+.cells button{border:0;background:none;font-size:26px;min-height:44px;padding:2px 0;border-radius:8px}.cells button.sel{background:#fff;box-shadow:inset 0 0 0 2px var(--ink)}
+@media (hover:hover) and (pointer:fine){.cells button:hover{background:#fff8}}
+.tabs{display:flex;justify-content:space-around;border-top:3px solid var(--ink);padding:4px 2px}
+.tabs button{border:0;background:none;font-size:18px;opacity:.55;min-height:44px;padding:6px 4px;border-radius:8px}
+.tabs button.on{opacity:1;background:#fff}
+.opts{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 14px}
+.opt{border:3px solid var(--ink);background:#fff;border-radius:999px;padding:8px 14px;font-weight:700;min-height:44px}
+.opt.on{background:var(--sun)}
+.sw{width:44px;height:44px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 2px var(--ink);padding:0}
+.sw.on{box-shadow:0 0 0 3px var(--hot)}
+label{font-size:13px;font-weight:800;color:var(--muted);display:block}
+.stage{display:grid;grid-template-columns:1fr;gap:16px}
+.mock{background:radial-gradient(circle at 50% 28%,#fff,#ffe4f2 55%,#efe4ff);border:3px solid var(--ink);border-radius:22px;display:grid;place-items:center;min-height:300px}
+.mock svg{width:min(100%,460px)}
+.mock.bump svg{animation:bump .4s cubic-bezier(.2,1.5,.3,1)}
+@keyframes bump{0%{transform:scale(.96)}55%{transform:scale(1.035)}100%{transform:scale(1)}}
+.price{font-size:34px;font-weight:900;margin:6px 0}.note{font-size:13px;color:var(--muted)}
+#drawer{position:fixed;top:0;right:0;height:100%;width:min(400px,100%);background:#fff;z-index:50;transform:translateX(100%);transition:transform .3s;padding:20px;display:flex;flex-direction:column;border-left:3px solid var(--ink)}
+#drawer.open{transform:none;box-shadow:-12px 0 0 var(--sun)}
+.item{display:flex;gap:10px;align-items:center;border-bottom:2px solid #efe7da;padding:10px 0}.item .e{font-size:22px}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:14px 18px;border-radius:16px;border:3px solid var(--ink);box-shadow:6px 6px 0 var(--sun);display:none;z-index:80;max-width:min(92vw,420px);font-weight:800;pointer-events:none}
+#fx{position:fixed;inset:0;pointer-events:none;z-index:70;overflow:hidden}
+.bit{position:fixed;width:9px;height:9px;border-radius:2px;animation:popbit .7s ease-out forwards}
+@keyframes popbit{to{transform:translate(var(--dx),var(--dy)) rotate(40deg) scale(.2);opacity:0}}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:28px 5vw 40px;border-top:3px solid var(--ink)}footer a{color:var(--ink)}
+.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+#testmode{background:var(--sun);color:var(--ink);text-align:center;font-size:13px;font-weight:800;padding:8px 16px;border-bottom:3px solid var(--ink)}
 button:disabled{opacity:.55;cursor:not-allowed}
+:focus-visible{outline:3px solid var(--hot);outline-offset:3px}
+@media(min-width:900px){
+ .floats{display:block}
+ .hero{padding:42px 6vw 20px}
+ .hero-grid{grid-template-columns:1.15fr .85fr;grid-template-areas:"kicker stage" "title stage" "try stage" "lede stage" "actions stage";gap:14px 36px;align-items:center}
+ .kicker{grid-area:kicker}.hero h1{grid-area:title}.try-wrap{grid-area:try}.lede{grid-area:lede}.hero-actions{grid-area:actions}.hero-stage{grid-area:stage}
+ .how,.idea-grid{grid-template-columns:repeat(3,1fr)}
+ main{grid-template-columns:minmax(320px,440px) 1fr;align-items:start}
+ .stage{grid-template-columns:1fr 280px}
+ .mock{min-height:440px}
+ .ex{flex-basis:300px}
+}
+@media (prefers-reduced-motion: reduce){
+ html{scroll-behavior:auto}
+ *,*::before,*::after{animation:none !important;transition:none !important}
+}
 </style></head><body>
 <div id="testmode" hidden>Test mode · Stripe test cards only. No real charges.</div>
+<a class="skip" href="#builder">Skip to the builder</a>
+<div id="fx" aria-hidden="true"></div>
 <header><div class="logo">Tri<span>moji</span></div><button class="btn ghost" type="button" id="cartbtn">🛒 Cart (<b id="cc">0</b>)</button></header>
-<section class="hero"><div><h1>Three emojis.<br>One logo.<br><span class="logo" style="font-size:inherit"><span>Totally you.</span></span></h1>
-<p>Pick your three favorite emojis, arrange them into your own logo, and wear it. Printed on demand and shipped to your door.</p>
-<a class="btn" href="#builder">Design yours →</a>
-<div class="names">Brand name: <b id="bn">Trimoji</b> <button class="opt" type="button" id="suggest" style="padding:3px 10px">✨ Suggest another</button></div></div>
-<div class="heroart" id="heroart">🔥😎🍕</div></section>
-<section class="how"><div><b>1. Pick 3</b><br><span class="note">From the full emoji keyboard, 1,900+ emojis.</span></div><div><b>2. Arrange</b><br><span class="note">Row, triangle or stacked. Size and background.</span></div><div><b>3. Wear it</b><br><span class="note">Tees, hoodies, mugs, and printed trucker hats, made on demand.</span></div></section>
+<section class="hero">
+<div class="floats" id="floats" aria-hidden="true"></div>
+<div class="hero-grid">
+<p class="kicker">No blank page. Start tapping.</p>
+<h1>Tap 3 emojis.<br>Get a logo.<br><span class="mark">Wear it today.</span></h1>
+<div class="try-wrap"><p class="trylabel" id="trylabel">Try it right here</p><div class="try" id="try" role="group" aria-labelledby="trylabel"></div></div>
+<div class="hero-stage"><div class="heroart" id="heroart">🔥😎🍕</div><p class="live-note">Your trio, live. It updates as you tap.</p><p class="sr" id="triosay" aria-live="polite"></p></div>
+<p class="lede">Those buttons are the design. Tap them and the sticker changes. Then put that logo on a tee, hoodie, mug, or printed trucker hat.</p>
+<div class="hero-actions"><a class="btn" href="#builder">Build it for real →</a>
+<div class="names">Brand name: <b id="bn">Trimoji</b> <button class="opt" type="button" id="suggest">✨ Suggest another</button></div></div>
+</div></section>
+<section class="show" id="showcase" aria-roledescription="carousel" aria-label="Example designs on products">
+<div class="showhead"><h2>Example looks. Steal one.</h2>
+<p>Sample trios we made up so you can see them on products. Not customer photos, reviews, or results.</p></div>
+<div class="showtrack" id="showtrack" tabindex="0" aria-live="off"></div>
+<div class="showctrl"><button type="button" class="opt" id="showprev">Previous</button><button type="button" class="opt" id="showpause" aria-pressed="false">Pause</button><button type="button" class="opt" id="shownext">Next</button></div>
+</section>
+<section class="how"><div><b>1. Tap a trio</b><br><span class="note">Start in the hero, or open the full emoji keyboard.</span></div><div><b>2. Shape the logo</b><br><span class="note">Row, triangle, or stacked. Size it. Give it a circle.</span></div><div><b>3. Put it on something</b><br><span class="note">Tee, hoodie, mug, or a printed trucker hat.</span></div></section>
+<section class="ideas" aria-labelledby="ideas-title">
+<h2 id="ideas-title">Example ways to start</h2>
+<p class="disclaimer">Not reviews, not quotes, and not statistics. Just prompts.</p>
+<div class="idea-grid">
+<article class="idea"><h3>The group-chat uniform</h3><p>Same three emojis, four tees, one joke only your people get.</p></article>
+<article class="idea"><h3>The desk mug</h3><p>A tiny stacked logo you see before the coffee does anything.</p></article>
+<article class="idea"><h3>The trucker era</h3><p>Mesh back, flat brim, your trio printed across the front panel.</p></article>
+</div>
+<p style="margin-top:14px"><a class="go" href="#builder">Open the builder</a></p>
+</section>
 <main id="builder">
-<div class="card"><h2><span class="step">1</span>Pick your 3 emojis</h2>
+<div class="card"><h2><span class="step">1</span>Pick your 3</h2>
 <div class="slots" id="slots"></div>
-<div class="kb"><input id="q" placeholder="Search emoji" autocomplete="off"><div class="grid" id="grid"></div><div class="tabs" id="tabs"></div></div></div>
+<div class="kb"><input id="q" placeholder="Search emoji" autocomplete="off" aria-label="Search emoji"><div class="grid" id="grid"></div><div class="tabs" id="tabs"></div></div></div>
 <div class="card"><div class="stage"><div class="mock" id="mock"></div><div>
-<h2><span class="step">2</span>Arrange</h2><label>Layout</label><div class="opts" id="lay"></div>
-<label>Logo size <span id="szv"></span></label><input type="range" id="sz" min="60" max="140" value="100" style="width:100%">
+<h2><span class="step">2</span>Arrange the logo</h2><label>Layout</label><div class="opts" id="lay"></div>
+<label>Logo size <span id="szv"></span></label><input type="range" id="sz" min="60" max="140" value="100" style="width:100%" aria-label="Logo size">
 <label style="margin-top:10px">Logo background</label><div class="opts" id="bgs"></div>
-<h2><span class="step">3</span>Product</h2><div class="opts" id="prods"></div>
+<h2><span class="step">3</span>Choose the merch</h2><div class="opts" id="prods"></div>
 <label>Color</label><div class="opts" id="cols"></div><label>Size</label><div class="opts" id="sizes"></div>
 <div class="price" id="price"></div><button class="btn" id="addbtn" type="button" style="width:100%">Add to cart</button>
 <p class="note" id="unavail" hidden></p>
 <p class="note">Printed on demand by Printful. US shipping is $5.99, free over $60.</p></div></div></div>
 </main>
-<div id="drawer"><div style="display:flex;justify-content:space-between;align-items:center"><h2>Your cart</h2><button class="opt" type="button" id="closecart">✕</button></div>
+<section class="close"><h2>That trio looks good on you.</h2><p>Finish the logo, pick a color, and send it to print.</p><a class="go" href="#builder">Start creating</a></section>
+<div id="drawer"><div style="display:flex;justify-content:space-between;align-items:center"><h2>Your cart</h2><button class="opt" type="button" id="closecart" aria-label="Close cart">✕</button></div>
 <div id="items" style="flex:1;overflow:auto"></div>
 <div style="display:flex;justify-content:space-between;margin-top:10px"><span>Subtotal</span><span id="sub">$0.00</span></div>
 <div style="display:flex;justify-content:space-between" class="note"><span>US shipping</span><span id="ship">$0.00</span></div>
@@ -92,6 +199,16 @@ const PRODS={
 const COLS=[['White','#ffffff'],['Black','#1f1f24'],['Heather','#b9b9c0'],['Navy','#1f2a4d'],['Lilac','#cbb8f5'],['Pink','#f7c6d9'],['Sage','#b6cdb1'],['Charcoal','#554b56']];
 const BGS=[['none','transparent'],['circle','#fde68a'],['circle','#c7d2fe'],['circle','#fbcfe8'],['circle','#ffffff'],['circle','#111827']];let bgi=0;
 const BRANDS=['Trimoji','Emoji Trio','Tri-Mo','Three Faces Co.','MojiMade','Emojink','TrioTee'];let bix=0;
+const reduceMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const TRY=[['🔥','fire'],['😎','smiling face with sunglasses'],['🍕','pizza'],['🌈','rainbow'],['✨','sparkles'],['🥳','partying face'],['🐶','dog face'],['⚡','high voltage'],['🚀','rocket'],['❤️','red heart']];
+const EXAMPLES=[
+ {title:'Night market',product:'tee',color:'Black',emojis:['🔥','😎','🍕'],layout:'row',bgi:0,blurb:'A row on a black tee.'},
+ {title:'Soft launch',product:'tee',color:'Lilac',emojis:['🌈','🦄','✨'],layout:'triangle',bgi:2,blurb:'A triangle on a lilac tee.'},
+ {title:'Weekend uniform',product:'hoodie',color:'Pink',emojis:['🐶','🌮','❤️'],layout:'row',bgi:3,blurb:'A row on a pink hoodie.'},
+ {title:'Main character',product:'hat',color:'Navy',emojis:['⚡','🎯','🚀'],layout:'row',bgi:1,blurb:'Printed on a navy trucker hat.'},
+ {title:'Desk ritual',product:'mug',color:'White',emojis:['☕','📚','🌙'],layout:'stacked',bgi:0,blurb:'Stacked on a white mug.'}
+];
+let showI=0,showTimer=0,showPaused=reduceMotion,draws=0;
 function suggest(){bix=(bix+1)%BRANDS.length;bn.textContent=BRANDS[bix]}
 let cat='sp';
 function tabs(){const root=document.getElementById('tabs');
@@ -102,12 +219,13 @@ function renderGrid(){const q=document.getElementById('q').value.trim().toLowerC
  for(const [k,,n] of CATS){let list=k=='fu'?FREQ.map(e=>[e,'']):DATA[k];if(q)list=list.filter(x=>x[1].includes(q));if(!list.length)continue;
   h+=`<div class="cat" id="c_${k}">${esc(n)}</div><div class="cells">`+list.map(x=>`<button type="button" title="${esc(x[1])}" data-emoji="${esc(x[0])}" class="${S.pick.includes(x[0])?'sel':''}">${img(x[0])}</button>`).join('')+'</div>'}
  grid.innerHTML=h||'<p style="padding:20px;text-align:center">No emoji found</p>'}
-function markSelected(){document.querySelectorAll('#grid button[data-emoji]').forEach(b=>b.classList.toggle('sel',S.pick.includes(b.dataset.emoji)))}
-function pick(e){const i=S.pick.indexOf(e);if(i>=0)S.pick.splice(i,1);else{if(S.pick.length>=3)S.pick.shift();S.pick.push(e)}all();markSelected()}
+function markSelected(){document.querySelectorAll('#grid button[data-emoji],#try button[data-emoji]').forEach(b=>{const on=S.pick.includes(b.dataset.emoji);b.classList.toggle(b.closest('#try')?'on':'sel',on);if(b.closest('#try'))b.setAttribute('aria-pressed',on?'true':'false')})}
+function pick(e){const had=S.pick.length;const i=S.pick.indexOf(e);let added=false;if(i>=0)S.pick.splice(i,1);else{if(S.pick.length>=3)S.pick.shift();S.pick.push(e);added=true}all();markSelected();if(!added)return;const slot=[...document.querySelectorAll('#slots button.f')].at(-1);const done=had<3&&S.pick.length===3;burst(slot||heroart,done);if(done)flash(heroart)}
 function slots(){const root=document.getElementById('slots');
  if(root.childElementCount!==3)root.innerHTML=[0,1,2].map(i=>`<button type="button" class="slot" data-slot="${i}"></button>`).join('');
- [...root.children].forEach((el,i)=>{const e=S.pick[i]||'';el.classList.toggle('f',!!e);if(el.dataset.shown!==e){el.dataset.shown=e;el.innerHTML=e?img(e)+'<small>✕</small>':'<span class="note">'+(i+1)+'</span>'}});
- heroart.innerHTML=S.pick.map(img).join('')||img('✨')}
+ [...root.children].forEach((el,i)=>{const e=S.pick[i]||'';el.classList.toggle('f',!!e);if(el.dataset.shown!==e){const fresh=el.dataset.shown!=null&&!!e;el.dataset.shown=e;el.innerHTML=e?img(e)+'<small>✕</small>':'<span class="note">'+(i+1)+'</span>';if(fresh){el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop')}}});
+ heroart.innerHTML=S.pick.map(img).join('')||img('✨');
+ const say=document.getElementById('triosay');if(say)say.textContent=S.pick.length?S.pick.join(' ')+' selected':'Trio is empty'}
 function ensureOpts(id,arr,cur){const el=document.getElementById(id);const key=arr.map(a=>a[0]).join('\0');
  if(el.dataset.key!==key){el.dataset.key=key;el.innerHTML=arr.map(a=>`<button type="button" class="opt" data-value="${esc(a[0])}">${esc(a[1])}</button>`).join('')}
  el.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.value===String(cur)))}
@@ -128,6 +246,7 @@ function draw(){szv.textContent=sz.value+'%';const c=COLS[S.col][1],st=shade(c);
  else if(S.prod=='mug')g=`<path d="M300 150 Q370 150 365 220 Q360 285 295 285" fill="none" stroke="${c}" stroke-width="26"/><path d="M300 150 Q370 150 365 220 Q360 285 295 285" fill="none" stroke="${st}" stroke-width="2"/><rect x="85" y="100" width="225" height="250" rx="22" fill="${c}" stroke="${st}" stroke-width="3"/><ellipse cx="197" cy="102" rx="112" ry="14" fill="${st}"/>`+logoSVG(197,225,48);
  else {const ink=c==='#ffffff'?'#1f1f2433':'#ffffff73';const edge=c==='#ffffff'?'#c8c8d2':'#ffffff80';g=`<defs><pattern id="mesh" width="9" height="9" patternUnits="userSpaceOnUse"><circle cx="4.5" cy="4.5" r="1.25" fill="${ink}"/></pattern><clipPath id="meshL"><path d="M124 292 L114 168 C118 124 150 96 170 90 L160 286 Z"/></clipPath><clipPath id="meshR"><path d="M276 292 L286 168 C282 124 250 96 230 90 L240 286 Z"/></clipPath></defs><g data-hat="trucker"><path d="M40 286 C100 262 300 262 360 286 L374 326 C300 312 100 312 26 326 Z" fill="${c}" stroke="${edge}" stroke-width="3"/><path d="M72 292 C140 274 260 274 328 292" fill="none" stroke="${edge}" stroke-width="2"/><path d="M124 292 L114 168 C118 112 152 78 200 74 C248 78 282 112 286 168 L276 292 C236 276 164 276 124 292 Z" fill="${c}" stroke="${edge}" stroke-width="3"/><g clip-path="url(#meshL)"><rect x="90" y="60" width="90" height="250" fill="url(#mesh)"/></g><g clip-path="url(#meshR)"><rect x="220" y="60" width="90" height="250" fill="url(#mesh)"/></g><path d="M170 92 L160 286" fill="none" stroke="${edge}" stroke-width="2"/><path d="M230 92 L240 286" fill="none" stroke="${edge}" stroke-width="2"/><circle cx="200" cy="74" r="7" fill="${edge}"/></g>`+logoSVG(200,188,28)}
  mountMock(g);
+ draws+=1;if(draws>1&&!reduceMotion&&document.activeElement?.id!=='sz')nudge();
  if(!PRODS[S.prod].available)price.innerHTML='<span class="note">Unavailable</span>';
  else price.innerHTML='$'+PRODS[S.prod].p.toFixed(2)+' <span class="note">free shipping over $60</span>'}
 function setLay(v){S.lay=v;all()}
@@ -155,7 +274,7 @@ function addCart(){if(S.pick.length<3)return toast('Pick exactly 3 emojis first 
  if(p.colors&&!p.colors.includes(COLS[S.col][0]))return toast('That color is not available on this product');
  const bg=BGS[bgi];
  S.cart.push({product:S.prod,emojis:S.pick.slice(),layout:S.lay,logoSize:Number(sz.value),background:bg[0]==='none'?{shape:'none'}:{shape:'circle',color:bg[1]},color:COLS[S.col][0],size:S.size,quantity:1,n:p.n,displayPrice:p.p});
- cart();toast('Added to cart 🛒');toggleCart(true)}
+ cart();burst(document.getElementById('addbtn'),true);flash(document.getElementById('cartbtn'));toast('Yes. That trio is in the cart.');toggleCart(true)}
 function cart(){cc.textContent=S.cart.length;items.innerHTML=S.cart.map((x,i)=>`<div class="item"><span class="e">${x.emojis.map(img).join('')}</span><div style="flex:1"><b>${esc(x.n)}</b><div class="note">${esc(x.color)} · ${esc(x.size)} · ${esc(x.layout)} · qty ${x.quantity}</div></div><b>${money(x.displayPrice*x.quantity)}</b><button type="button" class="opt" style="padding:3px 9px" data-remove="${i}">✕</button></div>`).join('')||'<p class="note">Your cart is empty.</p>';
  const subtotal=S.cart.reduce((a,x)=>a+x.displayPrice*x.quantity,0);const ship=subtotal<=0?0:(subtotal>=60?0:5.99);
  document.getElementById('sub').textContent=money(subtotal);
@@ -170,6 +289,22 @@ async function checkout(){if(!S.cart.length)return toast('Your cart is empty');
   if(!res.ok||!data||!data.url){toast(!data?'This preview can’t take payment. Checkout runs on the Vercel deployment.':(data.error||'Checkout failed'));return}
   location.href=data.url}catch(e){toast('This preview can’t take payment. Checkout runs on the Vercel deployment.')}
  finally{pay.disabled=false;pay.textContent=label}}
+function nudge(){mock.classList.remove('bump');void mock.offsetWidth;mock.classList.add('bump')}
+function flash(el){if(reduceMotion||!el)return;el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash')}
+function burst(el,big){if(reduceMotion||!el)return;const layer=document.getElementById('fx');if(!layer)return;const r=el.getBoundingClientRect();const cx=r.left+r.width/2,cy=r.top+r.height/2;const n=big?16:8;const colors=['#ff3d8a','#ffe14a','#c6f54e','#7c5cff','#2ec4ff'];
+ for(let i=0;i<n;i++){const bit=document.createElement('i');bit.className='bit';const ang=(Math.PI*2*i)/n;const dist=(big?78:46)+(i%3)*10;bit.style.left=cx+'px';bit.style.top=cy+'px';bit.style.background=colors[i%colors.length];bit.style.setProperty('--dx',Math.cos(ang)*dist+'px');bit.style.setProperty('--dy',Math.sin(ang)*dist+'px');layer.appendChild(bit);bit.addEventListener('animationend',()=>bit.remove())}}
+function setupFloats(){const spots=[['✨','1%','12%',0],['🎉','94%','8%',.5],['⚡','2%','74%',1],['🌈','93%','70%',.2]];
+ document.getElementById('floats').innerHTML=spots.map(([e,l,t,d])=>`<img alt="" src="${esc(tw(e))}" style="left:${l};top:${t};animation-delay:${d}s">`).join('')}
+function setupTry(){document.getElementById('try').innerHTML=TRY.map(([e,name])=>`<button type="button" data-emoji="${esc(e)}" title="${esc(name)}" aria-pressed="false">${img(e)}</button>`).join('')}
+function showGo(n){const track=document.getElementById('showtrack');showI=(n+EXAMPLES.length)%EXAMPLES.length;[...track.children].forEach((el,i)=>el.classList.toggle('on',i===showI));const card=track.children[showI];if(!card)return;const left=card.getBoundingClientRect().left-track.getBoundingClientRect().left+track.scrollLeft-(track.clientWidth-card.clientWidth)/2;track.scrollTo({left:Math.max(0,left),behavior:reduceMotion?'auto':'smooth'})}
+function showArm(){clearInterval(showTimer);if(showPaused||reduceMotion)return;showTimer=setInterval(()=>showGo(showI+1),3600)}
+function applyExample(ex){S.pick=ex.emojis.slice();S.lay=ex.layout;bgi=ex.bgi;S.prod=ex.product;const p=PRODS[ex.product];const idx=COLS.findIndex(c=>c[0]===ex.color);S.col=idx>=0&&p.colors.includes(ex.color)?idx:0;if(!p.sizes.includes(S.size))S.size=p.sizes[Math.min(1,p.sizes.length-1)];all();markSelected();flash(heroart);burst(heroart,true);document.getElementById('builder').scrollIntoView({behavior:reduceMotion?'auto':'smooth',block:'start'})}
+function setupShowcase(){const track=document.getElementById('showtrack');track.innerHTML=EXAMPLES.map((ex,i)=>{const hex=COLS.find(c=>c[0]===ex.color)[1];return `<article class="ex${i===0?' on':''}"><div class="garment ${ex.product}" style="background:${hex}"><span class="trio">${ex.emojis.map(img).join('')}</span></div><h3>${esc(ex.title)}</h3><p>${esc(ex.blurb)} <span class="note">Example · ${esc(PRODS[ex.product].n)}</span></p><button type="button" data-example="${i}">Try this trio</button></article>`}).join('');
+ const pause=document.getElementById('showpause');if(showPaused){pause.setAttribute('aria-pressed','true');pause.textContent='Play'}
+ document.getElementById('showprev').addEventListener('click',()=>{showGo(showI-1);showArm()});
+ document.getElementById('shownext').addEventListener('click',()=>{showGo(showI+1);showArm()});
+ pause.addEventListener('click',()=>{showPaused=!showPaused;pause.setAttribute('aria-pressed',showPaused?'true':'false');pause.textContent=showPaused?'Play':'Pause';showArm()});
+ showArm()}
 function loadShopConfig(){fetch('/api/config',{headers:{accept:'application/json'}}).then(r=>r.ok?r.json():null).then(d=>{
  if(d&&d.stripeTestMode===true){const el=document.getElementById('testmode');if(el)el.hidden=false}}).catch(()=>{})}
 function bindTap(id,fn){const root=document.getElementById(id);let swallow=0;
@@ -181,6 +316,8 @@ bindTap('sizes',b=>setSize(b.dataset.value));
 bindTap('cols',b=>{S.col=Number(b.dataset.col);all()});
 bindTap('bgs',b=>{bgi=Number(b.dataset.bg);all()});
 bindTap('grid',b=>{if(b.dataset.emoji)pick(b.dataset.emoji)});
+bindTap('try',b=>{if(b.dataset.emoji)pick(b.dataset.emoji)});
+bindTap('showtrack',b=>{if(b.dataset.example!=null)applyExample(EXAMPLES[Number(b.dataset.example)])});
 bindTap('slots',b=>{const i=Number(b.dataset.slot);if(!S.pick[i])return;S.pick.splice(i,1);all();markSelected()});
 bindTap('tabs',b=>jump(b.dataset.cat));
 bindTap('items',b=>{if(b.dataset.remove==null)return;S.cart.splice(Number(b.dataset.remove),1);cart()});
@@ -193,5 +330,7 @@ document.getElementById('closecart').addEventListener('click',()=>toggleCart());
 document.getElementById('pay').addEventListener('click',checkout);
 grid.addEventListener('scroll',()=>{let cur=cat;document.querySelectorAll('.cat').forEach(c=>{if(c.offsetTop-grid.offsetTop<=grid.scrollTop+5)cur=c.id.slice(2)});if(cur!=cat){cat=cur;tabs()}});
 document.querySelectorAll('#cartbtn, #suggest').forEach(b=>b.innerHTML=twx(b.innerHTML));
-tabs();renderGrid();all();cart();loadShopConfig();
+setupFloats();setupTry();setupShowcase();
+tabs();renderGrid();all();markSelected();cart();loadShopConfig();
+document.addEventListener('visibilitychange',()=>{if(document.hidden)clearInterval(showTimer);else showArm()});
 </script></body></html>
