@@ -65,6 +65,24 @@ test('design controls, cart, and Stripe checkout', async ({ page }, testInfo) =>
   await expect(page.locator('#testmode')).toBeVisible();
   await expect(page.locator('#testmode')).toContainText('Test mode');
   await expect(page.locator('body')).not.toContainText('sk_');
+  await expect(page.locator('body')).not.toContainText('Made when you order');
+  await expect(page.locator('body')).not.toContainText('Card details stay on Stripe');
+  await expect(page.locator('body')).not.toContainText('Printed by Printful');
+  await expect(page.locator('.trust li')).toHaveCount(2);
+  await expect(page.locator('.trust')).toHaveCount(2);
+  for (const label of ['Shipping and checkout', 'Order facts']) {
+    await expect(page.locator(`.trust[aria-label="${label}"] li`)).toHaveCount(1);
+    await expect(page.locator(`.trust[aria-label="${label}"]`)).toContainText('$5.99 flat, free over $60');
+  }
+  const trustLayout = await page.locator('.trust').first().evaluate((el) => {
+    const cs = getComputedStyle(el);
+    const tile = el.querySelector('li').getBoundingClientRect();
+    const row = el.getBoundingClientRect();
+    return { display: cs.display, columns: cs.gridTemplateColumns, tile: tile.width, row: row.width };
+  });
+  expect(trustLayout.display).toBe('flex');
+  expect(trustLayout.columns).toBe('none');
+  expect(trustLayout.row - trustLayout.tile).toBeLessThan(2);
   await expect(page.locator('a.btn[href="#builder"]')).toHaveCount(1);
   await expect(page.locator('a[href="#builder"] button')).toHaveCount(0);
   await expect(page.locator('#try button')).toHaveCount(10);
@@ -103,7 +121,7 @@ test('design controls, cart, and Stripe checkout', async ({ page }, testInfo) =>
   }, initial.map((image) => image.href));
   expect(loaded).toEqual([true, true, true]);
 
-  await page.locator('#grid button[title="fire"]').evaluate((el) => { el.dataset.keep = '1'; });
+  await page.locator('#grid button[data-emoji="🔥"]').first().evaluate((el) => { el.dataset.keep = '1'; });
   await press(page.locator('#slots button').first(), testInfo);
   await expect(page.locator('#heroart img')).toHaveCount(2);
   await expect(page.locator('#grid button[data-keep="1"]')).toHaveCount(1);
@@ -122,14 +140,19 @@ test('design controls, cart, and Stripe checkout', async ({ page }, testInfo) =>
   await page.locator('#q').fill('fire');
   await press(page.locator('#grid button[title="fire"]'), testInfo);
   await page.locator('#q').fill('');
-  await expect(page.locator('#c_fl')).toBeAttached();
+  await expect(page.locator('#grid .cat')).toHaveCount(1);
+  await expect(page.locator('#c_fu')).toBeAttached();
   await press(page.locator('#tabs button[data-cat="fl"]'), testInfo);
+  await expect(page.locator('#grid .cat')).toHaveCount(1);
+  await expect(page.locator('#tabs button.on')).toHaveCount(1);
   const flagsVisible = await page.locator('#c_fl').evaluate((el) => {
     const grid = document.getElementById('grid');
     const top = el.getBoundingClientRect().top - grid.getBoundingClientRect().top;
-    return top >= -2 && top < grid.clientHeight;
+    return top >= -2 && top < grid.clientHeight && grid.scrollTop === 0;
   });
   expect(flagsVisible).toBeTruthy();
+  await press(page.locator('#tabs button[data-cat="sp"]'), testInfo);
+  await expect(page.locator('#c_sp')).toBeVisible();
   await press(page.locator('#grid button[title="smiling face with sunglasses"]').first(), testInfo);
   await expect(page.locator('#heroart img')).toHaveCount(3);
   await press(page.locator('#grid button[title="face with tears of joy"]').first(), testInfo);
@@ -252,6 +275,81 @@ test('design controls, cart, and Stripe checkout', async ({ page }, testInfo) =>
   if (!live) await expect(page.locator('h1')).toHaveText('Stripe test checkout');
   else expect(page.url()).toContain('cs_test');
 
+  expect(errors, errors.join('\n')).toEqual([]);
+});
+
+test('emoji categories stay on the tapped tab', async ({ page }, testInfo) => {
+  const errors = track(page);
+  await page.goto('/');
+  await expect(page.locator('#tabs button')).toHaveCount(9);
+  await expect(page.locator('#tabs button.on')).toHaveCount(1);
+  await expect(page.locator('#tabs button[data-cat="fu"]')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#grid .cat')).toHaveCount(1);
+  await expect(page.locator('#c_fu')).toBeAttached();
+  const bar = await page.locator('#tabs').evaluate((el) => {
+    const cs = getComputedStyle(el);
+    return { wrap: cs.flexWrap, overflowX: cs.overflowX, overscroll: cs.overscrollBehaviorX };
+  });
+  expect(bar.wrap).toBe('nowrap');
+  expect(bar.overflowX).toBe('auto');
+  expect(bar.overscroll).toBe('contain');
+
+  const rapid = await page.evaluate(() => {
+    const ids = ['an', 'fd', 'ac', 'tp', 'ob', 'sy', 'fl', 'sp', 'fu'];
+    for (const id of ids) {
+      document.querySelector(`#tabs button[data-cat="${id}"]`).dispatchEvent(new PointerEvent('pointerup', {
+        bubbles: true, pointerType: 'touch', pointerId: 1, isPrimary: true,
+      }));
+    }
+    const on = document.querySelector('#tabs button.on');
+    return {
+      on: on.dataset.cat,
+      pressed: on.getAttribute('aria-pressed'),
+      ons: document.querySelectorAll('#tabs button.on').length,
+      cats: document.querySelectorAll('#grid .cat').length,
+      id: document.querySelector('#grid .cat').id,
+      top: document.getElementById('grid').scrollTop,
+    };
+  });
+  expect(rapid).toEqual({ on: 'fu', pressed: 'true', ons: 1, cats: 1, id: 'c_fu', top: 0 });
+
+  const stayed = await page.evaluate(() => {
+    const bar = document.getElementById('tabs');
+    const btn = bar.querySelector('[data-cat="an"]');
+    const r = btn.getBoundingClientRect();
+    const base = { bubbles: true, pointerType: 'touch', pointerId: 7, isPrimary: true, clientY: r.top + 12 };
+    btn.dispatchEvent(new PointerEvent('pointerdown', { ...base, clientX: r.left + 8 }));
+    bar.dispatchEvent(new PointerEvent('pointermove', { ...base, clientX: r.left + 40 }));
+    btn.dispatchEvent(new PointerEvent('pointerup', { ...base, clientX: r.left + 40 }));
+    return document.querySelector('#tabs button.on').dataset.cat;
+  });
+  expect(stayed).toBe('fu');
+
+  await page.locator('#grid button').first().evaluate((el) => { el.dataset.keep = '1'; });
+  await press(page.locator('#tabs button[data-cat="fu"]'), testInfo);
+  await expect(page.locator('#grid button[data-keep="1"]')).toHaveCount(1);
+
+  await press(page.locator('#tabs button[data-cat="fl"]'), testInfo);
+  await expect(page.locator('#c_fl')).toBeVisible();
+  await expect(page.locator('#grid .cat')).toHaveCount(1);
+  await expect(page.locator('#tabs button[data-cat="fl"]')).toHaveAttribute('aria-pressed', 'true');
+  const chip = await page.locator('#tabs button[data-cat="fl"]').evaluate((el) => {
+    const box = el.parentElement.getBoundingClientRect();
+    const rect = el.getBoundingClientRect();
+    return rect.left >= box.left - 2 && rect.right <= box.right + 2;
+  });
+  expect(chip).toBeTruthy();
+  await page.locator('#grid').evaluate((el) => { el.scrollTop = el.scrollHeight; });
+  await expect(page.locator('#tabs button.on')).toHaveAttribute('data-cat', 'fl');
+  await expect(page.locator('#grid .cat')).toHaveCount(1);
+
+  await page.locator('#q').fill('face');
+  await expect.poll(() => page.locator('#grid .cat').count()).toBeGreaterThan(1);
+  await press(page.locator('#tabs button[data-cat="an"]'), testInfo);
+  await expect(page.locator('#q')).toHaveValue('');
+  await expect(page.locator('#grid .cat')).toHaveCount(1);
+  await expect(page.locator('#c_an')).toBeVisible();
+  await expect(page.locator('#grid')).toHaveJSProperty('scrollTop', 0);
   expect(errors, errors.join('\n')).toEqual([]);
 });
 
