@@ -353,6 +353,89 @@ test('emoji categories stay on the tapped tab', async ({ page }, testInfo) => {
   expect(errors, errors.join('\n')).toEqual([]);
 });
 
+test('trucker logo fills the front panel', async ({ page }) => {
+  const errors = track(page);
+  await page.goto('/');
+  async function logoBox() {
+    return page.locator('#mock').evaluate((mock) => {
+      const print = mock.querySelector('.print');
+      const mockBox = mock.getBoundingClientRect();
+      const images = [...print.querySelectorAll('image')].map((image) => image.getBoundingClientRect());
+      const left = Math.min(...images.map((box) => box.left));
+      const right = Math.max(...images.map((box) => box.right));
+      const top = Math.min(...images.map((box) => box.top));
+      const bottom = Math.max(...images.map((box) => box.bottom));
+      const printBox = print.getBoundingClientRect();
+      return {
+        width: (right - left) / mockBox.width,
+        height: (bottom - top) / mockBox.height,
+        cx: ((left + right) / 2 - mockBox.left) / mockBox.width,
+        cy: ((top + bottom) / 2 - mockBox.top) / mockBox.height,
+        top: (top - mockBox.top) / mockBox.height,
+        bottom: (bottom - mockBox.top) / mockBox.height,
+        printAspect: printBox.width / printBox.height,
+      };
+    });
+  }
+  async function setSize(value) {
+    await page.locator('#sz').evaluate((el, next) => {
+      el.value = String(next);
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    }, value);
+  }
+
+  for (const product of ['tee', 'hoodie', 'mug']) {
+    await page.locator(`#prods button[data-value="${product}"]`).click();
+    await page.locator('#lay button[data-value="row"]').click();
+    await setSize(100);
+    const placed = await logoBox();
+    expect(placed.cx, product).toBeGreaterThan(0.42);
+    expect(placed.cx, product).toBeLessThan(0.58);
+    expect(placed.cy, product).toBeGreaterThan(0.28);
+    expect(placed.cy, product).toBeLessThan(0.62);
+    expect(placed.top, product).toBeGreaterThan(0.12);
+    expect(placed.bottom, product).toBeLessThan(0.78);
+  }
+
+  await page.locator('#prods button[data-value="hat"]').click();
+  await page.locator('#cols button[title="Navy"]').click();
+  await page.locator('#lay button[data-value="row"]').click();
+  await setSize(100);
+  const row = await logoBox();
+  expect(row.printAspect).toBeGreaterThan(2.05);
+  expect(row.printAspect).toBeLessThan(2.35);
+  expect(row.width).toBeGreaterThan(0.62);
+  expect(row.height).toBeGreaterThan(0.18);
+  expect(row.cx).toBeGreaterThan(0.45);
+  expect(row.cx).toBeLessThan(0.55);
+  expect(row.cy).toBeGreaterThan(0.4);
+  expect(row.cy).toBeLessThan(0.52);
+  expect(row.top).toBeGreaterThan(0.24);
+  expect(row.bottom).toBeLessThan(0.68);
+
+  await setSize(60);
+  const small = await logoBox();
+  expect(small.width).toBeLessThan(row.width * 0.75);
+  expect(small.cy).toBeGreaterThan(0.4);
+  expect(small.cy).toBeLessThan(0.52);
+
+  await setSize(100);
+  await page.locator('#lay button[data-value="stacked"]').click();
+  const stacked = await logoBox();
+  expect(stacked.height).toBeGreaterThan(0.28);
+  expect(stacked.cy).toBeGreaterThan(0.4);
+  expect(stacked.cy).toBeLessThan(0.52);
+  expect(stacked.bottom).toBeLessThan(0.72);
+
+  await page.locator('#lay button[data-value="triangle"]').click();
+  const triangle = await logoBox();
+  expect(triangle.height).toBeGreaterThan(0.26);
+  expect(triangle.width).toBeGreaterThan(0.28);
+  expect(triangle.cy).toBeGreaterThan(0.4);
+  expect(triangle.cy).toBeLessThan(0.52);
+  expect(errors, errors.join('\n')).toEqual([]);
+});
+
 test('reduced motion keeps the page still and tappable', async ({ page }) => {
   const errors = track(page);
   await page.emulateMedia({ reducedMotion: 'reduce' });

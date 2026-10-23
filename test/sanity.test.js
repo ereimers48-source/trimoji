@@ -12,7 +12,7 @@ import { decodeDesign, encodeDesign, itemsFromMetadata } from '../lib/design.js'
 import { HttpError } from '../lib/http.js';
 import { priceCart } from '../lib/prices.js';
 import { buildPrintfulOrder } from '../lib/printful.js';
-import { HAT_PRINT_H, HAT_PRINT_W, PRINT_PX, renderLogoPng } from '../lib/render.js';
+import { HAT_PRINT_H, HAT_PRINT_W, PRINT_PX, composeSvg, renderLogoPng } from '../lib/render.js';
 import { runtime } from '../lib/runtime.js';
 import { resolveVariant } from '../lib/variants.js';
 import { handleStripeWebhook } from '../lib/webhook.js';
@@ -299,6 +299,40 @@ test('print file is a transparent PNG from Twemoji SVG', async () => {
   assert.equal(dpi, 300);
   const apparel = decodeDesign(encodeDesign(sampleItem()));
   assert.equal(apparel.product, undefined);
+
+  function glyphBounds(svg) {
+    const marks = [...svg.matchAll(/translate\(([-\d.]+) ([-\d.]+)\) scale\(([-\d.]+)\)/g)];
+    const boxes = marks.map((mark) => {
+      const x = Number(mark[1]);
+      const y = Number(mark[2]);
+      const glyph = Number(mark[3]) * 36;
+      return { x, y, w: glyph, h: glyph };
+    });
+    const left = Math.min(...boxes.map((box) => box.x));
+    const right = Math.max(...boxes.map((box) => box.x + box.w));
+    const top = Math.min(...boxes.map((box) => box.y));
+    const bottom = Math.max(...boxes.map((box) => box.y + box.h));
+    return { left, right, top, bottom, width: right - left, height: bottom - top };
+  }
+  const hatArt = (layout, logoSize) => composeSvg({
+    product: 'hat',
+    emojis: ['🔥', '😎', '🍕'],
+    layout,
+    logoSize,
+    background: { shape: 'none' },
+  }, [SVG, SVG, SVG]);
+  const row = glyphBounds(hatArt('row', 100));
+  assert.ok(row.width > HAT_PRINT_W * 0.85, `row width ${row.width}`);
+  assert.ok(row.left > HAT_PRINT_W * 0.02 && row.right < HAT_PRINT_W * 0.98);
+  assert.ok(Math.abs((row.top + row.bottom) / 2 - HAT_PRINT_H / 2) < 8);
+  const smaller = glyphBounds(hatArt('row', 60));
+  assert.ok(smaller.width < row.width * 0.75);
+  const stacked = glyphBounds(hatArt('stacked', 100));
+  assert.ok(stacked.height > HAT_PRINT_H * 0.85, `stacked height ${stacked.height}`);
+  assert.ok(Math.abs((stacked.left + stacked.right) / 2 - HAT_PRINT_W / 2) < 8);
+  const triangle = glyphBounds(hatArt('triangle', 100));
+  assert.ok(triangle.height > HAT_PRINT_H * 0.8, `triangle height ${triangle.height}`);
+  assert.ok(Math.abs((triangle.top + triangle.bottom) / 2 - HAT_PRINT_H / 2) < 8);
 });
 
 test('HTTP handlers: checkout redirect, webhook, and print file', async () => {
