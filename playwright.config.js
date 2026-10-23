@@ -60,6 +60,17 @@ export default defineConfig({
         userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1',
       },
     },
+    {
+      name: 'webkit-short',
+      use: {
+        browserName: 'webkit',
+        viewport: { width: 375, height: 667 },
+        hasTouch: true,
+        isMobile: true,
+        deviceScaleFactor: 2,
+        userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1',
+      },
+    },
   ],
   webServer: process.env.BASE_URL
     ? undefined
