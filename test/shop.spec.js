@@ -21,7 +21,7 @@ function track(page) {
   page.on('requestfailed', (req) => {
     const url = req.url();
     const reason = req.failure()?.errorText || '';
-    if (reason.includes('ERR_ABORTED')) return;
+    if (reason.includes('ERR_ABORTED') || reason.includes('Load request cancelled')) return;
     if (url.includes('jsdelivr.net') || url.includes('twemoji') || url.includes('favicon')) {
       errors.push(`asset ${reason} ${url}`);
     }
@@ -707,30 +707,89 @@ test('product preview stays beside the choices and inside the builder', async ({
       const stage = document.querySelector('#stage').getBoundingClientRect();
       const mock = document.querySelector('#mock').getBoundingClientRect();
       const steps = document.querySelector('.steps').getBoundingClientRect();
-      const prods = document.querySelector('#prods').getBoundingClientRect();
+      const flow = document.querySelector('#flow').getBoundingClientRect();
+      const bar = document.querySelector('.topbar').getBoundingClientRect();
+      const buy = document.querySelector('.buybar');
       return {
         stageTop: stage.top,
         stepsTop: steps.top,
         mockH: mock.height,
         mockW: mock.width,
         vw: window.innerWidth,
-        prodsTop: prods.top,
+        flowTop: flow.top,
+        barBottom: bar.bottom,
+        buyPos: getComputedStyle(buy).position,
+        radius: getComputedStyle(document.querySelector('#mock')).borderRadius,
         photo: document.querySelector('#mock img.blank').currentSrc || document.querySelector('#mock img.blank').src,
       };
     });
     expect(frame.stepsTop).toBeGreaterThan(frame.stageTop + 40);
-    expect(frame.prodsTop).toBeGreaterThan(frame.stageTop);
-    expect(frame.mockH).toBeGreaterThan(frame.vw * 0.35);
-    expect(frame.mockW).toBeGreaterThan(120);
+    expect(frame.mockH).toBeGreaterThan(frame.vw * 0.45);
+    expect(frame.mockW).toBeGreaterThan(frame.vw * 0.9);
+    expect(frame.flowTop).toBeGreaterThanOrEqual(frame.barBottom - 2);
+    expect(frame.buyPos).not.toBe('fixed');
+    expect(frame.buyPos).not.toBe('sticky');
+    expect(parseFloat(frame.radius)).toBe(0);
     expect(frame.photo).toContain('/tee/');
-    await page.evaluate(() => { document.querySelector('.steps').scrollTop = 240; });
-    const stayed = await page.evaluate(() => {
-      const mock = document.querySelector('#mock').getBoundingClientRect();
-      const grid = document.querySelector('#grid');
-      return { top: mock.top, bottom: mock.bottom, vh: window.innerHeight, gridTop: grid ? grid.getBoundingClientRect().top : 0 };
+    await page.locator('#flow button[data-step="make"]').click();
+    await page.locator('#cols').evaluate((el) => {
+      const bar = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--bar')) || 0;
+      const flow = document.getElementById('flow').offsetHeight;
+      const top = el.getBoundingClientRect().top + window.scrollY - bar - flow - 12;
+      const root = document.documentElement;
+      const prev = root.style.scrollBehavior;
+      root.style.scrollBehavior = 'auto';
+      window.scrollTo(0, Math.max(0, top));
+      root.style.scrollBehavior = prev;
     });
-    expect(stayed.top).toBeGreaterThan(0);
-    expect(stayed.bottom).toBeLessThan(stayed.vh);
+    const make = await page.evaluate(() => {
+      const band = (el) => {
+        const r = el.getBoundingClientRect();
+        return { top: r.top, bottom: r.bottom, height: r.height, left: r.left, right: r.right };
+      };
+      const overlap = (a, b) => Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top))
+        * Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left));
+      const flow = band(document.getElementById('flow'));
+      const bar = band(document.querySelector('.topbar'));
+      const cols = band(document.getElementById('cols'));
+      const sizes = band(document.getElementById('sizes'));
+      const lay = band(document.getElementById('lay'));
+      const panel = band(document.querySelector('[data-panel="make"]'));
+      const show = band(document.getElementById('showcase'));
+      const back = band(document.querySelector('[data-panel="make"] [data-prev]'));
+      const next = band(document.querySelector('[data-panel="make"] [data-next]'));
+      const add = band(document.getElementById('addbtn'));
+      const price = band(document.getElementById('price'));
+      const maskBottom = Math.max(bar.bottom, flow.bottom);
+      return {
+        colsTop: cols.top,
+        sizesTop: sizes.top,
+        layTop: lay.top,
+        maskBottom,
+        vh: window.innerHeight,
+        colsH: cols.height,
+        sizesH: sizes.height,
+        layH: lay.height,
+        backH: back.height,
+        nextH: next.height,
+        showOverlap: overlap(panel, show),
+        addInPanel: add.top >= panel.top - 2 && add.bottom <= panel.bottom + 2,
+        priceInPanel: price.top >= panel.top - 2,
+        flowH: flow.bottom - flow.top,
+      };
+    });
+    expect(make.flowH).toBeLessThan(72);
+    expect(make.colsTop).toBeGreaterThanOrEqual(make.maskBottom - 2);
+    expect(make.sizesTop).toBeGreaterThanOrEqual(make.maskBottom - 2);
+    expect(make.layTop).toBeLessThan(make.vh);
+    expect(make.colsH).toBeGreaterThan(40);
+    expect(make.sizesH).toBeGreaterThan(40);
+    expect(make.layH).toBeGreaterThan(40);
+    expect(make.backH).toBeGreaterThanOrEqual(44);
+    expect(make.nextH).toBeGreaterThanOrEqual(44);
+    expect(make.showOverlap).toBe(0);
+    expect(make.addInPanel).toBeTruthy();
+    expect(make.priceInPanel).toBeTruthy();
     await expect(page.locator('#minislot')).not.toHaveClass(/on/);
     await expect(page.locator('#stagepin')).not.toHaveClass(/is-floating/);
   } else {
