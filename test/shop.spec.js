@@ -68,6 +68,23 @@ test('design controls, cart, and Stripe checkout', async ({ page }, testInfo) =>
   await expect(page.locator('body')).not.toContainText('Made when you order');
   await expect(page.locator('body')).not.toContainText('Card details stay on Stripe');
   await expect(page.locator('body')).not.toContainText('Printed by Printful');
+  await expect(page.locator('body')).not.toContainText('Before you pay');
+  await expect(page.locator('footer .footgrid > div')).toHaveCount(2);
+  const footerFit = await page.locator('footer .footgrid').evaluate((el) => {
+    const grid = el.getBoundingClientRect();
+    const kids = [...el.children].map((child) => child.getBoundingClientRect());
+    const stacked = kids[1].top >= kids[0].bottom - 2;
+    return {
+      stacked,
+      slackLeft: kids[0].left - grid.left,
+      slackRight: grid.right - kids[kids.length - 1].right,
+      gap: stacked ? kids[1].top - kids[0].bottom : kids[1].left - kids[0].right,
+    };
+  });
+  expect(footerFit.slackLeft).toBeLessThan(4);
+  expect(footerFit.gap).toBeGreaterThan(8);
+  if (footerFit.stacked) expect(footerFit.gap).toBeLessThan(40);
+  else expect(footerFit.slackRight).toBeLessThan(4);
   await expect(page.locator('.trust li')).toHaveCount(2);
   await expect(page.locator('.trust')).toHaveCount(2);
   for (const label of ['Shipping and checkout', 'Order facts']) {
@@ -433,6 +450,75 @@ test('trucker logo fills the front panel', async ({ page }) => {
   expect(triangle.width).toBeGreaterThan(0.28);
   expect(triangle.cy).toBeGreaterThan(0.4);
   expect(triangle.cy).toBeLessThan(0.52);
+  expect(errors, errors.join('\n')).toEqual([]);
+});
+
+test('product preview stays beside the choices and inside the builder', async ({ page }, testInfo) => {
+  const errors = track(page);
+  await page.goto('/');
+  await expect(page.locator('#mock img.blank')).toBeVisible();
+  const mobile = testInfo.project.name === 'mobile';
+  if (mobile) {
+    const gap = await page.evaluate(() => {
+      const prods = document.querySelector('#prods').getBoundingClientRect();
+      const stage = document.querySelector('#stage').getBoundingClientRect();
+      return stage.top - prods.bottom;
+    });
+    expect(gap).toBeGreaterThan(4);
+    expect(gap).toBeLessThan(48);
+  } else {
+    await page.locator('#prods').scrollIntoViewIfNeeded();
+    const gap = await page.evaluate(() => {
+      const card = document.querySelector('.product-controls').getBoundingClientRect();
+      const prods = document.querySelector('#prods').getBoundingClientRect();
+      const mock = document.querySelector('#mock').getBoundingClientRect();
+      return {
+        hGap: mock.left - card.right,
+        besideButtons: mock.top < prods.bottom && mock.bottom > prods.top,
+      };
+    });
+    expect(gap.besideButtons).toBeTruthy();
+    expect(gap.hGap).toBeGreaterThan(12);
+    expect(gap.hGap).toBeLessThan(40);
+  }
+
+  if (mobile) {
+    await page.locator('#step-pick').scrollIntoViewIfNeeded();
+    await expect(page.locator('#stagepin')).toHaveClass(/is-floating/);
+    const chip = await page.locator('#stagepin').evaluate((el) => {
+      const pin = el.getBoundingClientRect();
+      const grid = document.querySelector('#grid').getBoundingClientRect();
+      const bar = document.querySelector('.topbar').getBoundingClientRect();
+      const overlapLeft = Math.min(pin.right, grid.left + grid.width * 0.55) - Math.max(pin.left, grid.left);
+      return { width: pin.width, top: pin.top, bar: bar.bottom, overlapLeft, right: pin.right, vw: window.innerWidth };
+    });
+    expect(chip.width).toBeGreaterThan(70);
+    expect(chip.width).toBeLessThan(130);
+    expect(chip.top).toBeGreaterThan(chip.bar - 2);
+    expect(chip.overlapLeft).toBeLessThan(8);
+    expect(chip.right).toBeLessThanOrEqual(chip.vw + 1);
+  } else {
+    await page.locator('#step-arrange').scrollIntoViewIfNeeded();
+    const stuck = await page.evaluate(() => {
+      const mock = document.querySelector('#mock').getBoundingClientRect();
+      const bar = document.querySelector('.topbar').getBoundingClientRect().bottom;
+      const arrange = document.querySelector('#step-arrange').getBoundingClientRect();
+      return { mockTop: mock.top, bar, arrangeTop: arrange.top, mockBottom: mock.bottom };
+    });
+    expect(stuck.arrangeTop).toBeLessThan(stuck.mockBottom);
+    expect(stuck.mockTop).toBeGreaterThan(stuck.bar - 2);
+    expect(stuck.mockTop).toBeLessThan(stuck.bar + 40);
+  }
+
+  await page.evaluate(() => { document.documentElement.style.scrollBehavior = 'auto'; });
+  await page.locator('footer').evaluate((el) => el.scrollIntoView({ block: 'end' }));
+  await expect(page.locator('#stagepin')).not.toHaveClass(/is-floating/);
+  const clear = await page.evaluate(() => {
+    const mock = document.querySelector('#mock').getBoundingClientRect();
+    const footer = document.querySelector('footer').getBoundingClientRect();
+    return Math.min(mock.bottom, footer.bottom) - Math.max(mock.top, footer.top);
+  });
+  expect(clear).toBeLessThan(8);
   expect(errors, errors.join('\n')).toEqual([]);
 });
 
