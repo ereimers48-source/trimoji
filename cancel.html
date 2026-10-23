@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Checkout canceled — Trimoji</title>
+<style>
+:root{--ink:#1d1b2f;--muted:#6b6880;--bg:#fbf8ff;--pri:#7c3aed;--pri2:#ec4899}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);background:var(--bg)}
+#testmode{background:#fef3c7;color:#78350f;text-align:center;font-size:13px;font-weight:700;padding:8px 16px}
+main{max-width:560px;margin:12vh auto;padding:24px;text-align:center}
+h1{font-size:40px;letter-spacing:-1px;margin:0 0 12px}
+p{color:var(--muted);font-size:18px}
+a{display:inline-block;margin-top:18px;background:linear-gradient(90deg,var(--pri),var(--pri2));color:#fff;text-decoration:none;font-weight:700;border-radius:999px;padding:12px 22px}
+.logo{font-weight:900;font-size:22px}.logo span{background:linear-gradient(90deg,var(--pri),var(--pri2));-webkit-background-clip:text;color:transparent}
+</style>
+</head>
+<body>
+<div id="testmode" hidden>Test mode · Stripe test cards only. No real charges.</div>
+<main>
+<div class="logo">Tri<span>moji</span></div>
+<h1>No charge.</h1>
+<p>Checkout was canceled. Your design is still on the builder if you want to try again.</p>
+<a href="/#builder">Back to the builder</a>
+</main>
+<script>
+fetch('/api/config',{headers:{accept:'application/json'}}).then(r=>r.ok?r.json():null).then(d=>{
+  if(d&&d.stripeTestMode===true){var el=document.getElementById('testmode');if(el)el.hidden=false}
+}).catch(function(){});
+</script>
+</body>
+</html>
