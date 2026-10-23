@@ -157,6 +157,7 @@ test('text stays apart across phone, tablet, and desktop widths', async ({ page 
         document.documentElement.style.scrollBehavior = 'auto';
         window.scrollTo(0, 0);
         fitBar();
+        if (document.fonts && document.fonts.ready) await document.fonts.ready;
         await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
       }, font);
       const found = await page.evaluate(scan, 'page');
@@ -186,6 +187,7 @@ test('text stays apart across phone, tablet, and desktop widths', async ({ page 
           document.getElementById('testmode').hidden = false;
           document.documentElement.style.scrollBehavior = 'auto';
           fitBar();
+          if (document.fonts && document.fonts.ready) await document.fonts.ready;
           await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
           document.querySelector(sel).scrollIntoView({ block: 'start' });
           const bar = document.querySelector('.topbar').getBoundingClientRect();
