@@ -408,7 +408,8 @@ test('the static shop asks the server for checkout and test mode', () => {
   assert.match(html, /xlink:href/);
     assert.match(html, /function all\(\)\{slots\(\);controls\(\);draw\(\);syncProduct\(\)\}/);
   assert.match(html, /Trucker hat/);
-  assert.match(html, /data-hat="trucker"/);
+  assert.match(html, /setAttribute\('data-hat','trucker'\)/);
+  assert.match(html, /assets\/products\//);
   assert.match(html, /id="try"/);
   assert.match(html, /id="showcase"/);
   assert.match(html, /prefers-reduced-motion/);

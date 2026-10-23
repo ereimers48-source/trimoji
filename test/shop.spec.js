@@ -60,6 +60,8 @@ test('design controls, cart, and Stripe checkout', async ({ page }, testInfo) =>
 
   await page.goto('/');
   await expect(page.locator('#mock image')).toHaveCount(3);
+  await expect(page.locator('#mock img.blank')).toHaveAttribute('src', /\/tee\/white-/);
+  await expect.poll(() => page.locator('#mock img.blank').evaluate((el) => el.naturalWidth)).toBeGreaterThan(100);
   await expect(page.locator('#testmode')).toBeVisible();
   await expect(page.locator('#testmode')).toContainText('Test mode');
   await expect(page.locator('body')).not.toContainText('sk_');
@@ -202,8 +204,8 @@ test('design controls, cart, and Stripe checkout', async ({ page }, testInfo) =>
   expect(hatColors).toEqual(['White', 'Black', 'Navy', 'Charcoal']);
   await press(page.locator('#cols button[title="Charcoal"]'), testInfo);
   await expect(page.locator('#mock [data-hat="trucker"]')).toHaveCount(1);
-  await expect(page.locator('#mock pattern#mesh')).toHaveCount(1);
-  await expect(page.locator('#mock [data-hat="trucker"] path').first()).toHaveAttribute('fill', '#554b56');
+  await expect(page.locator('#mock img.blank')).toHaveAttribute('src', /\/hat\/charcoal-/);
+  await expect.poll(() => page.locator('#mock img.blank').evaluate((el) => el.naturalWidth)).toBeGreaterThan(100);
   await expect(page.locator('#mock image')).toHaveCount(3);
   await page.locator('#mock').scrollIntoViewIfNeeded();
   if (testInfo.project.name === 'mobile') {
@@ -224,7 +226,8 @@ test('design controls, cart, and Stripe checkout', async ({ page }, testInfo) =>
 
   await press(page.locator('#prods button[data-value="tee"]'), testInfo);
   await press(page.locator('#cols button[title="Black"]'), testInfo);
-  await expect(page.locator('#mock path').first()).toHaveAttribute('fill', '#1f1f24');
+  await expect(page.locator('#mock img.blank')).toHaveAttribute('src', /\/tee\/black-/);
+  await expect(page.locator('#mock')).toHaveAttribute('data-ink', 'dark');
   await press(page.locator('#sizes button[data-value="L"]'), testInfo);
   await expect(page.locator('#sizes button[data-value="L"]')).toHaveClass(/on/);
   await expect(page.locator('#price')).toContainText('$29.00');
