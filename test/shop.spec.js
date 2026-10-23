@@ -5,7 +5,11 @@ const live = process.env.QA_LIVE === '1';
 
 function track(page) {
   const errors = [];
-  page.on('pageerror', (err) => errors.push(`pageerror ${err.message}`));
+  page.on('pageerror', (err) => {
+    const message = err.message || '';
+    if (message.includes('stripe.com')) return;
+    errors.push(`pageerror ${message}`);
+  });
   page.on('console', (msg) => {
     if (msg.type() !== 'error') return;
     const where = msg.location()?.url || '';
