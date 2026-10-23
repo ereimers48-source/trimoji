@@ -47,7 +47,7 @@ button:disabled{opacity:.55;cursor:not-allowed}
 <a class="btn" href="#builder">Design yours →</a>
 <div class="names">Brand name: <b id="bn">Trimoji</b> <button class="opt" type="button" id="suggest" style="padding:3px 10px">✨ Suggest another</button></div></div>
 <div class="heroart" id="heroart">🔥😎🍕</div></section>
-<section class="how"><div><b>1. Pick 3</b><br><span class="note">From the full emoji keyboard, 1,900+ emojis.</span></div><div><b>2. Arrange</b><br><span class="note">Row, triangle or stacked. Size and background.</span></div><div><b>3. Wear it</b><br><span class="note">Tees, hoodies, and mugs, printed on demand. Embroidered dad hats are not available yet.</span></div></section>
+<section class="how"><div><b>1. Pick 3</b><br><span class="note">From the full emoji keyboard, 1,900+ emojis.</span></div><div><b>2. Arrange</b><br><span class="note">Row, triangle or stacked. Size and background.</span></div><div><b>3. Wear it</b><br><span class="note">Tees, hoodies, mugs, and printed trucker hats, made on demand.</span></div></section>
 <main id="builder">
 <div class="card"><h2><span class="step">1</span>Pick your 3 emojis</h2>
 <div class="slots" id="slots"></div>
@@ -87,9 +87,9 @@ const PRODS={
  tee:{n:'T-shirt',p:29,sizes:['S','M','L','XL','2XL'],colors:['White','Black','Heather','Navy','Lilac','Pink','Sage'],available:true},
  hoodie:{n:'Hoodie',p:54,sizes:['S','M','L','XL','2XL'],colors:['White','Black','Heather','Navy','Pink'],available:true},
  mug:{n:'Mug',p:19,sizes:['11 oz'],colors:['White'],available:true},
- hat:{n:'Dad hat',p:27,sizes:['One size'],colors:null,available:false,reason:'Dad hats need an embroidery file, which isn’t available yet.'}
+ hat:{n:'Trucker hat',p:33,sizes:['One size'],colors:['White','Black','Charcoal','Navy'],available:true}
 };
-const COLS=[['White','#ffffff'],['Black','#1f1f24'],['Heather','#b9b9c0'],['Navy','#1f2a4d'],['Lilac','#cbb8f5'],['Pink','#f7c6d9'],['Sage','#b6cdb1']];
+const COLS=[['White','#ffffff'],['Black','#1f1f24'],['Heather','#b9b9c0'],['Navy','#1f2a4d'],['Lilac','#cbb8f5'],['Pink','#f7c6d9'],['Sage','#b6cdb1'],['Charcoal','#554b56']];
 const BGS=[['none','transparent'],['circle','#fde68a'],['circle','#c7d2fe'],['circle','#fbcfe8'],['circle','#ffffff'],['circle','#111827']];let bgi=0;
 const BRANDS=['Trimoji','Emoji Trio','Tri-Mo','Three Faces Co.','MojiMade','Emojink','TrioTee'];let bix=0;
 function suggest(){bix=(bix+1)%BRANDS.length;bn.textContent=BRANDS[bix]}
@@ -126,7 +126,7 @@ function draw(){szv.textContent=sz.value+'%';const c=COLS[S.col][1],st=shade(c);
  if(S.prod=='tee')g=`<path d="M150 60 L110 75 L40 120 L70 180 L105 165 L105 390 L295 390 L295 165 L330 180 L360 120 L290 75 L250 60 Q200 95 150 60Z" fill="${c}" stroke="${st}" stroke-width="3"/><path d="M150 60 Q200 95 250 60" fill="none" stroke="${st}" stroke-width="5"/>`+logoSVG(200,190,42);
  else if(S.prod=='hoodie')g=`<path d="M140 70 L95 85 L45 140 L35 330 L80 335 L95 190 L105 395 L295 395 L305 190 L320 335 L365 330 L355 140 L305 85 L260 70 Q200 40 140 70Z" fill="${c}" stroke="${st}" stroke-width="3"/><path d="M150 72 Q200 130 250 72 Q230 40 200 38 Q170 40 150 72Z" fill="${st}"/><path d="M140 330 L260 330 L245 380 L155 380Z" fill="none" stroke="${st}" stroke-width="3"/><line x1="185" y1="110" x2="180" y2="160" stroke="${st}" stroke-width="3"/><line x1="215" y1="110" x2="220" y2="160" stroke="${st}" stroke-width="3"/>`+logoSVG(200,225,38);
  else if(S.prod=='mug')g=`<path d="M300 150 Q370 150 365 220 Q360 285 295 285" fill="none" stroke="${c}" stroke-width="26"/><path d="M300 150 Q370 150 365 220 Q360 285 295 285" fill="none" stroke="${st}" stroke-width="2"/><rect x="85" y="100" width="225" height="250" rx="22" fill="${c}" stroke="${st}" stroke-width="3"/><ellipse cx="197" cy="102" rx="112" ry="14" fill="${st}"/>`+logoSVG(197,225,48);
- else g=`<path d="M70 280 Q70 120 200 115 Q330 120 330 280Z" fill="${c}" stroke="${st}" stroke-width="3"/><path d="M60 280 Q200 255 340 280 Q370 300 360 320 Q200 290 40 330 Q30 300 60 280Z" fill="${c}" stroke="${st}" stroke-width="3"/><circle cx="200" cy="116" r="8" fill="${st}"/>`+logoSVG(200,215,34);
+ else {const ink=c==='#ffffff'?'#1f1f2433':'#ffffff73';const edge=c==='#ffffff'?'#c8c8d2':'#ffffff80';g=`<defs><pattern id="mesh" width="9" height="9" patternUnits="userSpaceOnUse"><circle cx="4.5" cy="4.5" r="1.25" fill="${ink}"/></pattern><clipPath id="meshL"><path d="M124 292 L114 168 C118 124 150 96 170 90 L160 286 Z"/></clipPath><clipPath id="meshR"><path d="M276 292 L286 168 C282 124 250 96 230 90 L240 286 Z"/></clipPath></defs><g data-hat="trucker"><path d="M40 286 C100 262 300 262 360 286 L374 326 C300 312 100 312 26 326 Z" fill="${c}" stroke="${edge}" stroke-width="3"/><path d="M72 292 C140 274 260 274 328 292" fill="none" stroke="${edge}" stroke-width="2"/><path d="M124 292 L114 168 C118 112 152 78 200 74 C248 78 282 112 286 168 L276 292 C236 276 164 276 124 292 Z" fill="${c}" stroke="${edge}" stroke-width="3"/><g clip-path="url(#meshL)"><rect x="90" y="60" width="90" height="250" fill="url(#mesh)"/></g><g clip-path="url(#meshR)"><rect x="220" y="60" width="90" height="250" fill="url(#mesh)"/></g><path d="M170 92 L160 286" fill="none" stroke="${edge}" stroke-width="2"/><path d="M230 92 L240 286" fill="none" stroke="${edge}" stroke-width="2"/><circle cx="200" cy="74" r="7" fill="${edge}"/></g>`+logoSVG(200,188,28)}
  mountMock(g);
  if(!PRODS[S.prod].available)price.innerHTML='<span class="note">Unavailable</span>';
  else price.innerHTML='$'+PRODS[S.prod].p.toFixed(2)+' <span class="note">free shipping over $60</span>'}

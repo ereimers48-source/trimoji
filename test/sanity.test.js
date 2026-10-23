@@ -12,9 +12,9 @@ import { decodeDesign, encodeDesign, itemsFromMetadata } from '../lib/design.js'
 import { HttpError } from '../lib/http.js';
 import { priceCart } from '../lib/prices.js';
 import { buildPrintfulOrder } from '../lib/printful.js';
-import { PRINT_PX, renderLogoPng } from '../lib/render.js';
+import { HAT_PRINT_H, HAT_PRINT_W, PRINT_PX, renderLogoPng } from '../lib/render.js';
 import { runtime } from '../lib/runtime.js';
-import { HAT_UNAVAILABLE, resolveVariant } from '../lib/variants.js';
+import { resolveVariant } from '../lib/variants.js';
 import { handleStripeWebhook } from '../lib/webhook.js';
 
 const SITE = 'https://trimoji.vercel.app';
@@ -84,6 +84,9 @@ test('server prices ignore the client and add US shipping under $60', () => {
   const free = priceCart([sampleItem(), sampleItem({ product: 'hoodie', color: 'Navy', size: 'M' })]);
   assert.equal(free.subtotal, 2900 + 5400);
   assert.equal(free.shipping, 0);
+  const hat = priceCart([sampleItem({ product: 'hat', color: 'Navy', size: 'One size', price: 1 })]);
+  assert.equal(hat.lines[0].unitAmount, 3300);
+  assert.equal(hat.shipping, 599);
 });
 
 test('variant map matches the Printful catalog lookup', () => {
@@ -102,7 +105,19 @@ test('variant map matches the Printful catalog lookup', () => {
   });
   assert.throws(() => resolveVariant('hoodie', 'Lilac', 'M'), HttpError);
   assert.throws(() => resolveVariant('mug', 'White', '15 oz'), HttpError);
-  assert.throws(() => resolveVariant('hat', 'Black', 'One size'), (err) => err.message === HAT_UNAVAILABLE);
+  assert.throws(() => resolveVariant('tee', 'Charcoal', 'M'), HttpError);
+  assert.deepEqual(resolveVariant('hat', 'Black', 'One size'), {
+    variantId: 4811,
+    printType: 'front_dtf_hat',
+    name: 'Trucker hat',
+    unitAmount: 3300,
+    printfulColor: 'Black',
+    catalogProductId: 100,
+    technique: 'dtfilm',
+  });
+  assert.equal(resolveVariant('hat', 'White', 'One size').variantId, 4810);
+  assert.equal(resolveVariant('hat', 'Charcoal', 'One size').variantId, 4814);
+  assert.equal(resolveVariant('hat', 'Navy', 'One size').variantId, 4816);
 });
 
 test('design token round-trips and checkout metadata survives a client price', async () => {
@@ -142,6 +157,7 @@ test('printful order is a draft unless PRINTFUL_AUTO_CONFIRM=true', async () => 
   assert.equal(order.recipient.email, 'ada@example.com');
   assert.equal(order.items[0].variant_id, 1320);
   assert.equal(order.items[0].files[0].type, 'default');
+  assert.equal(order.items[0].options, undefined);
   assert.match(order.items[0].files[0].url, /^https:\/\/trimoji\.vercel\.app\/api\/print-file\?design=/);
 
   const seen = [];
@@ -258,6 +274,31 @@ test('print file is a transparent PNG from Twemoji SVG', async () => {
   assert.equal(png.readUInt32BE(16), PRINT_PX);
   assert.equal(png.readUInt32BE(20), PRINT_PX);
   assert.equal(png[25], 6);
+
+  const hatDesign = decodeDesign(encodeDesign({
+    product: 'hat',
+    emojis: ['🔥', '😎', '🍕'],
+    layout: 'row',
+    logoSize: 100,
+    background: { shape: 'circle', color: '#fde68a' },
+  }));
+  assert.equal(hatDesign.product, 'hat');
+  const hatPng = await renderLogoPng(hatDesign, async () => SVG);
+  assert.equal(hatPng.readUInt32BE(16), HAT_PRINT_W);
+  assert.equal(hatPng.readUInt32BE(20), HAT_PRINT_H);
+  assert.equal(hatPng[25], 6);
+  let offset = 8;
+  let dpi = null;
+  while (offset + 12 <= hatPng.length) {
+    const length = hatPng.readUInt32BE(offset);
+    const type = hatPng.subarray(offset + 4, offset + 8).toString('ascii');
+    if (type === 'pHYs') dpi = Math.round(hatPng.readUInt32BE(offset + 8) * 0.0254);
+    offset += 12 + length;
+    if (type === 'IEND') break;
+  }
+  assert.equal(dpi, 300);
+  const apparel = decodeDesign(encodeDesign(sampleItem()));
+  assert.equal(apparel.product, undefined);
 });
 
 test('HTTP handlers: checkout redirect, webhook, and print file', async () => {
@@ -280,13 +321,26 @@ test('HTTP handlers: checkout redirect, webhook, and print file', async () => {
   runtime.createStripe = () => fakeStripe();
   runtime.fetch = async () => new Response(SVG, { status: 200, headers: { 'content-type': 'image/svg+xml' } });
   try {
-    const denied = await checkoutPost(new Request('https://trimoji.vercel.app/api/checkout', {
+    const hatStripe = fakeStripe();
+    runtime.createStripe = () => hatStripe;
+    const hatOk = await checkoutPost(new Request('https://trimoji.vercel.app/api/checkout', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ items: [sampleItem({ product: 'hat', price: 0 })] }),
+      body: JSON.stringify({ items: [sampleItem({ product: 'hat', color: 'Black', size: 'One size', price: 0 })] }),
     }));
-    assert.equal(denied.status, 400);
-    assert.match((await denied.json()).error, /embroidery/i);
+    assert.equal(hatOk.status, 200);
+    assert.equal(hatStripe.calls[0].line_items[0].price_data.unit_amount, 3300);
+    assert.match(hatStripe.calls[0].line_items[0].price_data.product_data.name, /Trucker hat/);
+    const hatOrder = buildPrintfulOrder({
+      session: completedSession(hatStripe.calls[0].metadata),
+      siteUrl: SITE,
+    });
+    assert.equal(hatOrder.items[0].variant_id, 4811);
+    assert.equal(hatOrder.items[0].retail_price, '33.00');
+    assert.equal(hatOrder.items[0].files[0].type, 'front_dtf_hat');
+    assert.deepEqual(hatOrder.items[0].options, [{ id: 'technique', value: 'dtfilm' }]);
+    const hatToken = new URL(hatOrder.items[0].files[0].url).searchParams.get('design');
+    assert.equal(decodeDesign(hatToken).product, 'hat');
 
     const stripe = fakeStripe();
     runtime.createStripe = () => stripe;
@@ -352,7 +406,10 @@ test('the static shop asks the server for checkout and test mode', () => {
   assert.match(html, /touch-action:manipulation/);
   assert.match(html, /DOMParser/);
   assert.match(html, /xlink:href/);
-  assert.match(html, /function all\(\)\{slots\(\);controls\(\);draw\(\);syncProduct\(\)\}/);
+    assert.match(html, /function all\(\)\{slots\(\);controls\(\);draw\(\);syncProduct\(\)\}/);
+  assert.match(html, /Trucker hat/);
+  assert.match(html, /data-hat="trucker"/);
+  assert.doesNotMatch(html, /Dad hat/);
   assert.doesNotMatch(html, /backdrop-filter/);
   assert.doesNotMatch(html, /assets\/svg\//);
   assert.doesNotMatch(html, /<a href="#builder"><button/);

@@ -181,9 +181,34 @@ test('design controls, cart, and Stripe checkout', async ({ page }, testInfo) =>
   await expect(page.locator('#sizes button')).toHaveText('11 oz');
 
   await press(page.locator('#prods button[data-value="hat"]'), testInfo);
-  await expect(page.locator('#addbtn')).toBeDisabled();
-  await expect(page.locator('#unavail')).toContainText('embroidery');
+  await expect(page.locator('#prods button[data-value="hat"]')).toHaveText('Trucker hat');
+  await expect(page.locator('#addbtn')).toBeEnabled();
+  await expect(page.locator('#unavail')).toBeHidden();
+  await expect(page.locator('#price')).toContainText('$33.00');
+  await expect(page.locator('#sizes button')).toHaveText('One size');
+  const hatColors = await page.locator('#cols button').evaluateAll((els) => els.map((el) => el.title));
+  expect(hatColors).toEqual(['White', 'Black', 'Navy', 'Charcoal']);
+  await press(page.locator('#cols button[title="Charcoal"]'), testInfo);
+  await expect(page.locator('#mock [data-hat="trucker"]')).toHaveCount(1);
+  await expect(page.locator('#mock pattern#mesh')).toHaveCount(1);
+  await expect(page.locator('#mock [data-hat="trucker"] path').first()).toHaveAttribute('fill', '#554b56');
+  await expect(page.locator('#mock image')).toHaveCount(3);
+  await page.locator('#mock').scrollIntoViewIfNeeded();
+  if (testInfo.project.name === 'mobile') {
+    const dir = process.env.SHOT_DIR || 'test-results/mobile';
+    await mkdir(dir, { recursive: true });
+    await page.locator('#mock').screenshot({ path: `${dir}/mobile_trucker_hat_mockup.png` });
+  }
+  await press(page.locator('#addbtn'), testInfo);
+  await expect(page.locator('#drawer')).toHaveClass(/open/);
+  await expect(page.locator('#items')).toContainText('Trucker hat');
+  await expect(page.locator('#items')).toContainText('Charcoal');
+  await expect(page.locator('#items')).toContainText('One size');
+  await expect(page.locator('#sub')).toHaveText('$33.00');
+  await expect(page.locator('#cc')).toHaveText('1');
+  await press(page.locator('#items button[data-remove="0"]'), testInfo);
   await expect(page.locator('#cc')).toHaveText('0');
+  await press(page.locator('#closecart'), testInfo);
 
   await press(page.locator('#prods button[data-value="tee"]'), testInfo);
   await press(page.locator('#cols button[title="Black"]'), testInfo);

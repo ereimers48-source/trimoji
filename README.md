@@ -46,7 +46,7 @@ When you are ready to charge real cards:
 | T-shirt | $29 | Bella+Canvas 3001, product `71` | `front` |
 | Hoodie | $54 | Gildan 18500, product `146` | `front` |
 | Mug | $19 | White Glossy Mug, product `19`, 11 oz only | `default` |
-| Dad hat | not sold | Yupoong 6245CM, product `206`, technique `EMBROIDERY` | not wired |
+| Trucker hat | $33 | Yupoong 6006, product `100`, technique `dtfilm` | `front_dtf_hat`, 1650×750 at 300 DPI |
 
 US shipping is $5.99, and free when the merchandise subtotal is $60 or more. That flat amount is what Stripe charges the customer. Printful bills the store its own fulfillment shipping when an order is confirmed.
 
@@ -76,9 +76,16 @@ Hoodie (Gildan 18500), sizes S / M / L / XL / 2XL. Lilac and Sage are not in thi
 
 Mug: White / 11 oz → variant `1320`. The 15 oz variant `4830` exists and is not sold.
 
-Dad hat: looked up and left unwired. Product `206` only accepts embroidery placements (`embroidery_front` and the other embroidery types), not a flat PNG. Example one-size variants from the same catalog response: White `7853`, Black `7854`, Navy `7857`, Pink `7858`. Selling it needs a real embroidery file, so the product is marked unavailable in the builder and `POST /api/checkout` rejects it.
+Trucker hat (Yupoong 6006, five-panel mesh back), one size. Confirmed from `GET https://api.printful.com/products/100` on 2026-10-23. The blank is $15.09 and the DTF front placement (`front_dtf_hat`) adds $2.95, so the Printful product cost is $18.04 before their shipping. $28 would be about 55% above that cost and about 36% of the selling price, so the shop price is $33, which keeps about 45% of the sale (($33 − $18.04) / $33). Embroidery is the catalog default on this hat, so each order item sends `options: [{ id: "technique", value: "dtfilm" }]` with the print file. The DTF template is 5.5″ × 2.5″ at 300 DPI (1650×750, PNG pHYs). Two-tone colorways are in the catalog and are not sold. The Classic Dad Hat (product `206`) is embroidery-only and is not sold.
 
-On `checkout.session.completed`, `POST /api/stripe-webhook` checks `STRIPE_WEBHOOK_SECRET`, then `POST https://api.printful.com/orders?confirm=false` (or `confirm=true` when `PRINTFUL_AUTO_CONFIRM=true`) with `X-PF-Store-Id`. The print file is `GET /api/print-file?design=…`, a transparent 1800×1800 PNG of the three Twemoji SVGs (CC-BY). Printful fetches that URL, so `SITE_URL` must be the public deployment.
+| Color on the site | Printful color | One size |
+| --- | --- | --- |
+| White | White | 4810 |
+| Black | Black | 4811 |
+| Charcoal | Charcoal | 4814 |
+| Navy | Navy | 4816 |
+
+On `checkout.session.completed`, `POST /api/stripe-webhook` checks `STRIPE_WEBHOOK_SECRET`, then `POST https://api.printful.com/orders?confirm=false` (or `confirm=true` when `PRINTFUL_AUTO_CONFIRM=true`) with `X-PF-Store-Id`. The print file is `GET /api/print-file?design=…`, a transparent PNG of the three Twemoji SVGs (CC-BY): 1800×1800 for tees, hoodies, and mugs, and 1650×750 at 300 DPI for the trucker hat. Tokens without a product still render the square file. Printful fetches that URL, so `SITE_URL` must be the public deployment.
 
 ## Local check
 
