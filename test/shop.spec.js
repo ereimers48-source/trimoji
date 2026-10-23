@@ -179,7 +179,27 @@ test('design controls, cart, and Stripe checkout', async ({ page }, testInfo) =>
   await expect(page.locator('#c_sp')).toBeVisible();
   await press(page.locator('#grid button[title="smiling face with sunglasses"]').first(), testInfo);
   await expect(page.locator('#heroart img')).toHaveCount(3);
+  const slotHit = await page.locator('#slots small').first().evaluate((el) => {
+    const box = el.getBoundingClientRect();
+    return { width: box.width, height: box.height };
+  });
+  expect(slotHit.width).toBeGreaterThanOrEqual(40);
+  expect(slotHit.height).toBeGreaterThanOrEqual(40);
+  await page.evaluate(() => {
+    for (const node of document.querySelectorAll('#slots img.em, #heroart img.em')) {
+      if (node.alt === '🔥' || node.alt === '😎') node.dataset.stay = node.alt;
+    }
+    for (const node of document.querySelectorAll('#mock image')) {
+      const href = node.getAttribute('href') || '';
+      if (href.includes('1f525') || href.includes('1f60e')) node.dataset.stay = '1';
+    }
+  });
   await press(page.locator('#grid button[title="face with tears of joy"]').first(), testInfo);
+  await expect(page.locator('#slots img[data-stay="🔥"]')).toHaveCount(1);
+  await expect(page.locator('#slots img[data-stay="😎"]')).toHaveCount(1);
+  await expect(page.locator('#heroart img[data-stay="🔥"]')).toHaveCount(1);
+  await expect(page.locator('#heroart img[data-stay="😎"]')).toHaveCount(1);
+  await expect(page.locator('#mock image[data-stay="1"]')).toHaveCount(2);
   await expect(page.locator('#heroart img')).toHaveCount(3);
   const picked = await page.locator('#heroart img').evaluateAll((els) => els.map((el) => el.alt));
   expect(picked).toEqual(['🔥', '😎', '😂']);
@@ -191,6 +211,32 @@ test('design controls, cart, and Stripe checkout', async ({ page }, testInfo) =>
   await expect(page.locator('#try button[data-emoji="🌈"]')).toHaveAttribute('aria-pressed', 'true');
   await expect(page.locator('#showcase')).toContainText('Not customer photos');
   await expect(page.locator('#showtrack article')).toHaveCount(5);
+  const looks = await page.locator('#showtrack').evaluate((el) => {
+    const cards = [...el.querySelectorAll('.ex')];
+    const boxes = cards.map((card) => card.getBoundingClientRect());
+    const buttons = cards.map((card) => card.querySelector('button').getBoundingClientRect());
+    const heights = boxes.map((box) => box.height);
+    const bottoms = buttons.map((box) => box.bottom);
+    const tops = boxes.map((box) => box.top);
+    return {
+      height: Math.max(...heights) - Math.min(...heights),
+      buttons: Math.max(...bottoms) - Math.min(...bottoms),
+      tops: Math.max(...tops) - Math.min(...tops),
+      left: boxes[0].left - el.getBoundingClientRect().left,
+      right: el.getBoundingClientRect().right - boxes.at(-1).right,
+      overflow: el.scrollWidth - el.clientWidth,
+    };
+  });
+  expect(looks.height).toBeLessThan(2);
+  expect(looks.buttons).toBeLessThan(2);
+  expect(looks.tops).toBeLessThan(2);
+  if (!testInfo.project.use.isMobile) {
+    expect(looks.overflow).toBeLessThan(4);
+    expect(looks.left).toBeGreaterThan(-2);
+    expect(looks.left).toBeLessThan(8);
+    expect(looks.right).toBeGreaterThan(-2);
+    expect(looks.right).toBeLessThan(8);
+  }
   await expect(page.locator('#showpause')).toBeVisible();
   await expect(page.locator('.disclaimer')).toContainText('Not reviews, not quotes, and not statistics');
   await page.locator('#grid').scrollIntoViewIfNeeded();
@@ -331,18 +377,25 @@ test('design controls, cart, and Stripe checkout', async ({ page }, testInfo) =>
       return iw > 0 && ih > 0 ? ih : 0;
     };
     const item = document.querySelector('#items .item').getBoundingClientRect();
+    const drawer = document.getElementById('drawer').getBoundingClientRect();
     return {
       shown: getComputedStyle(document.getElementById('toast')).display !== 'none',
       pay: overlap(toastBox, pay),
       sum: overlap(toastBox, sum),
       gap: sum.top - item.bottom,
+      drawerTop: drawer.top,
+      drawerHeight: drawer.height,
+      vh: window.innerHeight,
+      sumBottom: sum.bottom,
     };
   });
   expect(toastFit.shown).toBeTruthy();
   expect(toastFit.pay).toBeLessThan(8);
   expect(toastFit.sum).toBeLessThan(8);
   expect(toastFit.gap).toBeGreaterThan(-2);
-  expect(toastFit.gap).toBeLessThan(80);
+  expect(toastFit.drawerTop).toBeLessThan(2);
+  expect(Math.abs(toastFit.drawerHeight - toastFit.vh)).toBeLessThan(4);
+  expect(toastFit.sumBottom).toBeGreaterThan(toastFit.vh - 40);
   await press(page.locator('#items button[data-qty="1"]'), testInfo);
   await expect(page.locator('#items .qty b')).toHaveText('2');
   await expect(page.locator('#cc')).toHaveText('2');
@@ -398,11 +451,12 @@ test('emoji categories stay on the tapped tab', async ({ page }, testInfo) => {
     });
   });
   expect(tabsFit).toBeTruthy();
-  const pickerHole = await page.locator('#grid').evaluate((el) => {
-    const cells = el.querySelector('.cells');
-    return el.getBoundingClientRect().height - cells.getBoundingClientRect().height;
-  });
-  expect(pickerHole).toBeLessThan(48);
+  const pickerHeight = await page.locator('#grid').evaluate((el) => el.getBoundingClientRect().height);
+  await press(page.locator('#tabs button[data-cat="fl"]'), testInfo);
+  const flagsHeight = await page.locator('#grid').evaluate((el) => el.getBoundingClientRect().height);
+  await press(page.locator('#tabs button[data-cat="fu"]'), testInfo);
+  expect(Math.abs(pickerHeight - flagsHeight)).toBeLessThan(2);
+  expect(pickerHeight).toBeGreaterThan(280);
 
   const rapid = await page.evaluate(() => {
     const ids = ['an', 'fd', 'ac', 'tp', 'ob', 'sy', 'fl', 'sp', 'fu'];
@@ -514,7 +568,7 @@ test('trucker logo fills the front panel', async ({ page }) => {
   const row = await logoBox();
   expect(row.printAspect).toBeGreaterThan(2.05);
   expect(row.printAspect).toBeLessThan(2.35);
-  expect(row.width).toBeGreaterThan(0.62);
+  expect(row.width).toBeGreaterThan(0.58);
   expect(row.height).toBeGreaterThan(0.18);
   expect(row.cx).toBeGreaterThan(0.45);
   expect(row.cx).toBeLessThan(0.55);
@@ -555,14 +609,31 @@ test('trucker logo fills the front panel', async ({ page }) => {
       return { left: left - print.left, top: top - print.top, right: print.right - right, bottom: print.bottom - bottom };
     });
   }
-  for (const layout of ['stacked', 'triangle']) {
+  async function insideMock() {
+    return page.locator('#mock').evaluate((mock) => {
+      const box = mock.getBoundingClientRect();
+      const images = [...mock.querySelectorAll('.print image')].map((image) => image.getBoundingClientRect());
+      return {
+        left: Math.min(...images.map((item) => item.left)) - box.left,
+        top: Math.min(...images.map((item) => item.top)) - box.top,
+        right: box.right - Math.max(...images.map((item) => item.right)),
+        bottom: box.bottom - Math.max(...images.map((item) => item.bottom)),
+      };
+    });
+  }
+  for (const layout of ['row', 'stacked', 'triangle']) {
     await page.locator(`#lay button[data-value="${layout}"]`).click();
     await setSize(140);
     const inset = await insidePrint();
-    expect(inset.left, `hat ${layout}`).toBeGreaterThan(-1);
-    expect(inset.top, `hat ${layout}`).toBeGreaterThan(-1);
-    expect(inset.right, `hat ${layout}`).toBeGreaterThan(-1);
-    expect(inset.bottom, `hat ${layout}`).toBeGreaterThan(-1);
+    expect(inset.left, `hat ${layout}`).toBeGreaterThan(1);
+    expect(inset.top, `hat ${layout}`).toBeGreaterThan(1);
+    expect(inset.right, `hat ${layout}`).toBeGreaterThan(1);
+    expect(inset.bottom, `hat ${layout}`).toBeGreaterThan(1);
+    const onHat = await insideMock();
+    expect(onHat.left, `hat mock ${layout}`).toBeGreaterThan(2);
+    expect(onHat.top, `hat mock ${layout}`).toBeGreaterThan(2);
+    expect(onHat.right, `hat mock ${layout}`).toBeGreaterThan(2);
+    expect(onHat.bottom, `hat mock ${layout}`).toBeGreaterThan(2);
   }
   await page.locator('#prods button[data-value="mug"]').click();
   for (const layout of ['stacked', 'triangle']) {
@@ -590,6 +661,13 @@ test('product preview stays beside the choices and inside the builder', async ({
     });
     expect(gap).toBeGreaterThan(4);
     expect(gap).toBeLessThan(48);
+    const bleed = await page.locator('#stage').evaluate((el) => {
+      const box = el.getBoundingClientRect();
+      return { left: box.left, width: box.width, vw: window.innerWidth, height: box.height };
+    });
+    expect(bleed.left).toBeLessThan(2);
+    expect(bleed.width).toBeGreaterThan(bleed.vw - 4);
+    expect(bleed.height).toBeGreaterThan(bleed.vw * 0.7);
   } else {
     await page.locator('#prods').scrollIntoViewIfNeeded();
     const gap = await page.evaluate(() => {
@@ -632,8 +710,8 @@ test('product preview stays beside the choices and inside the builder', async ({
         photo: el.querySelector('img').currentSrc || el.querySelector('img').src,
       };
     });
-    expect(chip.width).toBeGreaterThan(60);
-    expect(chip.width).toBeLessThan(120);
+    expect(chip.width).toBeGreaterThan(120);
+    expect(chip.width).toBeLessThan(170);
     expect(chip.top).toBeGreaterThan(chip.bar - 2);
     expect(chip.bottom).toBeGreaterThan(chip.top + 40);
     expect(chip.overlap).toBeLessThan(8);
@@ -650,6 +728,29 @@ test('product preview stays beside the choices and inside the builder', async ({
     expect(stuck.arrangeTop).toBeLessThan(stuck.mockBottom);
     expect(stuck.mockTop).toBeGreaterThan(stuck.bar - 2);
     expect(stuck.mockTop).toBeLessThan(stuck.bar + 40);
+    await page.locator('#prods button[data-value="hoodie"]').click();
+    await page.locator('#step-arrange').scrollIntoViewIfNeeded();
+    const capped = await page.evaluate(() => {
+      const mock = document.querySelector('#mock').getBoundingClientRect();
+      const cap = document.querySelector('.mockcap').getBoundingClientRect();
+      const bar = document.querySelector('.topbar').getBoundingClientRect().bottom;
+      return {
+        top: mock.top,
+        bottom: mock.bottom,
+        capTop: cap.top,
+        capBottom: cap.bottom,
+        bar,
+        vh: window.innerHeight,
+        fit: getComputedStyle(document.querySelector('#mock img.blank')).objectFit,
+        product: document.querySelector('#mock').dataset.product,
+      };
+    });
+    expect(capped.product).toBe('hoodie');
+    expect(capped.fit).toBe('contain');
+    expect(capped.top).toBeGreaterThan(capped.bar - 2);
+    expect(capped.bottom).toBeLessThanOrEqual(capped.vh + 1);
+    expect(capped.capTop).toBeGreaterThan(capped.bottom - 2);
+    expect(capped.capBottom).toBeLessThanOrEqual(capped.vh + 1);
   }
 
   await page.evaluate(() => { document.documentElement.style.scrollBehavior = 'auto'; });

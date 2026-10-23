@@ -11,6 +11,7 @@ const VIEWPORTS = [
   [932, 430],
   [768, 1024],
   [1024, 768],
+  [1280, 740],
   [1280, 800],
   [1440, 900],
 ];
@@ -178,7 +179,7 @@ test('text stays apart across phone, tablet, and desktop widths', async ({ page 
   }
 
   const anchors = ['#showcase h2', '#ideas-title', '#builder h2', '.close h2'];
-  for (const [width, height] of [[320, 640], [390, 844], [844, 390], [768, 1024], [1280, 800]]) {
+  for (const [width, height] of [[320, 640], [390, 844], [844, 390], [768, 1024], [1280, 740], [1440, 900]]) {
     await page.setViewportSize({ width, height });
     for (const font of [16, 24]) {
       for (const sel of anchors) {

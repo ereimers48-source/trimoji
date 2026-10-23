@@ -21,7 +21,17 @@ export default defineConfig({
       name: 'desktop',
       use: {
         channel: 'chrome',
-        viewport: { width: 1280, height: 800 },
+        viewport: { width: 1280, height: 740 },
+        hasTouch: false,
+        isMobile: false,
+        launchOptions: { args: ['--no-sandbox', '--disable-dev-shm-usage'] },
+      },
+    },
+    {
+      name: 'desktop-wide',
+      use: {
+        channel: 'chrome',
+        viewport: { width: 1440, height: 900 },
         hasTouch: false,
         isMobile: false,
         launchOptions: { args: ['--no-sandbox', '--disable-dev-shm-usage'] },
