@@ -39,7 +39,7 @@ When you are ready to charge real cards:
 
 ## What checkout does
 
-`POST /api/checkout` accepts the cart (product, color, size, quantity, three emojis, layout, logo size, background). Prices are recomputed on the server. Client prices are ignored.
+`POST /api/checkout` accepts the cart (product, color, size, quantity, three emojis, layout, logo size). Prices are recomputed on the server. Client prices are ignored. The print file is transparent behind the emojis.
 
 | Product | Price | Printful catalog | Print file |
 | --- | --- | --- | --- |

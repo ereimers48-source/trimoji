@@ -144,8 +144,9 @@ test('configurator, bag, and Stripe checkout', async ({ page }, testInfo) => {
   const grown = await logoImages(page);
   expect(grown[0].w).toBeGreaterThan(beforeWidth);
 
-  await press(page.locator('#bgs button').nth(1), testInfo);
-  await expect(page.locator('#mock circle')).toHaveAttribute('fill', '#fde68a');
+  await expect(page.getByRole('heading', { name: 'Backdrop' })).toHaveCount(0);
+  await expect(page.locator('#bgs')).toHaveCount(0);
+  await expect(page.locator('#mock circle')).toHaveCount(0);
 
   const productRows = await page.locator('#prods').evaluate((el) => {
     const rows = new Map();
@@ -652,6 +653,7 @@ test('an empty middle slot stays empty on the product, in the bag, and in checko
   expect(payload.items[0].slots).toEqual(['🔥', null, '🍕']);
   expect(payload.items[0].emojis).toEqual(['🔥', null, '🍕']);
   expect(payload.items[0].layout).toBe('row');
+  expect(payload.items[0].background).toBeUndefined();
   expect(errors, errors.join('\n')).toEqual([]);
 });
 
@@ -705,6 +707,7 @@ test('the same emoji can repeat in every slot or leave a gap', async ({ page }, 
   await page.waitForURL(/checkout\.stripe\.com/, { timeout: 45_000 });
   expect(payload.items.map((item) => item.slots)).toEqual([['🔥', '🔥', '🔥'], ['🔥', null, '🔥']]);
   expect(payload.items.map((item) => item.emojis)).toEqual([['🔥', '🔥', '🔥'], ['🔥', null, '🔥']]);
+  expect(payload.items.every((item) => item.background === undefined)).toBeTruthy();
   expect(errors, errors.join('\n')).toEqual([]);
 });
 

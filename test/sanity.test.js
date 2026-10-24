@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
+import { inflateSync } from 'node:zlib';
 import Stripe from 'stripe';
 import { POST as checkoutPost } from '../api/checkout.js';
 import { GET as configGet } from '../api/config.js';
@@ -53,6 +54,60 @@ function fakeStripe() {
       },
     },
   };
+}
+
+function paeth(left, up, upLeft) {
+  const estimate = left + up - upLeft;
+  const dl = Math.abs(estimate - left);
+  const du = Math.abs(estimate - up);
+  const dlu = Math.abs(estimate - upLeft);
+  if (dl <= du && dl <= dlu) return left;
+  if (du <= dlu) return up;
+  return upLeft;
+}
+
+function decodeRgba(png) {
+  assert.equal(png.subarray(0, 8).toString('hex'), '89504e470d0a1a0a');
+  let offset = 8;
+  let width = 0;
+  let height = 0;
+  const idat = [];
+  while (offset + 12 <= png.length) {
+    const length = png.readUInt32BE(offset);
+    const type = png.subarray(offset + 4, offset + 8).toString('ascii');
+    const data = png.subarray(offset + 8, offset + 8 + length);
+    if (type === 'IHDR') {
+      width = data.readUInt32BE(0);
+      height = data.readUInt32BE(4);
+      assert.equal(data[8], 8);
+      assert.equal(data[9], 6);
+    } else if (type === 'IDAT') idat.push(data);
+    offset += 12 + length;
+    if (type === 'IEND') break;
+  }
+  const raw = inflateSync(Buffer.concat(idat));
+  const stride = width * 4;
+  const pixels = Buffer.alloc(height * stride);
+  let src = 0;
+  for (let y = 0; y < height; y += 1) {
+    const filter = raw[src];
+    src += 1;
+    for (let i = 0; i < stride; i += 1) {
+      const value = raw[src + i];
+      const left = i >= 4 ? pixels[y * stride + i - 4] : 0;
+      const up = y > 0 ? pixels[(y - 1) * stride + i] : 0;
+      const upLeft = y > 0 && i >= 4 ? pixels[(y - 1) * stride + i - 4] : 0;
+      let decoded = value;
+      if (filter === 1) decoded = (value + left) & 255;
+      else if (filter === 2) decoded = (value + up) & 255;
+      else if (filter === 3) decoded = (value + Math.floor((left + up) / 2)) & 255;
+      else if (filter === 4) decoded = (value + paeth(left, up, upLeft)) & 255;
+      else if (filter !== 0) throw new Error(`png filter ${filter}`);
+      pixels[y * stride + i] = decoded;
+    }
+    src += stride;
+  }
+  return { width, height, pixels };
 }
 
 function completedSession(metadata) {
@@ -142,7 +197,9 @@ test('design token round-trips and checkout metadata survives a client price', a
   assert.deepEqual(restored[0].emojis, ['🔥', '😎', '🍕']);
   assert.equal(restored[0].variant.variantId, 4018);
   const design = decodeDesign(encodeDesign(restored[0]));
-  assert.equal(design.background.color, '#fde68a');
+  assert.deepEqual(design.background, { shape: 'none' });
+  assert.equal(JSON.stringify(params.metadata).includes('fde68a'), false);
+  assert.equal(Object.hasOwn(JSON.parse(params.metadata.i0), 'b'), false);
   assert.equal(design.layout, 'row');
 });
 
@@ -414,6 +471,24 @@ test('print file is a transparent PNG from Twemoji SVG', async () => {
   assert.equal(png.readUInt32BE(20), PRINT_PX);
   assert.equal(png[25], 6);
 
+  const requestedCircle = {
+    emojis: ['🔥', '😎', '🍕'],
+    layout: 'row',
+    logoSize: 100,
+    background: { shape: 'circle', color: '#fde68a' },
+  };
+  const art = composeSvg(requestedCircle, [SVG, SVG, SVG]);
+  assert.equal(art.includes('#fde68a'), false);
+  const clear = decodeRgba(await renderLogoPng(requestedCircle, async () => SVG));
+  const alpha = (bitmap, x, y) => bitmap.pixels[(y * bitmap.width + x) * 4 + 3];
+  assert.equal(alpha(clear, 0, 0), 0);
+  assert.equal(alpha(clear, 900, 40), 0);
+  assert.ok(alpha(clear, 900, 900) > 200);
+  const legacy = Buffer.from(JSON.stringify({
+    e: ['🔥', '😎', '🍕'], l: 'row', z: 100, b: '#fde68a',
+  }), 'utf8').toString('base64url');
+  assert.deepEqual(decodeDesign(legacy).background, { shape: 'none' });
+
   const hatDesign = decodeDesign(encodeDesign({
     product: 'hat',
     emojis: ['🔥', '😎', '🍕'],
@@ -426,6 +501,10 @@ test('print file is a transparent PNG from Twemoji SVG', async () => {
   assert.equal(hatPng.readUInt32BE(16), HAT_PRINT_W);
   assert.equal(hatPng.readUInt32BE(20), HAT_PRINT_H);
   assert.equal(hatPng[25], 6);
+  const hatPixels = decodeRgba(hatPng);
+  assert.equal(alpha(hatPixels, 0, 0), 0);
+  assert.equal(alpha(hatPixels, 825, 40), 0);
+  assert.ok(alpha(hatPixels, 825, 375) > 200);
   let offset = 8;
   let dpi = null;
   while (offset + 12 <= hatPng.length) {
@@ -603,6 +682,8 @@ test('the static shop asks the server for checkout and test mode', () => {
   assert.match(html, /setAttribute\('data-hat','trucker'\)/);
   assert.match(html, /assets\/products\//);
   assert.match(html, /prefers-reduced-motion/);
+  assert.doesNotMatch(html, /id="bgs"/);
+  assert.doesNotMatch(html, /Backdrop/);
   assert.doesNotMatch(html, /id="showcase"/);
   assert.doesNotMatch(html, /mug example/);
   assert.doesNotMatch(html, /Dad hat/);
