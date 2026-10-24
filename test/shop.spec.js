@@ -647,6 +647,59 @@ test('an empty middle slot stays empty on the product, in the bag, and in checko
   expect(errors, errors.join('\n')).toEqual([]);
 });
 
+test('the same emoji can repeat in every slot or leave a gap', async ({ page }, testInfo) => {
+  const errors = track(page);
+  if (!live) {
+    await page.route('https://checkout.stripe.com/**', (route) => route.fulfill({
+      status: 200,
+      contentType: 'text/html',
+      body: '<!doctype html><title>Stripe test checkout</title><h1>Stripe test checkout</h1>',
+    }));
+  }
+  let payload = null;
+  page.on('request', (req) => {
+    if (req.method() === 'POST' && req.url().includes('/api/checkout')) payload = req.postDataJSON();
+  });
+  await page.goto('/');
+  await press(page.locator('#lay button[data-value="row"]'), testInfo);
+  const full = await logoImages(page);
+  for (let n = 0; n < 3; n += 1) await press(page.locator('#slots [data-clear]').first(), testInfo);
+  const fire = page.locator('#grid button[data-emoji="🔥"]');
+  for (let n = 0; n < 3; n += 1) await press(fire, testInfo);
+  await press(fire, testInfo);
+  await expect(page.locator('#slots button.f')).toHaveCount(3);
+  await expect(page.locator('#grid button.sel')).toHaveCount(0);
+  await expect(fire.locator('.count')).toHaveText('×3');
+  const triple = await logoImages(page);
+  expect(triple).toHaveLength(3);
+  expect(new Set(triple.map((image) => image.href)).size).toBe(1);
+  triple.forEach((image, index) => {
+    expect(Math.abs(image.x - full[index].x)).toBeLessThan(1);
+  });
+  await press(page.locator('#addbtn'), testInfo);
+  await press(page.locator('#closecart'), testInfo);
+  await press(page.locator('#slots button[data-slot="1"] [data-clear]'), testInfo);
+  await expect(fire.locator('.count')).toHaveText('×2');
+  await expect(page.locator('#grid button.sel')).toHaveCount(0);
+  const gapped = await logoImages(page);
+  expect(gapped).toHaveLength(2);
+  expect(Math.abs(gapped[0].x - full[0].x)).toBeLessThan(1);
+  expect(Math.abs(gapped[1].x - full[2].x)).toBeLessThan(1);
+  expect(gapped[1].x - gapped[0].x).toBeGreaterThan(gapped[0].w * 1.9);
+  await press(page.locator('#addbtn'), testInfo);
+  const lines = page.locator('#items .item');
+  await expect(lines).toHaveCount(2);
+  await expect(lines.nth(0).locator('img')).toHaveCount(3);
+  await expect(lines.nth(0).locator('.gap')).toHaveCount(0);
+  await expect(lines.nth(1).locator('img')).toHaveCount(2);
+  await expect(lines.nth(1).locator('.gap')).toHaveCount(1);
+  await press(page.locator('#pay'), testInfo);
+  await page.waitForURL(/checkout\.stripe\.com/, { timeout: 45_000 });
+  expect(payload.items.map((item) => item.slots)).toEqual([['🔥', '🔥', '🔥'], ['🔥', null, '🔥']]);
+  expect(payload.items.map((item) => item.emojis)).toEqual([['🔥', '🔥', '🔥'], ['🔥', null, '🔥']]);
+  expect(errors, errors.join('\n')).toEqual([]);
+});
+
 test('reduced motion keeps the page still', async ({ page }) => {
   const errors = track(page);
   await page.emulateMedia({ reducedMotion: 'reduce' });

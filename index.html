@@ -65,8 +65,8 @@ a{color:var(--ink)}
 .grid{height:312px;margin-top:10px;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain}
 .cat{font-size:.75rem;font-weight:600;color:var(--muted);padding:10px 2px 4px;line-height:1.4}
 .cells{display:grid;grid-template-columns:repeat(auto-fill, minmax(44px, 1fr))}
-.cells button{border:0;background:none;font-size:26px;min-height:44px;padding:2px 0;border-radius:10px}
-.cells button.sel{box-shadow:inset 0 0 0 1.5px var(--accent)}
+.cells button{position:relative;border:0;background:none;font-size:26px;min-height:44px;padding:2px 0;border-radius:10px}
+.cells button .count{position:absolute;top:1px;right:1px;padding:1px 3px;border-radius:6px;background:rgba(255,255,255,.94);color:#6e6e73;font-size:10px;font-weight:600;line-height:1.2;letter-spacing:-.03em;pointer-events:none}
 .cells button img{width:28px;height:28px}
 .tabs{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:10px;overflow-x:auto;overscroll-behavior-x:contain}
 .tabs button{border:1px solid var(--line);background:#fff;border-radius:980px;min-height:44px;padding:8px 12px;font-size:.85rem;font-weight:500;flex:0 0 auto}
@@ -258,9 +258,11 @@ function renderGrid(){const q=document.getElementById('q').value.trim().toLowerC
  if(key===gridKey&&grid.childElementCount)return;gridKey=key;let h='';
  const cats=q?CATS:CATS.filter(row=>row[0]===cat);
  for(const [k,,n] of cats){let list=k=='fu'?FREQ.map(e=>[e,'']):DATA[k];if(q)list=list.filter(x=>x[1].includes(q));if(!list.length)continue;
-  h+=`<div class="cat" id="c_${k}">${esc(n)}</div><div class="cells">`+list.map(x=>`<button type="button" title="${esc(x[1])}" data-emoji="${esc(x[0])}" class="${S.pick.includes(x[0])?'sel':''}">${img(x[0],false)}</button>`).join('')+'</div>'}
+  h+=`<div class="cat" id="c_${k}">${esc(n)}</div><div class="cells">`+list.map(x=>`<button type="button" title="${esc(x[1])}" data-emoji="${esc(x[0])}">${img(x[0],false)}${countBadge(x[0])}</button>`).join('')+'</div>'}
  grid.innerHTML=h||'<p class="note" style="padding:20px;text-align:center">No emoji found</p>';grid.scrollTop=0}
-function markSelected(){document.querySelectorAll('#grid button[data-emoji]').forEach(b=>{b.classList.toggle('sel',S.pick.includes(b.dataset.emoji))})}
+function useCount(e){let n=0;for(const x of S.pick)if(x===e)n++;return n}
+function countBadge(e){const n=useCount(e);return n>1?`<span class="count" aria-label="Used ${n} times">×${n}</span>`:''}
+function markSelected(){document.querySelectorAll('#grid button[data-emoji]').forEach(b=>{b.classList.remove('sel');const n=useCount(b.dataset.emoji);let badge=b.querySelector('.count');if(n>1){if(!badge){badge=document.createElement('span');badge.className='count';b.appendChild(badge)}badge.textContent='×'+n;badge.setAttribute('aria-label','Used '+n+' times')}else if(badge)badge.remove()})}
 function nextEmpty(from){for(let step=1;step<=3;step++){const i=(from+step)%3;if(!S.pick[i])return i}return from}
 function pick(e){if(!e)return;const i=S.slot;S.pick[i]=e;S.slot=nextEmpty(i);all();markSelected()}
 function takeEmoji(pool,emoji){const i=pool.findIndex(node=>node.alt===emoji);if(i>=0)return pool.splice(i,1)[0];const holder=document.createElement('div');holder.innerHTML=img(emoji,false);return holder.firstElementChild}

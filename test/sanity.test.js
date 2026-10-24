@@ -222,6 +222,69 @@ test('an empty middle slot stays a gap in checkout metadata and the print file',
   );
 });
 
+test('the same emoji can fill more than one slot', async () => {
+  const triple = ['🔥', '🔥', '🔥'];
+  const gapped = ['🔥', null, '🔥'];
+  const stripe = fakeStripe();
+  await createCheckoutSession({
+    items: [
+      sampleItem({ emojis: triple, slots: triple, layout: 'row', background: { shape: 'none' } }),
+      sampleItem({ emojis: gapped, slots: gapped, layout: 'row', background: { shape: 'none' }, quantity: 1 }),
+    ],
+    stripe,
+    siteUrl: SITE,
+  });
+  const meta = stripe.calls[0].metadata;
+  assert.equal(meta.n, '2');
+  assert.deepEqual(JSON.parse(meta.i0).slots, triple);
+  assert.deepEqual(JSON.parse(meta.i0).e, triple);
+  assert.deepEqual(JSON.parse(meta.i1).slots, gapped);
+  const restored = itemsFromMetadata(meta);
+  assert.deepEqual(restored[0].emojis, triple);
+  assert.deepEqual(restored[1].slots, gapped);
+  assert.deepEqual(decodeDesign(encodeDesign(restored[0])).emojis, triple);
+  assert.deepEqual(decodeDesign(encodeDesign(restored[1])).emojis, gapped);
+  const order = buildPrintfulOrder({ session: completedSession(meta), siteUrl: SITE });
+  assert.equal(order.items.length, 2);
+  assert.deepEqual(decodeDesign(new URL(order.items[0].files[0].url).searchParams.get('design')).emojis, triple);
+  assert.deepEqual(decodeDesign(new URL(order.items[1].files[0].url).searchParams.get('design')).emojis, gapped);
+
+  function marks(svg) {
+    return [...svg.matchAll(/translate\(([-\d.]+) ([-\d.]+)\) scale\(([-\d.]+)\)/g)].map((mark) => {
+      const x = Number(mark[1]);
+      const glyph = Number(mark[3]) * 36;
+      return { cx: x + glyph / 2, glyph };
+    });
+  }
+  const full = marks(composeSvg({
+    product: 'tee', emojis: ['🔥', '😎', '🍕'], layout: 'row', logoSize: 100, background: { shape: 'none' },
+  }, [SVG, SVG, SVG]));
+  const repeated = composeSvg({
+    product: 'tee', emojis: triple, layout: 'row', logoSize: 100, background: { shape: 'none' },
+  }, [SVG, SVG, SVG]);
+  const repeatedMarks = marks(repeated);
+  assert.equal(repeatedMarks.length, 3);
+  assert.match(repeated, /id="e0_/);
+  assert.match(repeated, /id="e2_/);
+  repeatedMarks.forEach((mark, index) => {
+    assert.ok(Math.abs(mark.cx - full[index].cx) < 1);
+  });
+  const outer = marks(composeSvg({
+    product: 'hat', emojis: gapped, layout: 'row', logoSize: 100, background: { shape: 'none' },
+  }, [SVG, SVG]));
+  const hatFull = marks(composeSvg({
+    product: 'hat', emojis: ['🔥', '😎', '🍕'], layout: 'row', logoSize: 100, background: { shape: 'none' },
+  }, [SVG, SVG, SVG]));
+  assert.equal(outer.length, 2);
+  assert.ok(Math.abs(outer[0].cx - hatFull[0].cx) < 1);
+  assert.ok(Math.abs(outer[1].cx - hatFull[2].cx) < 1);
+  const fetched = [];
+  await renderLogoPng({
+    product: 'tee', emojis: triple, layout: 'row', logoSize: 100, background: { shape: 'none' },
+  }, async () => { fetched.push('🔥'); return SVG; });
+  assert.equal(fetched.length, 3);
+});
+
 test('printful order is a draft unless PRINTFUL_AUTO_CONFIRM=true', async () => {
   const stripe = fakeStripe();
   await createCheckoutSession({ items: [sampleItem({ product: 'mug', color: 'White', size: '11 oz' })], stripe, siteUrl: SITE });
