@@ -114,19 +114,28 @@ footer a{color:var(--muted)}
  .opt:hover:not(.on){border-color:#86868b}
 }
 @media(max-width:899px){
- .stage{position:sticky;top:var(--bar, 48px);z-index:20;height:40dvh;margin-left:-22px;margin-right:-22px;border-radius:0;padding:6px 8px;display:flex;align-items:center;justify-content:center;background:var(--stage);box-shadow:0 1px 0 #e8e8ed}
- .mock{width:min(100%, calc((40dvh - 12px) * var(--aw) / var(--ah)));max-height:calc(40dvh - 12px);height:auto}
+ html{--pin:40dvh;--preview-compact:clamp(64px, 16dvh, calc(var(--pin) - 156px))}
+ .stage{position:sticky;top:var(--bar, 48px);z-index:20;height:var(--pin);margin-left:-22px;margin-right:-22px;border-radius:0;padding:6px 8px;display:flex;align-items:center;justify-content:center;background:var(--stage);box-shadow:0 1px 0 #e8e8ed;transition:height .32s ease}
+ .mock{width:min(100%, calc((var(--pin) - 12px) * var(--aw) / var(--ah)));max-height:calc(var(--pin) - 12px);height:auto;transition:max-height .32s ease, width .32s ease}
  .buy{gap:0}
  .choices{padding-top:0}
  .choices > .choice:first-child{padding:0;border-top:0}
- .choices button,.choices input,.choices .grid,#tabs{scroll-margin-top:calc(40dvh + 8px)}
- #emoji-choice{display:flex;flex-direction:column;height:calc(100dvh - var(--bar, 48px) - 40dvh);padding:8px 0 0;box-sizing:border-box;overflow:hidden}
+ .choices .choice,.choices .choice button,.choices .choice input{scroll-margin-top:calc(var(--pin) + 44px)}
+ #emoji-choice{display:flex;flex-direction:column;height:calc(100dvh - var(--bar, 48px) - var(--pin));padding:8px 0 0;box-sizing:border-box;overflow:hidden}
  #emoji-choice h3{font-size:1.15rem;margin:0 0 6px;line-height:1.5}
  #emoji-choice .note{font-size:.9rem;line-height:1.45;margin:0}
  #emoji-choice .slots{margin:8px 0}
  #emoji-choice .slot{height:56px;font-size:28px}
  #emoji-choice .kb{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;margin-top:0}
  #emoji-choice .grid{flex:1 1 auto;height:auto;min-height:0;margin-top:8px}
+ html.compact .stage{height:var(--preview-compact)}
+ html.compact .mock{width:min(100%, calc((var(--preview-compact) - 12px) * var(--aw) / var(--ah)));max-height:calc(var(--preview-compact) - 12px)}
+ html.compact #emoji-choice{position:sticky;top:calc(var(--bar, 48px) + var(--preview-compact));z-index:19;height:calc(var(--pin) - var(--preview-compact));margin-left:-22px;margin-right:-22px;padding:4px 22px 0;background:#fff;box-shadow:0 1px 0 #e8e8ed}
+ html.compact #emoji-choice h3,html.compact #emoji-choice > .note{display:none}
+ html.compact #emoji-choice .slots{margin:4px 0;flex:0 0 auto}
+ html.compact #emoji-choice .slot{height:44px;font-size:24px}
+ html.compact #emoji-choice .kb{margin-top:0}
+ html.compact #emoji-choice .grid{margin-top:6px}
 }
 @media(min-width:900px){
  .hero{padding:64px 6vw 0}
@@ -162,7 +171,6 @@ footer a{color:var(--muted)}
 <div class="mock" id="mock" data-fit="panel" data-product="tee" data-ink="light" style="--px:30.2%;--py:23.5%;--pw:38.5%;--ph:31.3%;--rx:4deg;--ry:-3deg;--swatch:#ffffff"><img class="blank" alt="White T-shirt" data-key="tee:White" src="assets/products/tee/white-520.webp" srcset="assets/products/tee/white-360.webp 360w, assets/products/tee/white-520.webp 520w" sizes="(min-width: 900px) 460px, 100vw" width="520" height="640" decoding="async" fetchpriority="high"><div class="print"></div></div>
 </div>
 <div class="choices">
-<section class="choice">
 <div id="emoji-choice">
 <h3>Emojis</h3>
 <p class="note">Tap a slot, then an emoji. Empty slots stay empty.</p>
@@ -170,6 +178,7 @@ footer a{color:var(--muted)}
 <p class="sr" id="triosay" aria-live="polite"></p>
 <div class="kb"><input id="q" placeholder="Search emoji" autocomplete="off" aria-label="Search emoji"><div class="grid" id="grid"></div></div>
 </div>
+<section class="choice">
 <div class="tabs" id="tabs"></div>
 </section>
 <section class="choice">
@@ -381,7 +390,8 @@ async function checkout(){if(!S.cart.length)return toast('Your bag is empty');
   location.href=data.url}catch(e){toast('This preview can’t take payment. Checkout runs on the Vercel deployment.')}
  finally{pay.disabled=false;pay.textContent=label}}
 function nudge(){mock.classList.remove('bump');void mock.offsetWidth;mock.classList.add('bump')}
-function fitBar(){const bar=document.querySelector('.topbar');if(!bar)return;document.documentElement.style.scrollPaddingTop=(bar.offsetHeight+12)+'px';document.documentElement.style.setProperty('--bar',bar.offsetHeight+'px')}
+function fitBar(){const bar=document.querySelector('.topbar');if(!bar)return;document.documentElement.style.scrollPaddingTop=(bar.offsetHeight+12)+'px';document.documentElement.style.setProperty('--bar',bar.offsetHeight+'px');syncPin()}
+function syncPin(){const root=document.documentElement;const phone=window.matchMedia('(max-width: 899px)').matches;if(!phone){root.classList.remove('compact');return}const bar=document.querySelector('.topbar');const heading=document.querySelector('#shop h2');if(!bar||!heading)return;const passed=heading.getBoundingClientRect().bottom<bar.getBoundingClientRect().bottom+1;root.classList.toggle('compact',passed)}
 function loadShopConfig(){fetch('/api/config',{headers:{accept:'application/json'}}).then(r=>r.ok?r.json():null).then(d=>{
  if(d&&d.stripeTestMode===true){const el=document.getElementById('testmode');if(el)el.hidden=false}fitBar()}).catch(()=>{})}
 function bindTap(id,fn){const root=document.getElementById(id);if(!root)return;let swallow=0,track=null;
@@ -408,5 +418,8 @@ mock.querySelector('img.blank').addEventListener('error',()=>mock.classList.add(
 mock.querySelector('img.blank').addEventListener('load',()=>mock.classList.remove('flat'));
 preloadPhotos();tabs();renderGrid();all();markSelected();cart();loadShopConfig();fitBar();
 new ResizeObserver(()=>fitBar()).observe(document.querySelector('.topbar'));
+let pinFrame=0;
+addEventListener('scroll',()=>{if(pinFrame)return;pinFrame=requestAnimationFrame(()=>{pinFrame=0;syncPin()})},{passive:true});
+addEventListener('resize',()=>syncPin());
 
 </script></body></html>

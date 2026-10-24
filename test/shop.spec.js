@@ -248,6 +248,8 @@ test('emoji categories stay on the tapped tab', async ({ page }, testInfo) => {
   await expect(page.locator('#tabs button.on')).toHaveCount(1);
   await expect(page.locator('#tabs button[data-cat="fu"]')).toHaveAttribute('aria-pressed', 'true');
   await expect(page.locator('#grid .cat')).toHaveCount(1);
+  await page.locator('#tabs').scrollIntoViewIfNeeded();
+  await page.evaluate(() => syncPin());
   const bar = await page.locator('#tabs').evaluate((el) => {
     const cs = getComputedStyle(el);
     return { wrap: cs.flexWrap, overflowX: cs.overflowX, overscroll: cs.overscrollBehaviorX };
@@ -268,7 +270,7 @@ test('emoji categories stay on the tapped tab', async ({ page }, testInfo) => {
   const flagsHeight = await page.locator('#grid').evaluate((el) => el.getBoundingClientRect().height);
   await press(page.locator('#tabs button[data-cat="fu"]'), testInfo);
   expect(Math.abs(pickerHeight - flagsHeight)).toBeLessThan(8);
-  expect(pickerHeight).toBeGreaterThan(100);
+  expect(pickerHeight).toBeGreaterThan(40);
 
   const rapid = await page.evaluate(() => {
     const ids = ['an', 'fd', 'ac', 'tp', 'ob', 'sy', 'fl', 'sp', 'fu'];
@@ -421,26 +423,56 @@ test('preview sits with the choices and the bag button stays in the page', async
   const mobile = testInfo.project.use.isMobile === true;
   await page.evaluate(() => { document.documentElement.style.scrollBehavior = 'auto'; });
   if (mobile) {
+    const openPreview = await page.evaluate(() => document.querySelector('#stage').getBoundingClientRect().height / window.innerHeight);
+    expect(openPreview).toBeGreaterThan(0.37);
+    expect(openPreview).toBeLessThan(0.43);
     await page.evaluate(() => {
       const stage = document.getElementById('stage');
       const bar = document.querySelector('.topbar').getBoundingClientRect().bottom;
       window.scrollTo(0, stage.getBoundingClientRect().top + window.scrollY - bar);
+      syncPin();
     });
+    await expect.poll(() => page.evaluate(() => document.documentElement.classList.contains('compact'))).toBeTruthy();
+    await page.evaluate(() => new Promise((resolve) => {
+      const stage = document.getElementById('stage');
+      let last = -1;
+      let stable = 0;
+      let frames = 0;
+      function tick() {
+        const height = stage.getBoundingClientRect().height;
+        if (Math.abs(height - last) < 0.5) stable += 1;
+        else stable = 0;
+        last = height;
+        frames += 1;
+        if (stable >= 4 || frames > 90) resolve();
+        else requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    }));
     const frame = await page.evaluate(() => {
       const stage = document.querySelector('#stage').getBoundingClientRect();
       const mock = document.querySelector('#mock').getBoundingClientRect();
       const slots = document.querySelector('#slots').getBoundingClientRect();
       const search = document.querySelector('#q').getBoundingClientRect();
       const grid = document.querySelector('#grid').getBoundingClientRect();
+      const emoji = document.querySelector('#emoji-choice').getBoundingClientRect();
+      const gridEl = document.querySelector('#grid');
       const buy = document.querySelector('.buybar');
       const vh = window.innerHeight;
       const bar = document.querySelector('.topbar').getBoundingClientRect().bottom;
       const logos = [...document.querySelectorAll('#mock image')].map((el) => el.getBoundingClientRect());
+      const pinBottom = Math.max(stage.bottom, emoji.bottom);
       return {
         sticky: getComputedStyle(document.querySelector('#stage')).position,
+        emojiSticky: getComputedStyle(document.querySelector('#emoji-choice')).position,
         stageTop: stage.top,
         stageBottom: stage.bottom,
         stageH: stage.height,
+        emojiTop: emoji.top,
+        emojiBottom: emoji.bottom,
+        pinH: pinBottom - stage.top,
+        gridScroll: gridEl.scrollHeight > gridEl.clientHeight + 8,
+        gridOverflow: getComputedStyle(gridEl).overflowY,
         mock: { top: mock.top, bottom: mock.bottom, left: mock.left, right: mock.right, width: mock.width, height: mock.height },
         slots: { top: slots.top, bottom: slots.bottom },
         search: { top: search.top, bottom: search.bottom, height: search.height },
@@ -459,10 +491,17 @@ test('preview sits with the choices and the bag button stays in the page', async
       };
     });
     expect(frame.sticky).toBe('sticky');
+    expect(frame.emojiSticky).toBe('sticky');
     expect(frame.stageTop).toBeGreaterThanOrEqual(frame.bar - 2);
     expect(frame.stageTop).toBeLessThan(frame.bar + 4);
-    expect(frame.stageH / frame.vh).toBeGreaterThan(0.37);
-    expect(frame.stageH / frame.vh).toBeLessThan(0.43);
+    expect(frame.stageH / frame.vh).toBeGreaterThan(0.12);
+    expect(frame.stageH / frame.vh).toBeLessThan(0.22);
+    expect(frame.stageH / frame.vh).toBeLessThan(openPreview - 0.15);
+    expect(frame.pinH / frame.vh).toBeGreaterThan(0.37);
+    expect(frame.pinH / frame.vh).toBeLessThan(0.44);
+    expect(frame.pinH / frame.vh).toBeLessThan(0.55);
+    expect(frame.emojiTop).toBeGreaterThanOrEqual(frame.stageBottom - 2);
+    expect(frame.emojiTop).toBeLessThanOrEqual(frame.stageBottom + 3);
     expect(frame.mock.top).toBeGreaterThanOrEqual(frame.stageTop - 1);
     expect(frame.mock.bottom).toBeLessThanOrEqual(frame.stageBottom + 1);
     expect(frame.mock.bottom).toBeLessThanOrEqual(frame.vh + 1);
@@ -472,8 +511,8 @@ test('preview sits with the choices and the bag button stays in the page', async
     expect(frame.fit).toBe('contain');
     expect(frame.logos.length).toBe(3);
     for (const logo of frame.logos) {
-      expect(logo.width).toBeGreaterThan(6);
-      expect(logo.height).toBeGreaterThan(6);
+      expect(logo.width).toBeGreaterThan(4);
+      expect(logo.height).toBeGreaterThan(4);
       expect(logo.top).toBeGreaterThanOrEqual(frame.mock.top - 1);
       expect(logo.bottom).toBeLessThanOrEqual(frame.mock.bottom + 1);
       expect(logo.left).toBeGreaterThanOrEqual(frame.mock.left - 1);
@@ -485,8 +524,11 @@ test('preview sits with the choices and the bag button stays in the page', async
     expect(frame.search.bottom).toBeLessThanOrEqual(frame.vh + 1);
     expect(frame.search.height).toBeGreaterThanOrEqual(44);
     expect(frame.grid.top).toBeGreaterThanOrEqual(frame.search.bottom - 4);
-    expect(frame.grid.bottom).toBeLessThanOrEqual(frame.vh + 1);
-    expect(frame.grid.height).toBeGreaterThan(80);
+    expect(frame.grid.bottom).toBeLessThanOrEqual(frame.emojiBottom + 1);
+    expect(frame.grid.bottom).toBeLessThanOrEqual(frame.stageTop + frame.pinH + 2);
+    expect(frame.grid.height).toBeGreaterThan(40);
+    expect(frame.gridScroll).toBeTruthy();
+    expect(['auto', 'scroll']).toContain(frame.gridOverflow);
     expect(frame.buyPos).toBe('static');
     expect(frame.fixedBuy).toBeFalsy();
     expect(frame.captionInStage).toBeFalsy();
@@ -499,30 +541,59 @@ test('preview sits with the choices and the bag button stays in the page', async
       const vh = window.innerHeight;
       return [...document.querySelectorAll('#mock image')].every((el) => {
         const r = el.getBoundingClientRect();
-        return r.width > 6 && r.top >= mock.top - 1 && r.bottom <= mock.bottom + 1 && r.bottom <= vh + 1 && r.top >= 0;
+        return r.width > 4 && r.top >= mock.top - 1 && r.bottom <= mock.bottom + 1 && r.bottom <= vh + 1 && r.top >= 0;
       });
     });
     expect(still).toBeTruthy();
     for (const target of ['#prods', '#cols', '#sizes']) {
-      await page.locator(target).scrollIntoViewIfNeeded();
-      const pinned = await page.evaluate(() => {
+      await page.locator(`${target} button`).first().evaluate((el) => el.scrollIntoView({ block: 'start', inline: 'nearest' }));
+      await page.evaluate(() => new Promise((resolve) => {
+        const stage = document.getElementById('stage');
+        let last = -1;
+        let stable = 0;
+        let frames = 0;
+        function tick() {
+          const height = stage.getBoundingClientRect().height;
+          if (Math.abs(height - last) < 0.5) stable += 1;
+          else stable = 0;
+          last = height;
+          frames += 1;
+          if (stable >= 3 || frames > 90) resolve();
+          else requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+      }));
+      const pinned = await page.evaluate((selector) => {
         const stage = document.querySelector('#stage').getBoundingClientRect();
+        const emoji = document.querySelector('#emoji-choice').getBoundingClientRect();
         const mock = document.querySelector('#mock').getBoundingClientRect();
+        const section = document.querySelector(`${selector} button`).getBoundingClientRect();
         const bar = document.querySelector('.topbar').getBoundingClientRect().bottom;
         const vh = window.innerHeight;
         const logos = [...document.querySelectorAll('#mock image')];
+        const pinBottom = Math.max(stage.bottom, emoji.bottom);
         return {
           stuck: Math.abs(stage.top - bar) < 4,
+          compact: document.documentElement.classList.contains('compact'),
+          pinRatio: (pinBottom - stage.top) / vh,
+          emojiUnder: emoji.top >= stage.bottom - 2 && emoji.top <= stage.bottom + 3,
+          sectionTop: section.top,
+          pinBottom,
           mockTop: mock.top,
           mockBottom: mock.bottom,
           vh,
           logosIn: logos.every((el) => {
             const r = el.getBoundingClientRect();
-            return r.width > 6 && r.top >= mock.top - 1 && r.bottom <= Math.min(mock.bottom, vh) + 1;
+            return r.width > 4 && r.top >= mock.top - 1 && r.bottom <= Math.min(mock.bottom, vh) + 1;
           }),
         };
-      });
+      }, target);
       expect(pinned.stuck, target).toBeTruthy();
+      expect(pinned.compact, target).toBeTruthy();
+      expect(pinned.pinRatio, target).toBeLessThan(0.55);
+      expect(pinned.pinRatio, target).toBeLessThan(0.44);
+      expect(pinned.emojiUnder, target).toBeTruthy();
+      expect(pinned.sectionTop, target).toBeGreaterThanOrEqual(pinned.pinBottom - 8);
       expect(pinned.mockTop).toBeGreaterThanOrEqual(0);
       expect(pinned.mockBottom).toBeLessThanOrEqual(pinned.vh + 1);
       expect(pinned.logosIn, target).toBeTruthy();
