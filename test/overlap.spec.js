@@ -2,13 +2,13 @@ import { expect, test } from '@playwright/test';
 
 const VIEWPORTS = [
   [320, 640],
+  [375, 667],
   [375, 812],
   [390, 844],
   [430, 932],
   [568, 320],
   [667, 375],
   [844, 390],
-  [932, 430],
   [768, 1024],
   [1024, 768],
   [1280, 740],
@@ -26,7 +26,7 @@ function scan(mode) {
   }
   const issues = [];
   function hidden(el) {
-    if (el.closest('.skip, .sr, #fx, #toast')) return true;
+    if (el.closest('.skip, .sr, #toast')) return true;
     if (mode !== 'drawer' && el.closest('#drawer')) return true;
     if (el.closest('[hidden]')) return true;
     const cs = getComputedStyle(el);
@@ -110,22 +110,9 @@ function scan(mode) {
       issues.push(`page is ${document.documentElement.scrollWidth}px wide in a ${vw}px window`);
     }
     for (const node of nodes) {
-      if (node.el.closest('#showtrack, .grid')) continue;
+      if (node.el.closest('.grid')) continue;
       if (node.r.bottom < 0 || node.r.top > window.innerHeight) continue;
       if (node.r.left < -2 || node.r.right > vw + 2) issues.push(`"${node.text}" runs outside the window`);
-    }
-    document.querySelectorAll('.floats img').forEach((img) => {
-      if (getComputedStyle(img).display === 'none') return;
-      const r = img.getBoundingClientRect();
-      for (const node of nodes) {
-        if (hit(r, node.r)) issues.push(`floating emoji overlaps "${node.text}"`);
-      }
-    });
-    const art = document.getElementById('heroart').getBoundingClientRect();
-    for (const node of nodes) {
-      if (node.el.closest('#heroart, .topbar')) continue;
-      if (node.r.bottom < 0 || node.r.top > window.innerHeight) continue;
-      if (hit(art, node.r)) issues.push(`sticker overlaps "${node.text}"`);
     }
   }
   return [...new Set(issues)].slice(0, 20);
@@ -134,7 +121,7 @@ function scan(mode) {
 test('text stays apart across phone, tablet, and desktop widths', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop', 'one viewport sweep covers every width');
   await page.goto('/');
-  await expect(page.locator('#heroart img').first()).toBeVisible();
+  await expect(page.locator('#mock image').first()).toBeVisible();
   await page.evaluate(() => {
     document.getElementById('testmode').hidden = false;
     fitBar();
@@ -145,6 +132,7 @@ test('text stays apart across phone, tablet, and desktop widths', async ({ page 
   await expect(page.locator('#drawer')).not.toHaveClass(/open/);
   await page.evaluate(() => {
     document.getElementById('toast').style.display = 'none';
+    document.documentElement.style.setProperty('scroll-behavior', 'auto', 'important');
     window.scrollTo(0, 0);
   });
 
@@ -155,7 +143,8 @@ test('text stays apart across phone, tablet, and desktop widths', async ({ page 
       await page.evaluate(async (px) => {
         document.documentElement.style.fontSize = `${px}px`;
         document.getElementById('testmode').hidden = false;
-        document.documentElement.style.scrollBehavior = 'auto';
+        document.documentElement.style.setProperty('scroll-behavior', 'auto', 'important');
+        if (document.activeElement) document.activeElement.blur();
         window.scrollTo(0, 0);
         fitBar();
         if (document.fonts && document.fonts.ready) await document.fonts.ready;
@@ -178,15 +167,15 @@ test('text stays apart across phone, tablet, and desktop widths', async ({ page 
     }
   }
 
-  const anchors = ['#showcase h2', '#ideas-title', '#builder h2', '.close h2'];
-  for (const [width, height] of [[320, 640], [390, 844], [844, 390], [768, 1024], [1280, 740], [1440, 900]]) {
+  const anchors = ['.hero h1', '#shop h2'];
+  for (const [width, height] of [[320, 640], [375, 667], [390, 844], [844, 390], [768, 1024], [1280, 740], [1440, 900]]) {
     await page.setViewportSize({ width, height });
     for (const font of [16, 24]) {
       for (const sel of anchors) {
         const placed = await page.evaluate(async ({ px, sel }) => {
           document.documentElement.style.fontSize = `${px}px`;
           document.getElementById('testmode').hidden = false;
-          document.documentElement.style.scrollBehavior = 'auto';
+          document.documentElement.style.setProperty('scroll-behavior', 'auto', 'important');
           fitBar();
           if (document.fonts && document.fonts.ready) await document.fonts.ready;
           await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));

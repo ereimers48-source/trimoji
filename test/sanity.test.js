@@ -1,14 +1,15 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
+import { inflateSync } from 'node:zlib';
 import Stripe from 'stripe';
-import { POST as checkoutPost } from '../api/checkout.js';
+import { OPTIONS as checkoutOptions, POST as checkoutPost } from '../api/checkout.js';
 import { GET as configGet } from '../api/config.js';
 import { GET as printGet } from '../api/print-file.js';
 import { POST as webhookPost } from '../api/stripe-webhook.js';
 import { publicConfig } from '../lib/config.js';
 import { createCheckoutSession } from '../lib/checkout.js';
-import { decodeDesign, encodeDesign, itemsFromMetadata } from '../lib/design.js';
+import { decodeDesign, encodeDesign, itemsFromMetadata, resolveSiteUrl } from '../lib/design.js';
 import { HttpError } from '../lib/http.js';
 import { priceCart } from '../lib/prices.js';
 import { buildPrintfulOrder } from '../lib/printful.js';
@@ -17,7 +18,7 @@ import { runtime } from '../lib/runtime.js';
 import { resolveVariant } from '../lib/variants.js';
 import { handleStripeWebhook } from '../lib/webhook.js';
 
-const SITE = 'https://trimoji.vercel.app';
+const SITE = 'https://trimojiapparel.com';
 const SECRET = 'whsec_test_secret';
 const SVG = `<?xml version="1.0"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36">
@@ -53,6 +54,60 @@ function fakeStripe() {
       },
     },
   };
+}
+
+function paeth(left, up, upLeft) {
+  const estimate = left + up - upLeft;
+  const dl = Math.abs(estimate - left);
+  const du = Math.abs(estimate - up);
+  const dlu = Math.abs(estimate - upLeft);
+  if (dl <= du && dl <= dlu) return left;
+  if (du <= dlu) return up;
+  return upLeft;
+}
+
+function decodeRgba(png) {
+  assert.equal(png.subarray(0, 8).toString('hex'), '89504e470d0a1a0a');
+  let offset = 8;
+  let width = 0;
+  let height = 0;
+  const idat = [];
+  while (offset + 12 <= png.length) {
+    const length = png.readUInt32BE(offset);
+    const type = png.subarray(offset + 4, offset + 8).toString('ascii');
+    const data = png.subarray(offset + 8, offset + 8 + length);
+    if (type === 'IHDR') {
+      width = data.readUInt32BE(0);
+      height = data.readUInt32BE(4);
+      assert.equal(data[8], 8);
+      assert.equal(data[9], 6);
+    } else if (type === 'IDAT') idat.push(data);
+    offset += 12 + length;
+    if (type === 'IEND') break;
+  }
+  const raw = inflateSync(Buffer.concat(idat));
+  const stride = width * 4;
+  const pixels = Buffer.alloc(height * stride);
+  let src = 0;
+  for (let y = 0; y < height; y += 1) {
+    const filter = raw[src];
+    src += 1;
+    for (let i = 0; i < stride; i += 1) {
+      const value = raw[src + i];
+      const left = i >= 4 ? pixels[y * stride + i - 4] : 0;
+      const up = y > 0 ? pixels[(y - 1) * stride + i] : 0;
+      const upLeft = y > 0 && i >= 4 ? pixels[(y - 1) * stride + i - 4] : 0;
+      let decoded = value;
+      if (filter === 1) decoded = (value + left) & 255;
+      else if (filter === 2) decoded = (value + up) & 255;
+      else if (filter === 3) decoded = (value + Math.floor((left + up) / 2)) & 255;
+      else if (filter === 4) decoded = (value + paeth(left, up, upLeft)) & 255;
+      else if (filter !== 0) throw new Error(`png filter ${filter}`);
+      pixels[y * stride + i] = decoded;
+    }
+    src += stride;
+  }
+  return { width, height, pixels };
 }
 
 function completedSession(metadata) {
@@ -142,8 +197,149 @@ test('design token round-trips and checkout metadata survives a client price', a
   assert.deepEqual(restored[0].emojis, ['🔥', '😎', '🍕']);
   assert.equal(restored[0].variant.variantId, 4018);
   const design = decodeDesign(encodeDesign(restored[0]));
-  assert.equal(design.background.color, '#fde68a');
+  assert.deepEqual(design.background, { shape: 'none' });
+  assert.equal(JSON.stringify(params.metadata).includes('fde68a'), false);
+  assert.equal(Object.hasOwn(JSON.parse(params.metadata.i0), 'b'), false);
   assert.equal(design.layout, 'row');
+});
+
+test('an empty middle slot stays a gap in checkout metadata and the print file', async () => {
+  const slots = ['🔥', null, '🍕'];
+  const stripe = fakeStripe();
+  await createCheckoutSession({
+    items: [sampleItem({ emojis: slots, slots, layout: 'row', background: { shape: 'none' } })],
+    stripe,
+    siteUrl: SITE,
+  });
+  const packed = JSON.parse(stripe.calls[0].metadata.i0);
+  assert.deepEqual(packed.slots, slots);
+  assert.deepEqual(packed.e, slots);
+  assert.match(stripe.calls[0].line_items[0].price_data.product_data.name, /🔥🍕/);
+  assert.equal(stripe.calls[0].line_items[0].price_data.product_data.name.includes('null'), false);
+  const restored = itemsFromMetadata(stripe.calls[0].metadata);
+  assert.deepEqual(restored[0].emojis, slots);
+  assert.deepEqual(restored[0].slots, slots);
+  assert.deepEqual(decodeDesign(encodeDesign(restored[0])).emojis, slots);
+  const order = buildPrintfulOrder({ session: completedSession(stripe.calls[0].metadata), siteUrl: SITE });
+  const token = new URL(order.items[0].files[0].url).searchParams.get('design');
+  assert.deepEqual(decodeDesign(token).emojis, slots);
+
+  function marks(svg) {
+    return [...svg.matchAll(/translate\(([-\d.]+) ([-\d.]+)\) scale\(([-\d.]+)\)/g)].map((mark) => {
+      const x = Number(mark[1]);
+      const y = Number(mark[2]);
+      const glyph = Number(mark[3]) * 36;
+      return { x, y, glyph, cx: x + glyph / 2, cy: y + glyph / 2 };
+    });
+  }
+  for (const product of ['tee', 'hoodie', 'mug', 'hat']) {
+    const design = { product, layout: 'row', logoSize: 100, background: { shape: 'none' } };
+    const full = marks(composeSvg({ ...design, emojis: ['🔥', '😎', '🍕'] }, [SVG, SVG, SVG]));
+    const gapped = marks(composeSvg({ ...design, emojis: slots }, [SVG, SVG]));
+    assert.equal(gapped.length, 2, product);
+    assert.equal(gapped[0].glyph, full[0].glyph, product);
+    assert.ok(gapped[1].cx - gapped[0].cx > gapped[0].glyph * 1.9, product);
+    assert.ok(Math.abs(gapped[0].cx - full[0].cx) < 1, product);
+    assert.ok(Math.abs(gapped[1].cx - full[2].cx) < 1, product);
+    const width = product === 'hat' ? HAT_PRINT_W : PRINT_PX;
+    assert.ok(Math.abs((gapped[0].cx + gapped[1].cx) / 2 - width / 2) < gapped[0].glyph * 0.15, product);
+  }
+  const triangle = marks(composeSvg({
+    product: 'tee', emojis: slots, layout: 'triangle', logoSize: 100, background: { shape: 'none' },
+  }, [SVG, SVG]));
+  assert.ok(triangle[1].cy > triangle[0].cy);
+  assert.ok(triangle[1].cx - triangle[0].cx > triangle[0].glyph * 0.3);
+  const stacked = marks(composeSvg({
+    product: 'hoodie', emojis: slots, layout: 'stacked', logoSize: 100, background: { shape: 'none' },
+  }, [SVG, SVG]));
+  assert.ok(Math.abs(stacked[0].cx - stacked[1].cx) < 1);
+  assert.ok(stacked[1].cy - stacked[0].cy > stacked[0].glyph * 1.9);
+  const fetched = [];
+  const png = await renderLogoPng({
+    product: 'tee', emojis: slots, layout: 'row', logoSize: 100, background: { shape: 'none' },
+  }, async () => { fetched.push(1); return SVG; });
+  assert.equal(fetched.length, 2);
+  assert.equal(png.readUInt32BE(16), PRINT_PX);
+
+  await assert.rejects(
+    () => createCheckoutSession({
+      items: [sampleItem({ emojis: [null, null, null], slots: [null, null, null] })],
+      stripe: fakeStripe(),
+      siteUrl: SITE,
+    }),
+    (err) => err instanceof HttpError && /at least 1/.test(err.message),
+  );
+  await assert.rejects(
+    () => createCheckoutSession({
+      items: [sampleItem({ emojis: ['🔥', '🍕'] })],
+      stripe: fakeStripe(),
+      siteUrl: SITE,
+    }),
+    (err) => err instanceof HttpError && /3 emoji slots/.test(err.message),
+  );
+});
+
+test('the same emoji can fill more than one slot', async () => {
+  const triple = ['🔥', '🔥', '🔥'];
+  const gapped = ['🔥', null, '🔥'];
+  const stripe = fakeStripe();
+  await createCheckoutSession({
+    items: [
+      sampleItem({ emojis: triple, slots: triple, layout: 'row', background: { shape: 'none' } }),
+      sampleItem({ emojis: gapped, slots: gapped, layout: 'row', background: { shape: 'none' }, quantity: 1 }),
+    ],
+    stripe,
+    siteUrl: SITE,
+  });
+  const meta = stripe.calls[0].metadata;
+  assert.equal(meta.n, '2');
+  assert.deepEqual(JSON.parse(meta.i0).slots, triple);
+  assert.deepEqual(JSON.parse(meta.i0).e, triple);
+  assert.deepEqual(JSON.parse(meta.i1).slots, gapped);
+  const restored = itemsFromMetadata(meta);
+  assert.deepEqual(restored[0].emojis, triple);
+  assert.deepEqual(restored[1].slots, gapped);
+  assert.deepEqual(decodeDesign(encodeDesign(restored[0])).emojis, triple);
+  assert.deepEqual(decodeDesign(encodeDesign(restored[1])).emojis, gapped);
+  const order = buildPrintfulOrder({ session: completedSession(meta), siteUrl: SITE });
+  assert.equal(order.items.length, 2);
+  assert.deepEqual(decodeDesign(new URL(order.items[0].files[0].url).searchParams.get('design')).emojis, triple);
+  assert.deepEqual(decodeDesign(new URL(order.items[1].files[0].url).searchParams.get('design')).emojis, gapped);
+
+  function marks(svg) {
+    return [...svg.matchAll(/translate\(([-\d.]+) ([-\d.]+)\) scale\(([-\d.]+)\)/g)].map((mark) => {
+      const x = Number(mark[1]);
+      const glyph = Number(mark[3]) * 36;
+      return { cx: x + glyph / 2, glyph };
+    });
+  }
+  const full = marks(composeSvg({
+    product: 'tee', emojis: ['🔥', '😎', '🍕'], layout: 'row', logoSize: 100, background: { shape: 'none' },
+  }, [SVG, SVG, SVG]));
+  const repeated = composeSvg({
+    product: 'tee', emojis: triple, layout: 'row', logoSize: 100, background: { shape: 'none' },
+  }, [SVG, SVG, SVG]);
+  const repeatedMarks = marks(repeated);
+  assert.equal(repeatedMarks.length, 3);
+  assert.match(repeated, /id="e0_/);
+  assert.match(repeated, /id="e2_/);
+  repeatedMarks.forEach((mark, index) => {
+    assert.ok(Math.abs(mark.cx - full[index].cx) < 1);
+  });
+  const outer = marks(composeSvg({
+    product: 'hat', emojis: gapped, layout: 'row', logoSize: 100, background: { shape: 'none' },
+  }, [SVG, SVG]));
+  const hatFull = marks(composeSvg({
+    product: 'hat', emojis: ['🔥', '😎', '🍕'], layout: 'row', logoSize: 100, background: { shape: 'none' },
+  }, [SVG, SVG, SVG]));
+  assert.equal(outer.length, 2);
+  assert.ok(Math.abs(outer[0].cx - hatFull[0].cx) < 1);
+  assert.ok(Math.abs(outer[1].cx - hatFull[2].cx) < 1);
+  const fetched = [];
+  await renderLogoPng({
+    product: 'tee', emojis: triple, layout: 'row', logoSize: 100, background: { shape: 'none' },
+  }, async () => { fetched.push('🔥'); return SVG; });
+  assert.equal(fetched.length, 3);
 });
 
 test('printful order is a draft unless PRINTFUL_AUTO_CONFIRM=true', async () => {
@@ -158,7 +354,7 @@ test('printful order is a draft unless PRINTFUL_AUTO_CONFIRM=true', async () => 
   assert.equal(order.items[0].variant_id, 1320);
   assert.equal(order.items[0].files[0].type, 'default');
   assert.equal(order.items[0].options, undefined);
-  assert.match(order.items[0].files[0].url, /^https:\/\/trimoji\.vercel\.app\/api\/print-file\?design=/);
+  assert.match(order.items[0].files[0].url, /^https:\/\/trimojiapparel\.com\/api\/print-file\?design=/);
 
   const seen = [];
   const fetchImpl = async (url, init) => {
@@ -275,6 +471,24 @@ test('print file is a transparent PNG from Twemoji SVG', async () => {
   assert.equal(png.readUInt32BE(20), PRINT_PX);
   assert.equal(png[25], 6);
 
+  const requestedCircle = {
+    emojis: ['🔥', '😎', '🍕'],
+    layout: 'row',
+    logoSize: 100,
+    background: { shape: 'circle', color: '#fde68a' },
+  };
+  const art = composeSvg(requestedCircle, [SVG, SVG, SVG]);
+  assert.equal(art.includes('#fde68a'), false);
+  const clear = decodeRgba(await renderLogoPng(requestedCircle, async () => SVG));
+  const alpha = (bitmap, x, y) => bitmap.pixels[(y * bitmap.width + x) * 4 + 3];
+  assert.equal(alpha(clear, 0, 0), 0);
+  assert.equal(alpha(clear, 900, 40), 0);
+  assert.ok(alpha(clear, 900, 900) > 200);
+  const legacy = Buffer.from(JSON.stringify({
+    e: ['🔥', '😎', '🍕'], l: 'row', z: 100, b: '#fde68a',
+  }), 'utf8').toString('base64url');
+  assert.deepEqual(decodeDesign(legacy).background, { shape: 'none' });
+
   const hatDesign = decodeDesign(encodeDesign({
     product: 'hat',
     emojis: ['🔥', '😎', '🍕'],
@@ -287,6 +501,10 @@ test('print file is a transparent PNG from Twemoji SVG', async () => {
   assert.equal(hatPng.readUInt32BE(16), HAT_PRINT_W);
   assert.equal(hatPng.readUInt32BE(20), HAT_PRINT_H);
   assert.equal(hatPng[25], 6);
+  const hatPixels = decodeRgba(hatPng);
+  assert.equal(alpha(hatPixels, 0, 0), 0);
+  assert.equal(alpha(hatPixels, 825, 40), 0);
+  assert.ok(alpha(hatPixels, 825, 375) > 200);
   let offset = 8;
   let dpi = null;
   while (offset + 12 <= hatPng.length) {
@@ -376,7 +594,7 @@ test('HTTP handlers: checkout redirect, webhook, and print file', async () => {
   try {
     const hatStripe = fakeStripe();
     runtime.createStripe = () => hatStripe;
-    const hatOk = await checkoutPost(new Request('https://trimoji.vercel.app/api/checkout', {
+    const hatOk = await checkoutPost(new Request('https://trimojiapparel.com/api/checkout', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ items: [sampleItem({ product: 'hat', color: 'Black', size: 'One size', price: 0 })] }),
@@ -397,12 +615,13 @@ test('HTTP handlers: checkout redirect, webhook, and print file', async () => {
 
     const stripe = fakeStripe();
     runtime.createStripe = () => stripe;
-    const ok = await checkoutPost(new Request('https://trimoji.vercel.app/api/checkout', {
+    const ok = await checkoutPost(new Request('https://trimojiapparel.com/api/checkout', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', origin: SITE },
       body: JSON.stringify({ items: [sampleItem()] }),
     }));
     assert.equal(ok.status, 200);
+    assert.equal(ok.headers.get('access-control-allow-origin'), SITE);
     assert.equal((await ok.json()).url, 'https://checkout.stripe.com/c/pay/cs_test_123');
 
     const payload = JSON.stringify({
@@ -414,7 +633,7 @@ test('HTTP handlers: checkout redirect, webhook, and print file', async () => {
     const header = Stripe.webhooks.generateTestHeaderString({ payload, secret: SECRET });
     runtime.createStripe = () => new Stripe('sk_test_placeholder');
     runtime.fetch = async () => new Response(JSON.stringify({ result: { id: 7 } }), { status: 200 });
-    const hooked = await webhookPost(new Request('https://trimoji.vercel.app/api/stripe-webhook', {
+    const hooked = await webhookPost(new Request('https://trimojiapparel.com/api/stripe-webhook', {
       method: 'POST',
       headers: { 'stripe-signature': header, 'content-type': 'application/json' },
       body: payload,
@@ -427,7 +646,7 @@ test('HTTP handlers: checkout redirect, webhook, and print file', async () => {
       assert.match(String(url), /twemoji@latest\/assets\/svg\/.+\.svg$/);
       return new Response(SVG, { status: 200 });
     };
-    const file = await printGet(new Request(`https://trimoji.vercel.app/api/print-file?design=${token}`));
+    const file = await printGet(new Request(`https://trimojiapparel.com/api/print-file?design=${token}`));
     assert.equal(file.status, 200);
     assert.equal(file.headers.get('content-type'), 'image/png');
     const bytes = Buffer.from(await file.arrayBuffer());
@@ -449,6 +668,63 @@ test('HTTP handlers: checkout redirect, webhook, and print file', async () => {
   }
 });
 
+test('the custom domain is the checkout fallback and older origins stay allowed', async () => {
+  assert.equal(resolveSiteUrl(undefined), SITE);
+  assert.equal(resolveSiteUrl('  '), SITE);
+  assert.equal(resolveSiteUrl('https://trimoji.vercel.app/'), 'https://trimoji.vercel.app');
+  assert.equal(resolveSiteUrl('https://ereimers48-source.github.io/trimoji/'), 'https://ereimers48-source.github.io/trimoji');
+
+  const stripe = fakeStripe();
+  await createCheckoutSession({ items: [sampleItem()], stripe, siteUrl: resolveSiteUrl(undefined) });
+  assert.equal(stripe.calls[0].success_url, `${SITE}/success.html?session_id={CHECKOUT_SESSION_ID}`);
+  assert.equal(stripe.calls[0].cancel_url, `${SITE}/cancel.html`);
+
+  const legacy = fakeStripe();
+  await createCheckoutSession({
+    items: [sampleItem()],
+    stripe: legacy,
+    siteUrl: resolveSiteUrl('https://trimoji.vercel.app'),
+  });
+  assert.equal(legacy.calls[0].success_url, 'https://trimoji.vercel.app/success.html?session_id={CHECKOUT_SESSION_ID}');
+  assert.equal(legacy.calls[0].cancel_url, 'https://trimoji.vercel.app/cancel.html');
+
+  for (const origin of [SITE, 'https://www.trimojiapparel.com', 'https://trimoji.vercel.app', 'https://ereimers48-source.github.io']) {
+    const pre = await checkoutOptions(new Request(`${SITE}/api/checkout`, { method: 'OPTIONS', headers: { origin } }));
+    assert.equal(pre.status, 204, origin);
+    assert.equal(pre.headers.get('access-control-allow-origin'), origin);
+  }
+  const denied = await checkoutOptions(new Request(`${SITE}/api/checkout`, {
+    method: 'OPTIONS',
+    headers: { origin: 'https://evil.example' },
+  }));
+  assert.equal(denied.status, 403);
+  assert.equal(denied.headers.get('access-control-allow-origin'), null);
+
+  const previous = { site: process.env.SITE_URL, key: process.env.STRIPE_SECRET_KEY };
+  delete process.env.SITE_URL;
+  process.env.STRIPE_SECRET_KEY = 'sk_test_placeholder';
+  const originalStripe = runtime.createStripe;
+  const routed = fakeStripe();
+  runtime.createStripe = () => routed;
+  try {
+    const response = await checkoutPost(new Request(`${SITE}/api/checkout`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', origin: 'https://trimoji.vercel.app' },
+      body: JSON.stringify({ items: [sampleItem()] }),
+    }));
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('access-control-allow-origin'), 'https://trimoji.vercel.app');
+    assert.equal(routed.calls[0].success_url, `${SITE}/success.html?session_id={CHECKOUT_SESSION_ID}`);
+    assert.equal(routed.calls[0].cancel_url, `${SITE}/cancel.html`);
+  } finally {
+    runtime.createStripe = originalStripe;
+    if (previous.site === undefined) delete process.env.SITE_URL;
+    else process.env.SITE_URL = previous.site;
+    if (previous.key === undefined) delete process.env.STRIPE_SECRET_KEY;
+    else process.env.STRIPE_SECRET_KEY = previous.key;
+  }
+});
+
 test('the static shop asks the server for checkout and test mode', () => {
   const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   assert.match(html, /id="testmode"/);
@@ -463,10 +739,20 @@ test('the static shop asks the server for checkout and test mode', () => {
   assert.match(html, /Trucker hat/);
   assert.match(html, /setAttribute\('data-hat','trucker'\)/);
   assert.match(html, /assets\/products\//);
-  assert.match(html, /id="try"/);
-  assert.match(html, /id="showcase"/);
   assert.match(html, /prefers-reduced-motion/);
-  assert.match(html, /Not reviews, not quotes, and not statistics/);
+  assert.match(html, /rel="canonical" href="https:\/\/trimojiapparel\.com\/"/);
+  assert.match(html, /property="og:url" content="https:\/\/trimojiapparel\.com\/"/);
+  assert.doesNotMatch(html, /trimoji\.vercel\.app/);
+  assert.doesNotMatch(html, /github\.io/);
+  for (const page of ['success.html', 'cancel.html']) {
+    const extra = readFileSync(new URL(`../${page}`, import.meta.url), 'utf8');
+    assert.match(extra, /rel="canonical" href="https:\/\/trimojiapparel\.com\//);
+    assert.match(extra, /property="og:url" content="https:\/\/trimojiapparel\.com\//);
+  }
+  assert.doesNotMatch(html, /id="bgs"/);
+  assert.doesNotMatch(html, /Backdrop/);
+  assert.doesNotMatch(html, /id="showcase"/);
+  assert.doesNotMatch(html, /mug example/);
   assert.doesNotMatch(html, /Dad hat/);
   assert.doesNotMatch(html, /backdrop-filter/);
   assert.doesNotMatch(html, /assets\/svg\//);
