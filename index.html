@@ -117,28 +117,26 @@ footer a{color:var(--muted)}
  .opt:hover:not(.on){border-color:#86868b}
 }
 @media(max-width:899px){
- html{--pin:40dvh;--preview-compact:clamp(64px, 16dvh, calc(var(--pin) - 156px))}
+ html{--pin:40dvh;--preview-compact:clamp(64px, 16dvh, calc(var(--pin) - 156px));--slotbar:64px}
  .stage{position:sticky;top:var(--bar, 48px);z-index:20;height:var(--pin);margin-left:-22px;margin-right:-22px;border-radius:0;padding:6px 8px;display:flex;align-items:center;justify-content:center;background:var(--stage);box-shadow:0 1px 0 #e8e8ed;transition:height .32s ease}
  .mock{width:min(100%, calc((var(--pin) - 12px) * var(--aw) / var(--ah)));max-height:calc(var(--pin) - 12px);height:auto;transition:max-height .32s ease, width .32s ease}
  .buy{gap:0}
  .choices{padding-top:0}
- .choices > .choice:first-child{padding:0;border-top:0}
- .choices .choice,.choices .choice button,.choices .choice input{scroll-margin-top:calc(var(--pin) + 44px)}
- #emoji-choice{display:flex;flex-direction:column;height:calc(100dvh - var(--bar, 48px) - var(--pin));padding:8px 0 0;box-sizing:border-box;overflow:hidden}
+ html{scroll-padding-top:calc(var(--bar, 48px) + var(--pin) + var(--slotbar) + 88px)}
+ html.compact{scroll-padding-top:calc(var(--bar, 48px) + var(--preview-compact) + var(--slotbar) + 16px)}
+ #emoji-choice{display:block;height:auto;overflow:visible;padding:8px 0 0}
  #emoji-choice h3{font-size:1.15rem;margin:0 0 6px;line-height:1.5}
  #emoji-choice .note{font-size:.9rem;line-height:1.45;margin:0}
- #emoji-choice .slots{margin:8px 0}
- #emoji-choice .slot{height:56px;font-size:28px}
- #emoji-choice .kb{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;margin-top:0}
- #emoji-choice .grid{flex:1 1 auto;height:auto;min-height:0;margin-top:8px}
+ .slotbar .slots{margin:8px 0}
+ .slotbar .slot{height:56px;font-size:28px}
+ .kb{display:block;margin-top:0}
+ #grid{height:auto;margin-top:8px;overflow:visible}
  html.compact .stage{height:var(--preview-compact)}
  html.compact .mock{width:min(100%, calc((var(--preview-compact) - 12px) * var(--aw) / var(--ah)));max-height:calc(var(--preview-compact) - 12px)}
- html.compact #emoji-choice{position:sticky;top:calc(var(--bar, 48px) + var(--preview-compact));z-index:19;height:calc(var(--pin) - var(--preview-compact));margin-left:-22px;margin-right:-22px;padding:4px 22px 0;background:#fff;box-shadow:0 1px 0 #e8e8ed}
  html.compact #emoji-choice h3,html.compact #emoji-choice > .note{display:none}
- html.compact #emoji-choice .slots{margin:4px 0;flex:0 0 auto}
- html.compact #emoji-choice .slot{height:44px;font-size:24px}
- html.compact #emoji-choice .kb{margin-top:0}
- html.compact #emoji-choice .grid{margin-top:6px}
+ html.compact .slotbar{position:sticky;top:calc(var(--bar, 48px) + var(--preview-compact));z-index:19;margin-left:-22px;margin-right:-22px;padding:0 22px 2px;background:#fff;box-shadow:0 1px 0 #e8e8ed}
+ html.compact .slotbar .slots{margin:0}
+ html.compact .slotbar .slot{height:44px;font-size:24px}
 }
 @media(min-width:900px){
  .hero{padding:64px 6vw 0}
@@ -148,8 +146,8 @@ footer a{color:var(--muted)}
  .mock{width:min(100%, calc((100dvh - var(--bar, 64px) - 48px) * var(--aw) / var(--ah)));max-height:calc(100dvh - var(--bar, 64px) - 48px);height:auto}
  .choices{padding-top:0}
  #emoji-choice{display:block;height:auto;overflow:visible}
- #emoji-choice .kb{display:block}
- #emoji-choice .grid{height:312px;flex:none}
+ .kb{display:block}
+ #grid{height:312px;overflow-x:hidden;overflow-y:auto;flex:none}
 }
 @media (prefers-reduced-motion: reduce){
  html{scroll-behavior:auto}
@@ -177,13 +175,12 @@ footer a{color:var(--muted)}
 <div id="emoji-choice">
 <h3>Emojis</h3>
 <p class="note">Tap a slot, then an emoji. Empty slots stay empty.</p>
+</div>
+<div class="slotbar" id="slotbar">
 <div class="slots" id="slots"></div>
 <p class="sr" id="triosay" aria-live="polite"></p>
-<div class="kb"><input id="q" placeholder="Search emoji" autocomplete="off" aria-label="Search emoji"><div class="grid" id="grid"></div></div>
 </div>
-<section class="choice">
-<div class="tabs" id="tabs"></div>
-</section>
+<div class="kb"><input id="q" placeholder="Search emoji" autocomplete="off" aria-label="Search emoji"><div class="tabs" id="tabs"></div><div class="grid" id="grid"></div></div>
 <section class="choice">
 <h3>Layout</h3>
 <div class="opts" id="lay"></div>
@@ -397,7 +394,7 @@ async function checkout(){if(!S.cart.length)return toast('Your bag is empty');
   location.href=data.url}catch(e){toast('This preview can’t take payment. Checkout runs on the Vercel deployment.')}
  finally{pay.disabled=false;pay.textContent=label}}
 function nudge(){mock.classList.remove('bump');void mock.offsetWidth;mock.classList.add('bump')}
-function fitBar(){const bar=document.querySelector('.topbar');if(!bar)return;document.documentElement.style.scrollPaddingTop=(bar.offsetHeight+12)+'px';document.documentElement.style.setProperty('--bar',bar.offsetHeight+'px');syncPin()}
+function fitBar(){const bar=document.querySelector('.topbar');if(!bar)return;document.documentElement.style.setProperty('--bar',bar.offsetHeight+'px');const phone=window.matchMedia('(max-width: 899px)').matches;document.documentElement.style.scrollPaddingTop=phone?'':(bar.offsetHeight+12)+'px';syncPin()}
 function syncPin(){const root=document.documentElement;const phone=window.matchMedia('(max-width: 899px)').matches;if(!phone){root.classList.remove('compact');return}const bar=document.querySelector('.topbar');const heading=document.querySelector('#shop h2');if(!bar||!heading)return;const passed=heading.getBoundingClientRect().bottom<bar.getBoundingClientRect().bottom+1;root.classList.toggle('compact',passed)}
 function loadShopConfig(){fetch('/api/config',{headers:{accept:'application/json'}}).then(r=>r.ok?r.json():null).then(d=>{
  if(d&&d.stripeTestMode===true){const el=document.getElementById('testmode');if(el)el.hidden=false}fitBar()}).catch(()=>{})}
