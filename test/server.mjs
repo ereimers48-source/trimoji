@@ -2,6 +2,7 @@ import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { pageRedirect } from '../lib/redirect.js';
 
 process.env.STRIPE_SECRET_KEY = 'sk_test_playwright';
 process.env.SITE_URL = 'http://127.0.0.1:4173';
@@ -44,9 +45,23 @@ async function send(res, response) {
   res.end(Buffer.from(await response.arrayBuffer()));
 }
 
+const cleanPages = {
+  '/privacy': 'privacy.html',
+  '/terms': 'terms.html',
+  '/shipping': 'shipping.html',
+  '/returns': 'returns.html',
+  '/contact': 'contact.html',
+};
+
 const server = createServer(async (req, res) => {
   try {
     const url = new URL(req.url || '/', 'http://127.0.0.1:4173');
+    const redirect = pageRedirect(req.headers.host, url.pathname);
+    if (redirect) {
+      res.writeHead(308, { location: redirect + url.search });
+      res.end();
+      return;
+    }
     if (url.pathname === '/api/config' && req.method === 'GET') {
       await send(res, await configGet());
       return;
@@ -66,7 +81,7 @@ const server = createServer(async (req, res) => {
       res.end(JSON.stringify({ error: 'Not found' }));
       return;
     }
-    const rel = decodeURIComponent(url.pathname).replace(/^\/+/, '') || 'index.html';
+    const rel = cleanPages[url.pathname] || decodeURIComponent(url.pathname).replace(/^\/+/, '') || 'index.html';
     const file = normalize(join(root, rel));
     if (file !== root && !file.startsWith(`${root}/`)) {
       res.writeHead(403);

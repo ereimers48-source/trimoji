@@ -14,6 +14,7 @@ import { HttpError } from '../lib/http.js';
 import { priceCart } from '../lib/prices.js';
 import { buildPrintfulOrder } from '../lib/printful.js';
 import { HAT_PRINT_H, HAT_PRINT_W, PRINT_PX, composeSvg, renderLogoPng } from '../lib/render.js';
+import { pageRedirect } from '../lib/redirect.js';
 import { runtime } from '../lib/runtime.js';
 import { resolveVariant } from '../lib/variants.js';
 import { handleStripeWebhook } from '../lib/webhook.js';
@@ -762,4 +763,53 @@ test('the static shop asks the server for checkout and test mode', () => {
   assert.match(readme, /\/api\/stripe-webhook/);
   assert.match(readme, /checkout\.session\.completed/);
   assert.match(readme, /sk_live_/);
+});
+
+test('policy pages share a footer and old hosts keep /api', () => {
+  const footer = '<nav aria-label="Policies"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/shipping">Shipping</a><a href="/returns">Returns</a><a href="/contact">Contact</a></nav>';
+  for (const page of ['index.html', 'success.html', 'cancel.html', 'privacy.html', 'terms.html', 'shipping.html', 'returns.html', 'contact.html']) {
+    const html = readFileSync(new URL(`../${page}`, import.meta.url), 'utf8');
+    assert.ok(html.includes(footer), page);
+    assert.match(html, /© Trimoji/);
+    assert.doesNotMatch(html, /\bLLC\b|\bL\.L\.C\b|Incorporated/);
+  }
+  const mains = {
+    'privacy.html': [/Privacy Policy/, /hello@trimojiapparel\.com/, /does not sell personal information/],
+    'terms.html': [/Terms of Service/, /made to order/i, /United States/],
+    'shipping.html': [/Shipping Policy/, /Printful/, /2–7 business days/, /\$5\.99/, /\$60 or more/, /tracking number is emailed/i],
+    'returns.html': [/change of mind/, /30 days/, /photo/, /replacement or refund/i, /hello@trimojiapparel\.com/],
+    'contact.html': [/mailto:hello@trimojiapparel\.com/],
+  };
+  for (const [page, patterns] of Object.entries(mains)) {
+    const html = readFileSync(new URL(`../${page}`, import.meta.url), 'utf8');
+    const main = html.slice(html.indexOf('<main>'), html.indexOf('</main>'));
+    for (const pattern of patterns) assert.match(main, pattern, `${page} ${pattern}`);
+    assert.doesNotMatch(main, /\b\d{5}\b|Street|Avenue|\bSuite\b|P\.O\. Box/i, page);
+  }
+  const index = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  assert.match(index, /href="\/shipping">Shipping<\/a> · <a href="\/returns">Returns<\/a>/);
+  const success = readFileSync(new URL('../success.html', import.meta.url), 'utf8');
+  assert.match(success, /Tracking is emailed when it ships/);
+  const config = JSON.parse(readFileSync(new URL('../vercel.json', import.meta.url), 'utf8'));
+  for (const host of ['www.trimojiapparel.com', 'trimoji.vercel.app']) {
+    const rules = config.redirects.filter((rule) => rule.has?.some((item) => item.type === 'host' && item.value === host));
+    assert.ok(rules.some((rule) => rule.source === '/' && rule.destination === `${SITE}/` && rule.permanent === true), host);
+    const wild = rules.find((rule) => rule.source === '/:path((?!api(?:/|$)).*)');
+    assert.equal(wild.destination, `${SITE}/:path*`);
+    assert.equal(wild.permanent, true);
+  }
+  assert.equal(config.redirects.some((rule) => rule.has?.some((item) => item.value === 'trimojiapparel.com')), false);
+  for (const path of ['/privacy', '/terms', '/shipping', '/returns', '/contact']) {
+    assert.ok(config.rewrites.some((rule) => rule.source === path && rule.destination === `${path}.html`));
+  }
+  for (const host of ['www.trimojiapparel.com', 'trimoji.vercel.app']) {
+    assert.equal(pageRedirect(host, '/'), `${SITE}/`);
+    assert.equal(pageRedirect(host, '/privacy'), `${SITE}/privacy`);
+    assert.equal(pageRedirect(host, '/success.html'), `${SITE}/success.html`);
+    assert.equal(pageRedirect(host, '/api/stripe-webhook'), null);
+    assert.equal(pageRedirect(host, '/api/checkout'), null);
+    assert.equal(pageRedirect(host, '/api'), null);
+  }
+  assert.equal(pageRedirect('trimojiapparel.com', '/'), null);
+  assert.equal(pageRedirect('trimoji-git-preview.vercel.app', '/privacy'), null);
 });

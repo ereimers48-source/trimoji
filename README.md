@@ -16,7 +16,7 @@ Checkout runs on Vercel. GitHub Pages stays a static preview: the cart still wor
 | `STRIPE_WEBHOOK_SECRET` | The signing secret of a **test-mode** webhook (`whsec_…`). Create it in step 5. You can deploy once without it, then add it and redeploy. |
 | `PRINTFUL_API_TOKEN` | A Printful private API token (Settings → API). |
 | `PRINTFUL_STORE_ID` | `18937301` (the Trimoji store). Sent as `X-PF-Store-Id`. |
-| `SITE_URL` | `https://trimojiapparel.com`, with no trailing slash. Success, cancel, and print-file URLs are built from this. If it is unset, checkout uses that origin. `https://trimoji.vercel.app` still works when this is set to it. |
+| `SITE_URL` | `https://trimojiapparel.com`, with no trailing slash. Success, cancel, and print-file URLs are built from this. If it is unset, checkout uses that origin. Page requests on `www.trimojiapparel.com` and `https://trimoji.vercel.app` redirect to that origin. `/api` stays on the Vercel host, so an existing webhook at `https://trimoji.vercel.app/api/stripe-webhook` still reaches this deployment. |
 | `PRINTFUL_AUTO_CONFIRM` | `false` (or leave unset). Orders are Printful drafts (`confirm=false`). Set to the exact string `true` only when a paid order should be submitted for fulfillment immediately. |
 
 4. Deploy. The shop is the deployment URL. A yellow **Test mode** banner appears when `STRIPE_SECRET_KEY` starts with `sk_test_`. The key itself is never sent to the browser (`GET /api/config` returns only `{ "stripeTestMode": true }`).
@@ -48,7 +48,7 @@ When you are ready to charge real cards:
 | Mug | $19 | White Glossy Mug, product `19`, 11 oz only | `default` |
 | Trucker hat | $33 | Yupoong 6006, product `100`, technique `dtfilm` | `front_dtf_hat`, 1650×750 at 300 DPI |
 
-US shipping is $5.99, and free when the merchandise subtotal is $60 or more. That flat amount is what Stripe charges the customer. Printful bills the store its own fulfillment shipping when an order is confirmed.
+US shipping is $5.99, and free when the merchandise subtotal is $60 or more. That flat amount is what Stripe charges the customer. Printful bills the store its own fulfillment shipping when an order is confirmed. The same facts are on `/shipping`. `/privacy`, `/terms`, `/returns`, and `/contact` are linked from the footer. Contact mail is hello@trimojiapparel.com.
 
 Variant IDs were read from `GET https://api.printful.com/products/{id}` on 2026-10-22.
 
