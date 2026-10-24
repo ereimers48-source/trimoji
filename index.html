@@ -29,9 +29,7 @@ a{color:var(--ink)}
 .lede{margin:18px auto 0;max-width:28rem;color:var(--muted);font-size:1.2rem;line-height:1.4}
 .btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:12px 28px;border-radius:980px;border:0;background:var(--accent);color:#fff;font-weight:500;font-size:1.05rem;text-decoration:none;line-height:1.2}
 .hero .btn{margin-top:26px}
-.hero-shot{margin:40px -22px 0;background:var(--stage)}
-.hero-shot img{width:min(100%, 760px);height:auto;display:block;margin:0 auto}
-#shop{padding:72px 22px 48px;scroll-margin-top:1rem}
+#shop{padding:32px 22px 48px;scroll-margin-top:1rem}
 #shop h2{margin:0 0 8px;font-size:min(2.6rem, 8vw);font-weight:600;letter-spacing:-.035em;line-height:1.1}
 .buy{display:flex;flex-direction:column;gap:8px;min-width:0}
 .stage{background:var(--stage);border-radius:18px;padding:12px 12px 16px;min-width:0}
@@ -134,9 +132,8 @@ footer a{color:var(--muted)}
  #emoji-choice .grid{flex:1 1 auto;height:auto;min-height:0;margin-top:8px}
 }
 @media(min-width:900px){
- .hero{padding:72px 6vw 0}
- .hero-shot{margin:48px 0 0;border-radius:24px}
- #shop{padding:88px 6vw 72px}
+ .hero{padding:64px 6vw 0}
+ #shop{padding:40px 6vw 72px}
  .buy{display:grid;grid-template-columns:minmax(320px, 1.05fr) minmax(340px, .95fr);gap:56px;align-items:start}
  .stage{position:sticky;top:calc(var(--bar, 64px) + 16px);align-self:start}
  .mock{width:min(100%, calc((100dvh - var(--bar, 64px) - 48px) * var(--aw) / var(--ah)));max-height:calc(100dvh - var(--bar, 64px) - 48px);height:auto}
@@ -159,7 +156,6 @@ footer a{color:var(--muted)}
 <h1>Three emojis.<br>Your logo.</h1>
 <p class="lede">Pick three. See them on the product before you buy.</p>
 <a class="btn" href="#shop">Start</a>
-<div class="hero-shot"><img id="herophoto" alt="White T-shirt" src="assets/products/tee/white-520.webp" width="520" height="640"></div>
 </section>
 <main id="shop">
 <h2>Build it.</h2>
@@ -294,7 +290,6 @@ const PHOTO={
 };
 const photoCache=new Set();
 function preloadPhotos(){for(const [prod,spec] of Object.entries(PHOTO)){for(const color of spec.colors){for(const w of spec.w){const url=`assets/products/${prod}/${color.toLowerCase()}-${w}.webp`;const im=new Image();im.onload=()=>photoCache.add(url);im.src=url}}}}
-function paintHero(src,alt){const hero=document.getElementById('herophoto');if(!hero)return;if(hero.getAttribute('src')!==src)hero.src=src;if(alt)hero.alt=alt}
 function applyPhoto(){const spec=PHOTO[S.prod];const color=COLS[S.col][0];const print=mock.querySelector('.print');
  mock.dataset.product=S.prod;mock.dataset.ink=(color==='Black'||color==='Navy'||color==='Charcoal')?'dark':'light';
  mock.style.setProperty('--swatch',COLS[S.col][1]);
@@ -305,7 +300,7 @@ function applyPhoto(){const spec=PHOTO[S.prod];const color=COLS[S.col][0];const 
  if(!known){mock.classList.add('flat');mock.classList.remove('waiting');return}
  const [sm,lg]=spec.w;const base=`assets/products/${S.prod}/${color.toLowerCase()}`;const src=`${base}-${lg}.webp`;const set=`${base}-${sm}.webp ${sm}w, ${src} ${lg}w`;const key=`${S.prod}:${color}`;
  const link=document.getElementById('preload-blank');if(link){link.href=src;link.imageSrcset=set;link.imageSizes=blank.sizes||'(min-width: 900px) 460px, 100vw'}
- blank.alt=`${color} ${PRODS[S.prod].n}`;paintHero(src,blank.alt);
+ blank.alt=`${color} ${PRODS[S.prod].n}`;
  if(blank.dataset.key===key){mock.classList.remove('waiting');return}
  blank.dataset.pending=key;
  const commit=()=>{if(blank.dataset.pending!==key)return;blank.dataset.key=key;blank.src=src;blank.srcset=set;mock.classList.remove('waiting');mock.classList.remove('flat');schedulePreview()};

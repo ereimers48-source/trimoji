@@ -60,7 +60,15 @@ test('configurator, bag, and Stripe checkout', async ({ page }, testInfo) => {
   await expect(page.locator('#mock image')).toHaveCount(3);
   await expect(page.locator('#mock img.blank')).toHaveAttribute('src', /\/tee\/white-/);
   await expect.poll(() => page.locator('#mock img.blank').evaluate((el) => el.naturalWidth)).toBeGreaterThan(100);
-  await expect(page.locator('#herophoto')).toBeVisible();
+  await expect(page.locator('#herophoto')).toHaveCount(0);
+  await expect(page.locator('.hero-shot')).toHaveCount(0);
+  const heroGap = await page.evaluate(() => {
+    const start = document.querySelector('a.btn[href="#shop"]').getBoundingClientRect();
+    const build = document.querySelector('#shop h2').getBoundingClientRect();
+    return build.top - start.bottom;
+  });
+  expect(heroGap).toBeGreaterThan(8);
+  expect(heroGap).toBeLessThan(140);
   await expect(page.locator('#testmode')).toBeVisible();
   await expect(page.locator('#testmode')).toContainText('Test mode');
   await expect(page.locator('body')).not.toContainText('sk_');
@@ -152,7 +160,7 @@ test('configurator, bag, and Stripe checkout', async ({ page }, testInfo) => {
   await press(page.locator('#prods button[data-value="hoodie"]'), testInfo);
   await expect(page.locator('#price')).toContainText('$54.00');
   await expect(page.locator('#cols button')).toHaveCount(5);
-  await expect(page.locator('#herophoto')).toHaveAttribute('src', /\/hoodie\//);
+  await expect(page.locator('#mock img.blank')).toHaveAttribute('src', /\/hoodie\//);
   await press(page.locator('#prods button[data-value="mug"]'), testInfo);
   await expect(page.locator('#price')).toContainText('$19.00');
   await expect(page.locator('#sizes button')).toHaveText('11 oz');
