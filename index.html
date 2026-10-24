@@ -53,7 +53,7 @@ a{color:var(--ink)}
 .choice{padding:26px 0;border-top:1px solid var(--line)}
 .choice h3{margin:0 0 4px;font-size:1.35rem;font-weight:600;letter-spacing:-.02em;line-height:1.2}
 .note{margin:0;color:var(--muted);font-size:.95rem;line-height:1.45}
-.slots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:16px 0}
+.slots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:16px auto;width:82%}
 .slot{aspect-ratio:1;width:100%;height:auto;border:1px solid var(--line);border-radius:16px;display:grid;place-items:center;font-size:40px;position:relative;cursor:pointer;background:#fff;padding:0;min-width:0}
 .slot img.em{width:68%;height:68%;vertical-align:middle}
 .slot .note{font-size:1.5rem;line-height:1}
@@ -119,7 +119,7 @@ footer a{color:var(--muted)}
  .opt:hover:not(.on){border-color:#86868b}
 }
 @media(max-width:899px){
- html{--pin:40dvh;--preview-compact:clamp(64px, 16dvh, calc(var(--pin) - 156px));--slotbar:calc((100vw - 44px - 20px) / 3 + 8px)}
+ html{--pin:40dvh;--preview-compact:clamp(72px, 19dvh, calc(var(--pin) - 108px));--slotbar:calc((0.82 * (100vw - 44px) - 20px) / 3 + 8px)}
  .stage{position:sticky;top:var(--bar, 48px);z-index:20;height:var(--pin);margin-left:-22px;margin-right:-22px;border-radius:0;padding:6px 8px;display:flex;align-items:center;justify-content:center;background:var(--stage);box-shadow:0 1px 0 #e8e8ed;transition:height .32s ease}
  .mock{width:min(100%, calc((var(--pin) - 12px) * var(--aw) / var(--ah)));max-height:calc(var(--pin) - 12px);height:auto;transition:max-height .32s ease, width .32s ease}
  .buy{gap:0}
@@ -129,21 +129,21 @@ footer a{color:var(--muted)}
  #emoji-choice{display:block;height:auto;overflow:visible;padding:8px 0 0}
  #emoji-choice h3{font-size:1.15rem;margin:0 0 6px;line-height:1.5}
  #emoji-choice .note{font-size:.9rem;line-height:1.45;margin:0}
- .slotbar .slots{margin:8px 0}
+ .slotbar .slots{margin:8px auto}
  .kb{display:block;margin-top:0}
  #grid{height:auto;margin-top:8px;overflow:visible}
  html.compact .stage{height:var(--preview-compact)}
  html.compact .mock{width:min(100%, calc((var(--preview-compact) - 12px) * var(--aw) / var(--ah)));max-height:calc(var(--preview-compact) - 12px)}
  html.compact #emoji-choice h3,html.compact #emoji-choice > .note{display:none}
  html.compact .slotbar{position:sticky;top:calc(var(--bar, 48px) + var(--preview-compact));z-index:19;margin-left:-22px;margin-right:-22px;padding:0 22px 2px;background:#fff;box-shadow:0 1px 0 #e8e8ed}
- html.compact .slotbar .slots{margin:0}
+ html.compact .slotbar .slots{margin:0 auto}
 }
 @media(min-width:900px){
  .hero{padding:64px 6vw 0}
  #shop{padding:40px 6vw 72px}
  .buy{display:grid;grid-template-columns:minmax(320px, 1.05fr) minmax(340px, .95fr);gap:56px;align-items:start}
  .stage{position:sticky;top:calc(var(--bar, 64px) + 16px);align-self:start}
- .mock{width:min(100%, calc((100dvh - var(--bar, 64px) - 48px) * var(--aw) / var(--ah)));max-height:calc(100dvh - var(--bar, 64px) - 48px);height:auto}
+ .mock{width:min(100%, calc((100dvh - var(--bar, 64px) - 28px) * var(--aw) / var(--ah)));max-height:calc(100dvh - var(--bar, 64px) - 28px);height:auto}
  .choices{padding-top:0}
  #emoji-choice{display:block;height:auto;overflow:visible}
  .kb{display:block}
