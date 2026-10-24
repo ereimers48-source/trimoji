@@ -1,6 +1,11 @@
 import { createCheckoutSession } from '../lib/checkout.js';
-import { HttpError, jsonError, safeLog } from '../lib/http.js';
+import { resolveSiteUrl } from '../lib/design.js';
+import { HttpError, jsonError, preflight, safeLog, withCors } from '../lib/http.js';
 import { runtime } from '../lib/runtime.js';
+
+export function OPTIONS(request) {
+  return preflight(request);
+}
 
 export async function POST(request) {
   try {
@@ -15,11 +20,11 @@ export async function POST(request) {
     const session = await createCheckoutSession({
       items: body?.items,
       stripe: runtime.createStripe(key),
-      siteUrl: process.env.SITE_URL,
+      siteUrl: resolveSiteUrl(process.env.SITE_URL),
     });
-    return Response.json({ url: session.url });
+    return withCors(request, Response.json({ url: session.url }));
   } catch (err) {
     safeLog(err);
-    return jsonError(err);
+    return withCors(request, jsonError(err));
   }
 }

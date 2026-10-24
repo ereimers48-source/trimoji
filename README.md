@@ -1,8 +1,8 @@
 # trimoji
 
-Static preview: https://ereimers48-source.github.io/trimoji/
+Live shop: https://trimojiapparel.com
 
-Checkout runs on Vercel. GitHub Pages stays a static preview: the cart still works, and Checkout tells you to use the Vercel deployment when `/api/checkout` is unreachable.
+Checkout runs on Vercel. GitHub Pages stays a static preview: the cart still works, and Checkout tells you to use the live shop when `/api/checkout` is unreachable.
 
 ## Deploy on Vercel (Hobby)
 
@@ -16,7 +16,7 @@ Checkout runs on Vercel. GitHub Pages stays a static preview: the cart still wor
 | `STRIPE_WEBHOOK_SECRET` | The signing secret of a **test-mode** webhook (`whsec_…`). Create it in step 5. You can deploy once without it, then add it and redeploy. |
 | `PRINTFUL_API_TOKEN` | A Printful private API token (Settings → API). |
 | `PRINTFUL_STORE_ID` | `18937301` (the Trimoji store). Sent as `X-PF-Store-Id`. |
-| `SITE_URL` | The public Vercel origin, with no trailing slash, for example `https://trimoji.vercel.app`. Success, cancel, and print-file URLs are built from this. |
+| `SITE_URL` | `https://trimojiapparel.com`, with no trailing slash. Success, cancel, and print-file URLs are built from this. If it is unset, checkout uses that origin. `https://trimoji.vercel.app` still works when this is set to it. |
 | `PRINTFUL_AUTO_CONFIRM` | `false` (or leave unset). Orders are Printful drafts (`confirm=false`). Set to the exact string `true` only when a paid order should be submitted for fulfillment immediately. |
 
 4. Deploy. The shop is the deployment URL. A yellow **Test mode** banner appears when `STRIPE_SECRET_KEY` starts with `sk_test_`. The key itself is never sent to the browser (`GET /api/config` returns only `{ "stripeTestMode": true }`).
@@ -85,7 +85,7 @@ Trucker hat (Yupoong 6006, five-panel mesh back), one size. Confirmed from `GET 
 | Charcoal | Charcoal | 4814 |
 | Navy | Navy | 4816 |
 
-On `checkout.session.completed`, `POST /api/stripe-webhook` checks `STRIPE_WEBHOOK_SECRET`, then `POST https://api.printful.com/orders?confirm=false` (or `confirm=true` when `PRINTFUL_AUTO_CONFIRM=true`) with `X-PF-Store-Id`. The print file is `GET /api/print-file?design=…`, a transparent PNG of the three Twemoji SVGs (CC-BY): 1800×1800 for tees, hoodies, and mugs, and 1650×750 at 300 DPI for the trucker hat. Tokens without a product still render the square file. Printful fetches that URL, so `SITE_URL` must be the public deployment.
+On `checkout.session.completed`, `POST /api/stripe-webhook` checks `STRIPE_WEBHOOK_SECRET`, then `POST https://api.printful.com/orders?confirm=false` (or `confirm=true` when `PRINTFUL_AUTO_CONFIRM=true`) with `X-PF-Store-Id`. The print file is `GET /api/print-file?design=…`, a transparent PNG of the three Twemoji SVGs (CC-BY): 1800×1800 for tees, hoodies, and mugs, and 1650×750 at 300 DPI for the trucker hat. Tokens without a product still render the square file. Printful fetches that URL, so `SITE_URL` must be the public deployment (`https://trimojiapparel.com`).
 
 ## Local check
 

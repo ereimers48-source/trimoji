@@ -3,13 +3,13 @@ import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import { inflateSync } from 'node:zlib';
 import Stripe from 'stripe';
-import { POST as checkoutPost } from '../api/checkout.js';
+import { OPTIONS as checkoutOptions, POST as checkoutPost } from '../api/checkout.js';
 import { GET as configGet } from '../api/config.js';
 import { GET as printGet } from '../api/print-file.js';
 import { POST as webhookPost } from '../api/stripe-webhook.js';
 import { publicConfig } from '../lib/config.js';
 import { createCheckoutSession } from '../lib/checkout.js';
-import { decodeDesign, encodeDesign, itemsFromMetadata } from '../lib/design.js';
+import { decodeDesign, encodeDesign, itemsFromMetadata, resolveSiteUrl } from '../lib/design.js';
 import { HttpError } from '../lib/http.js';
 import { priceCart } from '../lib/prices.js';
 import { buildPrintfulOrder } from '../lib/printful.js';
@@ -18,7 +18,7 @@ import { runtime } from '../lib/runtime.js';
 import { resolveVariant } from '../lib/variants.js';
 import { handleStripeWebhook } from '../lib/webhook.js';
 
-const SITE = 'https://trimoji.vercel.app';
+const SITE = 'https://trimojiapparel.com';
 const SECRET = 'whsec_test_secret';
 const SVG = `<?xml version="1.0"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36">
@@ -354,7 +354,7 @@ test('printful order is a draft unless PRINTFUL_AUTO_CONFIRM=true', async () => 
   assert.equal(order.items[0].variant_id, 1320);
   assert.equal(order.items[0].files[0].type, 'default');
   assert.equal(order.items[0].options, undefined);
-  assert.match(order.items[0].files[0].url, /^https:\/\/trimoji\.vercel\.app\/api\/print-file\?design=/);
+  assert.match(order.items[0].files[0].url, /^https:\/\/trimojiapparel\.com\/api\/print-file\?design=/);
 
   const seen = [];
   const fetchImpl = async (url, init) => {
@@ -594,7 +594,7 @@ test('HTTP handlers: checkout redirect, webhook, and print file', async () => {
   try {
     const hatStripe = fakeStripe();
     runtime.createStripe = () => hatStripe;
-    const hatOk = await checkoutPost(new Request('https://trimoji.vercel.app/api/checkout', {
+    const hatOk = await checkoutPost(new Request('https://trimojiapparel.com/api/checkout', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ items: [sampleItem({ product: 'hat', color: 'Black', size: 'One size', price: 0 })] }),
@@ -615,12 +615,13 @@ test('HTTP handlers: checkout redirect, webhook, and print file', async () => {
 
     const stripe = fakeStripe();
     runtime.createStripe = () => stripe;
-    const ok = await checkoutPost(new Request('https://trimoji.vercel.app/api/checkout', {
+    const ok = await checkoutPost(new Request('https://trimojiapparel.com/api/checkout', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', origin: SITE },
       body: JSON.stringify({ items: [sampleItem()] }),
     }));
     assert.equal(ok.status, 200);
+    assert.equal(ok.headers.get('access-control-allow-origin'), SITE);
     assert.equal((await ok.json()).url, 'https://checkout.stripe.com/c/pay/cs_test_123');
 
     const payload = JSON.stringify({
@@ -632,7 +633,7 @@ test('HTTP handlers: checkout redirect, webhook, and print file', async () => {
     const header = Stripe.webhooks.generateTestHeaderString({ payload, secret: SECRET });
     runtime.createStripe = () => new Stripe('sk_test_placeholder');
     runtime.fetch = async () => new Response(JSON.stringify({ result: { id: 7 } }), { status: 200 });
-    const hooked = await webhookPost(new Request('https://trimoji.vercel.app/api/stripe-webhook', {
+    const hooked = await webhookPost(new Request('https://trimojiapparel.com/api/stripe-webhook', {
       method: 'POST',
       headers: { 'stripe-signature': header, 'content-type': 'application/json' },
       body: payload,
@@ -645,7 +646,7 @@ test('HTTP handlers: checkout redirect, webhook, and print file', async () => {
       assert.match(String(url), /twemoji@latest\/assets\/svg\/.+\.svg$/);
       return new Response(SVG, { status: 200 });
     };
-    const file = await printGet(new Request(`https://trimoji.vercel.app/api/print-file?design=${token}`));
+    const file = await printGet(new Request(`https://trimojiapparel.com/api/print-file?design=${token}`));
     assert.equal(file.status, 200);
     assert.equal(file.headers.get('content-type'), 'image/png');
     const bytes = Buffer.from(await file.arrayBuffer());
@@ -667,6 +668,63 @@ test('HTTP handlers: checkout redirect, webhook, and print file', async () => {
   }
 });
 
+test('the custom domain is the checkout fallback and older origins stay allowed', async () => {
+  assert.equal(resolveSiteUrl(undefined), SITE);
+  assert.equal(resolveSiteUrl('  '), SITE);
+  assert.equal(resolveSiteUrl('https://trimoji.vercel.app/'), 'https://trimoji.vercel.app');
+  assert.equal(resolveSiteUrl('https://ereimers48-source.github.io/trimoji/'), 'https://ereimers48-source.github.io/trimoji');
+
+  const stripe = fakeStripe();
+  await createCheckoutSession({ items: [sampleItem()], stripe, siteUrl: resolveSiteUrl(undefined) });
+  assert.equal(stripe.calls[0].success_url, `${SITE}/success.html?session_id={CHECKOUT_SESSION_ID}`);
+  assert.equal(stripe.calls[0].cancel_url, `${SITE}/cancel.html`);
+
+  const legacy = fakeStripe();
+  await createCheckoutSession({
+    items: [sampleItem()],
+    stripe: legacy,
+    siteUrl: resolveSiteUrl('https://trimoji.vercel.app'),
+  });
+  assert.equal(legacy.calls[0].success_url, 'https://trimoji.vercel.app/success.html?session_id={CHECKOUT_SESSION_ID}');
+  assert.equal(legacy.calls[0].cancel_url, 'https://trimoji.vercel.app/cancel.html');
+
+  for (const origin of [SITE, 'https://www.trimojiapparel.com', 'https://trimoji.vercel.app', 'https://ereimers48-source.github.io']) {
+    const pre = await checkoutOptions(new Request(`${SITE}/api/checkout`, { method: 'OPTIONS', headers: { origin } }));
+    assert.equal(pre.status, 204, origin);
+    assert.equal(pre.headers.get('access-control-allow-origin'), origin);
+  }
+  const denied = await checkoutOptions(new Request(`${SITE}/api/checkout`, {
+    method: 'OPTIONS',
+    headers: { origin: 'https://evil.example' },
+  }));
+  assert.equal(denied.status, 403);
+  assert.equal(denied.headers.get('access-control-allow-origin'), null);
+
+  const previous = { site: process.env.SITE_URL, key: process.env.STRIPE_SECRET_KEY };
+  delete process.env.SITE_URL;
+  process.env.STRIPE_SECRET_KEY = 'sk_test_placeholder';
+  const originalStripe = runtime.createStripe;
+  const routed = fakeStripe();
+  runtime.createStripe = () => routed;
+  try {
+    const response = await checkoutPost(new Request(`${SITE}/api/checkout`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', origin: 'https://trimoji.vercel.app' },
+      body: JSON.stringify({ items: [sampleItem()] }),
+    }));
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('access-control-allow-origin'), 'https://trimoji.vercel.app');
+    assert.equal(routed.calls[0].success_url, `${SITE}/success.html?session_id={CHECKOUT_SESSION_ID}`);
+    assert.equal(routed.calls[0].cancel_url, `${SITE}/cancel.html`);
+  } finally {
+    runtime.createStripe = originalStripe;
+    if (previous.site === undefined) delete process.env.SITE_URL;
+    else process.env.SITE_URL = previous.site;
+    if (previous.key === undefined) delete process.env.STRIPE_SECRET_KEY;
+    else process.env.STRIPE_SECRET_KEY = previous.key;
+  }
+});
+
 test('the static shop asks the server for checkout and test mode', () => {
   const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   assert.match(html, /id="testmode"/);
@@ -682,6 +740,15 @@ test('the static shop asks the server for checkout and test mode', () => {
   assert.match(html, /setAttribute\('data-hat','trucker'\)/);
   assert.match(html, /assets\/products\//);
   assert.match(html, /prefers-reduced-motion/);
+  assert.match(html, /rel="canonical" href="https:\/\/trimojiapparel\.com\/"/);
+  assert.match(html, /property="og:url" content="https:\/\/trimojiapparel\.com\/"/);
+  assert.doesNotMatch(html, /trimoji\.vercel\.app/);
+  assert.doesNotMatch(html, /github\.io/);
+  for (const page of ['success.html', 'cancel.html']) {
+    const extra = readFileSync(new URL(`../${page}`, import.meta.url), 'utf8');
+    assert.match(extra, /rel="canonical" href="https:\/\/trimojiapparel\.com\//);
+    assert.match(extra, /property="og:url" content="https:\/\/trimojiapparel\.com\//);
+  }
   assert.doesNotMatch(html, /id="bgs"/);
   assert.doesNotMatch(html, /Backdrop/);
   assert.doesNotMatch(html, /id="showcase"/);
