@@ -898,7 +898,7 @@ test('policy pages are linked from the shop and the bag', async ({ page }) => {
   await expect(page.locator('h1')).toContainText('Three emojis');
   await expect(page.locator('footer nav a')).toHaveText(['Privacy', 'Terms', 'Shipping', 'Returns', 'Contact']);
   await page.goto('/shop-preview');
-  await expect(page.locator('footer nav a')).toHaveText(['Privacy', 'Terms', 'Shipping', 'Returns', 'Contact']);
+  await expect(page.locator('footer nav a')).toHaveText(['Privacy', 'Terms', 'Shipping', 'Returns', 'Contact', 'Stories']);
   const bagPolicy = page.locator('.buybar a[href="/returns"]');
   await expect(page.locator('.buybar')).toContainText('Custom-made to order. See our Returns policy.');
   await expect(bagPolicy).toHaveText('Returns policy');
@@ -923,7 +923,7 @@ test('policy pages are linked from the shop and the bag', async ({ page }) => {
     await expect(page.locator('h1')).toHaveText(title);
     await expect(page.locator('main')).toContainText(line);
     await expect(page.locator('main')).toContainText('hello@trimojiapparel.com');
-    await expect(page.locator('footer nav a')).toHaveText(['Privacy', 'Terms', 'Shipping', 'Returns', 'Contact']);
+    await expect(page.locator('footer nav a')).toHaveText(['Privacy', 'Terms', 'Shipping', 'Returns', 'Contact', 'Stories']);
     await expect(page.locator('footer')).toContainText('© Trimoji');
     const text = await page.locator('main').innerText();
     expect(text).not.toMatch(/\bLLC\b|Street|Avenue|\bSuite\b/);

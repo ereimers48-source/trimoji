@@ -6,12 +6,13 @@
     "node": ">=20"
   },
   "scripts": {
-    "test": "node --test test/sanity.test.js && playwright test",
-    "test:unit": "node --test test/sanity.test.js",
+    "test": "node --test test/sanity.test.js test/stories.test.js && playwright test",
+    "test:unit": "node --test test/sanity.test.js test/stories.test.js",
     "test:browser": "playwright test"
   },
   "dependencies": {
     "@resvg/resvg-js": "^2.6.2",
+    "@vercel/blob": "^2.3.1",
     "@vercel/functions": "^3.10.3",
     "stripe": "^18.5.0"
   },

@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Stories admin — Trimoji</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7' fill='%230071e3'/%3E%3C/svg%3E">
+<style>
+:root{--ink:#1d1d1f;--muted:#6e6e73;--line:#d2d2d7;--accent:#0071e3;--sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Inter,system-ui,sans-serif}
+*{box-sizing:border-box}
+html{overflow-anchor:none}
+body{min-height:100dvh;display:flex;flex-direction:column;margin:0;overflow-anchor:none;font-family:var(--sans);color:var(--ink);background:#fff;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);touch-action:manipulation}
+button,input{font:inherit;color:inherit;touch-action:manipulation}
+.topbar{position:sticky;top:0;z-index:30;background:#fff;padding-top:env(safe-area-inset-top)}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:48px;padding:0 22px;border-bottom:1px solid #e8e8ed}
+.logo{font-weight:600;font-size:1.05rem;letter-spacing:-.03em;text-decoration:none;color:var(--ink);line-height:1}
+.nav-links a{color:var(--ink);text-decoration:none;font-size:.95rem;min-height:44px;padding:0 10px;display:inline-flex;align-items:center}
+main{flex:1;width:min(40rem,100%);margin:0 auto;padding:48px 22px 64px}
+h1{margin:0 0 8px;font-size:min(2.4rem,9vw);font-weight:600;letter-spacing:-.035em;line-height:1.15}
+.lede{margin:0 0 20px;color:var(--muted);font-size:1.02rem}
+form.gate{display:flex;flex-direction:column;gap:10px;margin:0 0 20px}
+label{font-size:.95rem;font-weight:500}
+input{width:100%;min-height:48px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:#f5f5f7;font-size:16px}
+input:focus{outline:2px solid var(--accent);outline-offset:2px;background:#fff}
+.btn,.opt{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:10px 16px;border-radius:980px;font-size:1rem;font-weight:500;cursor:pointer}
+.btn{border:0;background:var(--accent);color:#fff}
+.opt{border:1px solid var(--line);background:#fff;color:var(--ink)}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 8px}
+article{border:1px solid var(--line);border-radius:18px;padding:18px 18px 10px;margin:0 0 14px}
+.emojis{margin:0 0 8px;font-size:2.2rem;line-height:1.2}
+.who,.mail{margin:0 0 8px;color:var(--muted);font-size:.95rem}
+.story{margin:0 0 14px;font-size:1.05rem;white-space:pre-wrap;overflow-wrap:anywhere}
+article img{width:100%;height:160px;object-fit:cover;border-radius:12px;margin:0 0 12px;background:#f5f5f7;display:block}
+#admin-status{min-height:1.45em;color:var(--muted)}
+.empty{margin:0;padding:18px;border-radius:18px;background:#f5f5f7}
+footer{color:var(--muted);font-size:.9rem;line-height:1.5;padding:28px 22px calc(36px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
+footer nav{display:flex;flex-wrap:wrap;gap:2px 18px;margin:0 0 8px}
+footer nav a,footer p a{color:var(--muted);text-decoration:none}
+footer nav a{min-height:44px;display:inline-flex;align-items:center}
+footer p{margin:0 0 8px;font-size:.9rem}
+@media (hover:hover) and (pointer:fine){
+ .btn:hover{background:#0077ed}
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+<nav class="nav" aria-label="Shop"><a class="logo" href="/">Trimoji</a><div class="nav-links"><a href="/stories">Stories</a></div></nav>
+</header>
+<main>
+<h1>Story review</h1>
+<p class="lede">Pending notes only. Nothing here is public until you approve it.</p>
+<form id="gate" class="gate">
+<label for="token">Admin token</label>
+<input id="token" type="password" autocomplete="current-password">
+<button class="btn" type="submit">View stories</button>
+</form>
+<p id="admin-status" role="status"></p>
+<div id="queue"></div>
+</main>
+<footer>
+<nav aria-label="Policies"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/shipping">Shipping</a><a href="/returns">Returns</a><a href="/contact">Contact</a><a href="/stories">Stories</a></nav>
+<p>© Trimoji.</p>
+</footer>
+<script>
+const ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const gate = document.getElementById('gate');
+const tokenInput = document.getElementById('token');
+const status = document.getElementById('admin-status');
+const queue = document.getElementById('queue');
+const params = new URLSearchParams(location.search);
+if (params.get('token')) {
+  sessionStorage.setItem('stories-admin', params.get('token'));
+  params.delete('token');
+  history.replaceState({}, '', location.pathname + (params.toString() ? '?' + params.toString() : ''));
+}
+if (sessionStorage.getItem('stories-admin')) tokenInput.value = sessionStorage.getItem('stories-admin');
+function headers() {
+  return { 'x-stories-token': tokenInput.value, accept: 'application/json' };
+}
+async function load() {
+  status.textContent = '';
+  queue.replaceChildren();
+  const res = await fetch('/api/stories-admin', { headers: headers() });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    status.textContent = data.error || 'Could not open the queue.';
+    return;
+  }
+  sessionStorage.setItem('stories-admin', tokenInput.value);
+  const rows = Array.isArray(data.stories) ? data.stories : [];
+  if (!rows.length) {
+    const empty = document.createElement('p');
+    empty.className = 'empty';
+    empty.textContent = 'No stories are waiting for review.';
+    queue.append(empty);
+    return;
+  }
+  for (const story of rows) {
+    const card = document.createElement('article');
+    const emojis = document.createElement('p');
+    emojis.className = 'emojis';
+    emojis.textContent = Array.isArray(story.emojis) ? story.emojis.join('  ') : '';
+    const who = document.createElement('p');
+    who.className = 'who';
+    who.textContent = story.city ? story.firstName + ' · ' + story.city : (story.firstName || '');
+    const mail = document.createElement('p');
+    mail.className = 'mail';
+    mail.textContent = story.email ? 'Email (private): ' + story.email : 'No email';
+    const body = document.createElement('p');
+    body.className = 'story';
+    body.textContent = story.story || '';
+    const actions = document.createElement('div');
+    actions.className = 'actions';
+    for (const [action, label, kind] of [['approve', 'Approve', 'btn'], ['reject', 'Reject', 'opt'], ['delete', 'Delete', 'opt']]) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = kind;
+      button.textContent = label;
+      button.addEventListener('click', () => act(story.id, action));
+      actions.append(button);
+    }
+    card.append(emojis, who, mail, body, actions);
+    if (story.photo === true && ID.test(story.id || '')) {
+      const img = document.createElement('img');
+      img.alt = '';
+      fetch('/api/stories-admin-photo?id=' + story.id, { headers: headers() })
+        .then((res) => res.ok ? res.blob() : null)
+        .then((blob) => { if (blob) img.src = URL.createObjectURL(blob); });
+      card.insertBefore(img, body);
+    }
+    queue.append(card);
+  }
+}
+async function act(id, action) {
+  const res = await fetch('/api/stories-admin', {
+    method: 'POST',
+    headers: { ...headers(), 'content-type': 'application/json' },
+    body: JSON.stringify({ id, action }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    status.textContent = data.error || 'Could not update that story.';
+    return;
+  }
+  await load();
+}
+gate.addEventListener('submit', (event) => {
+  event.preventDefault();
+  load();
+});
+if (tokenInput.value) load();
+</script>
+</body>
+</html>
