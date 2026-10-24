@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Trimoji — Three emojis. One you.</title>
+<meta name="description" content="Custom 3-emoji logos on tees, hoodies, mugs, hats, and phone cases. Coming soon.">
+<link rel="canonical" href="https://trimojiapparel.com/">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://trimojiapparel.com/">
+<meta property="og:title" content="Trimoji — Three emojis. One you.">
+<meta property="og:description" content="Custom 3-emoji logos on tees, hoodies, mugs, hats, and phone cases.">
+<meta property="og:image" content="https://trimojiapparel.com/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Trimoji — Three emojis. One you.">
+<meta name="twitter:description" content="Custom 3-emoji logos on tees, hoodies, mugs, hats, and phone cases.">
+<meta name="twitter:image" content="https://trimojiapparel.com/assets/og.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7' fill='%230071e3'/%3E%3C/svg%3E">
+<style>
+:root{--ink:#1d1d1f;--muted:#6e6e73;--line:#d2d2d7;--accent:#0071e3;--sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Inter,system-ui,sans-serif}
+*{box-sizing:border-box}
+html,body{overflow-anchor:none}
+body{min-height:100dvh;display:flex;flex-direction:column;margin:0;font-family:var(--sans);color:var(--ink);background:#fff;line-height:1.47;-webkit-font-smoothing:antialiased}
+a,button,input{touch-action:manipulation}
+button,input{font:inherit;color:inherit}
+a{color:var(--accent)}
+.topbar{padding-top:env(safe-area-inset-top)}
+.nav{display:flex;align-items:center;min-height:48px;padding:0 22px}
+.logo{font-weight:600;font-size:1.05rem;letter-spacing:-.03em;text-decoration:none;color:var(--ink)}
+main{flex:1;width:min(36rem,100%);margin:0 auto;padding:12vh 22px 48px}
+.eyebrow{margin:0;color:var(--muted);font-size:.95rem;font-weight:500;letter-spacing:.02em}
+h1{margin:14px 0 0;max-width:10ch;font-size:min(4.8rem,15vw);font-weight:600;letter-spacing:-.045em;line-height:1.02}
+.lede{margin:22px 0 0;max-width:28rem;color:var(--muted);font-size:1.2rem;line-height:1.4}
+form{display:flex;flex-direction:column;gap:10px;margin-top:28px}
+label{font-size:.95rem;font-weight:500}
+input{width:100%;min-height:48px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:#f5f5f7;font-size:16px}
+input:focus{outline:2px solid var(--accent);outline-offset:2px;background:#fff}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:12px 22px;border:0;border-radius:980px;background:var(--accent);color:#fff;font-size:1.05rem;font-weight:500;cursor:pointer}
+.btn:disabled{opacity:.6}
+#signup-status{min-height:1.45em;margin:14px 0 0;color:var(--muted);font-size:.95rem}
+#signup-status a{word-break:break-all}
+.social{margin:28px 0 0;font-size:1rem}
+.social a{color:var(--ink);text-decoration:none;min-height:44px;display:inline-flex;align-items:center}
+footer{color:var(--muted);font-size:.9rem;line-height:1.5;padding:28px 22px calc(36px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
+footer nav{display:flex;flex-wrap:wrap;gap:2px 18px;margin:0 0 8px}
+footer nav a,footer p a{color:var(--muted);text-decoration:none}
+footer nav a{min-height:44px;display:inline-flex;align-items:center}
+footer p{margin:0 0 8px}
+@media (min-width:700px){
+ main{padding-top:16vh}
+ form{flex-direction:row;align-items:flex-end}
+ label{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+ input{flex:1}
+ .btn{flex:0 0 auto}
+}
+@media (hover:hover) and (pointer:fine){
+ .btn:hover{background:#0077ed}
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+<nav class="nav" aria-label="Trimoji"><a class="logo" href="/">Trimoji</a></nav>
+</header>
+<main>
+<p class="eyebrow">Coming soon</p>
+<h1>Three emojis.<br>One you.</h1>
+<p class="lede">Custom 3-emoji logos on tees, hoodies, mugs, hats, and phone cases.</p>
+<form id="waitlist">
+<label for="email">Email</label>
+<input id="email" name="email" type="email" autocomplete="email" inputmode="email" maxlength="254" required placeholder="Email address" aria-label="Email address">
+<button class="btn" id="notify" type="submit">Notify me</button>
+</form>
+<p id="signup-status" role="status"></p>
+<p class="social"><a href="https://www.instagram.com/trimojiapparel/">Instagram @trimojiapparel</a></p>
+</main>
+<footer>
+<nav aria-label="Policies"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/shipping">Shipping</a><a href="/returns">Returns</a><a href="/contact">Contact</a></nav>
+<p>© Trimoji. Emoji graphics by <a href="https://github.com/jdecked/twemoji">Twemoji</a>, © Twitter, Inc. and other contributors, licensed under <a href="https://creativecommons.org/licenses/by/4.0/">CC-BY 4.0</a>.</p>
+</footer>
+<script>
+const form = document.getElementById('waitlist');
+const status = document.getElementById('signup-status');
+function clientMailto(email) {
+  const subject = 'Notify me when Trimoji opens';
+  const body = `Please tell me when Trimoji opens.\n\nEmail: ${email}\n`;
+  return `mailto:hello@trimojiapparel.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+function showMail(mailto) {
+  status.replaceChildren();
+  status.append('Send this from your email app to ');
+  const link = document.createElement('a');
+  link.id = 'mailopen';
+  link.href = mailto;
+  link.textContent = 'hello@trimojiapparel.com';
+  status.append(link, '. That note asks us to notify you.');
+  const open = window.__openMail || ((url) => { location.href = url; });
+  open(mailto);
+}
+form.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const email = document.getElementById('email').value.trim();
+  const button = document.getElementById('notify');
+  button.disabled = true;
+  status.textContent = '';
+  try {
+    const res = await fetch('/api/waitlist', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', accept: 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    let data = null;
+    try { data = await res.json(); } catch (err) { data = null; }
+    if (res.ok && data && data.delivery === 'stored') {
+      status.textContent = "You're on the list. We'll write when Trimoji opens.";
+      form.reset();
+      return;
+    }
+    if (res.ok && data && data.delivery === 'mailto' && typeof data.mailto === 'string' && data.mailto.startsWith('mailto:')) {
+      showMail(data.mailto);
+      return;
+    }
+    if (!res.ok && data && data.error) throw new Error(data.error);
+    showMail(clientMailto(email));
+  } catch (err) {
+    if (err && err.message === 'Enter a valid email address') status.textContent = err.message;
+    else showMail(clientMailto(email));
+  } finally {
+    button.disabled = false;
+  }
+});
+</script>
+</body>
+</html>

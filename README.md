@@ -1,6 +1,8 @@
 # trimoji
 
-Live shop: https://trimojiapparel.com
+Public site: https://trimojiapparel.com
+
+The public homepage is a coming-soon page until you set `COMING_SOON=false` and redeploy. The shop stays available to the team at https://trimojiapparel.com/shop-preview (unlisted, `noindex`). Checkout, the print file, and the Stripe webhook stay on so that preview can place a test order and the existing webhook keeps working. They are not linked from the public page. GitHub Pages has no env flag, so it still serves the shop file.
 
 Checkout runs on Vercel. GitHub Pages stays a static preview: the cart still works, and Checkout tells you to use the live shop when `/api/checkout` is unreachable.
 
@@ -18,6 +20,8 @@ Checkout runs on Vercel. GitHub Pages stays a static preview: the cart still wor
 | `PRINTFUL_STORE_ID` | `18937301` (the Trimoji store). Sent as `X-PF-Store-Id`. |
 | `SITE_URL` | `https://trimojiapparel.com`, with no trailing slash. Success, cancel, and print-file URLs are built from this. If it is unset, checkout uses that origin. Page requests on `www.trimojiapparel.com` and `https://trimoji.vercel.app` redirect to that origin. `/api` stays on the Vercel host, so an existing webhook at `https://trimoji.vercel.app/api/stripe-webhook` still reaches this deployment. |
 | `PRINTFUL_AUTO_CONFIRM` | `false` (or leave unset). Orders are Printful drafts (`confirm=false`). Set to the exact string `true` only when a paid order should be submitted for fulfillment immediately. |
+| `COMING_SOON` | Unset, or any value other than `false`, `0`, `no`, or `off`. The homepage is the coming-soon page and the shop is only at `/shop-preview`. Set `false` and redeploy to open the shop at `/`. |
+| `WAITLIST_WEBHOOK_URL` | Optional. When unset, Notify me opens an email to `hello@trimojiapparel.com` because the site has no address database. When set, `POST /api/waitlist` forwards `{ "email" }` to that URL and the page says the person is on the list. |
 
 4. Deploy. The shop is the deployment URL. A yellow **Test mode** banner appears when `STRIPE_SECRET_KEY` starts with `sk_test_`. The key itself is never sent to the browser (`GET /api/config` returns only `{ "stripeTestMode": true }`).
 5. Create the Stripe webhook in **test mode** (the Test mode toggle in the Stripe Dashboard must be on):

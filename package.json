@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@resvg/resvg-js": "^2.6.2",
+    "@vercel/functions": "^3.10.3",
     "stripe": "^18.5.0"
   },
   "devDependencies": {

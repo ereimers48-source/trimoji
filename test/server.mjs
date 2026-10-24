@@ -2,6 +2,7 @@ import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { routeRequest } from '../lib/coming-soon.js';
 import { pageRedirect } from '../lib/redirect.js';
 
 process.env.STRIPE_SECRET_KEY = 'sk_test_playwright';
@@ -23,6 +24,7 @@ runtime.createStripe = () => ({
 
 const { GET: configGet } = await import('../api/config.js');
 const { POST: checkoutPost } = await import('../api/checkout.js');
+const { POST: waitlistPost } = await import('../api/waitlist.js');
 
 const root = fileURLToPath(new URL('..', import.meta.url)).replace(/\/$/, '');
 const types = {
@@ -66,10 +68,11 @@ const server = createServer(async (req, res) => {
       await send(res, await configGet());
       return;
     }
-    if (url.pathname === '/api/checkout' && req.method === 'POST') {
+    if ((url.pathname === '/api/checkout' || url.pathname === '/api/waitlist') && req.method === 'POST') {
       const chunks = [];
       for await (const chunk of req) chunks.push(chunk);
-      await send(res, await checkoutPost(new Request(url, {
+      const handler = url.pathname === '/api/waitlist' ? waitlistPost : checkoutPost;
+      await send(res, await handler(new Request(url, {
         method: 'POST',
         headers: { 'content-type': req.headers['content-type'] || 'application/json' },
         body: Buffer.concat(chunks),
@@ -81,15 +84,32 @@ const server = createServer(async (req, res) => {
       res.end(JSON.stringify({ error: 'Not found' }));
       return;
     }
-    const rel = cleanPages[url.pathname] || decodeURIComponent(url.pathname).replace(/^\/+/, '') || 'index.html';
+    const route = routeRequest(url.pathname);
+    if (route.type === 'missing') {
+      res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' });
+      res.end('not found');
+      return;
+    }
+    const rel = route.type === 'file'
+      ? route.file
+      : (cleanPages[url.pathname] || decodeURIComponent(url.pathname).replace(/^\/+/, '') || 'index.html');
     const file = normalize(join(root, rel));
     if (file !== root && !file.startsWith(`${root}/`)) {
       res.writeHead(403);
       res.end('forbidden');
       return;
     }
-    const data = await readFile(file);
-    res.writeHead(200, { 'content-type': types[extname(file)] || 'application/octet-stream', 'cache-control': 'no-store' });
+    let data = await readFile(file);
+    const headers = { 'content-type': types[extname(file)] || 'application/octet-stream', 'cache-control': 'no-store' };
+    if (route.robots) {
+      headers['x-robots-tag'] = route.robots;
+      if (extname(file) === '.html') {
+        const html = data.toString('utf8').replace('</head>', `<meta name="robots" content="${route.robots}">\n</head>`);
+        data = Buffer.from(html);
+        headers['content-type'] = 'text/html; charset=utf-8';
+      }
+    }
+    res.writeHead(200, headers);
     res.end(data);
   } catch (err) {
     if (err && err.code === 'ENOENT') {
