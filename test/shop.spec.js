@@ -475,6 +475,12 @@ test('preview sits with the choices and the bag button stays in the page', async
         gridOverflow: getComputedStyle(gridEl).overflowY,
         mock: { top: mock.top, bottom: mock.bottom, left: mock.left, right: mock.right, width: mock.width, height: mock.height },
         slots: { top: slots.top, bottom: slots.bottom },
+        chips: [...document.querySelectorAll('#slots .slot')].map((el) => {
+          const r = el.getBoundingClientRect();
+          const img = el.querySelector('img.em');
+          const ir = img ? img.getBoundingClientRect() : null;
+          return { w: r.width, h: r.height, emoji: ir ? ir.width : 0 };
+        }),
         search: { top: search.top, bottom: search.bottom, height: search.height },
         grid: { top: grid.top, bottom: grid.bottom, height: grid.height },
         vh,
@@ -521,6 +527,13 @@ test('preview sits with the choices and the bag button stays in the page', async
     }
     expect(frame.slots.top).toBeGreaterThanOrEqual(frame.stageBottom - 2);
     expect(frame.slots.bottom).toBeLessThanOrEqual(frame.vh + 1);
+    expect(frame.chips).toHaveLength(3);
+    for (const chip of frame.chips) {
+      expect(Math.abs(chip.w - chip.h)).toBeLessThan(1.5);
+      expect(chip.w).toBeGreaterThan(72);
+      expect(chip.emoji).toBeGreaterThan(48);
+      expect(chip.emoji).toBeGreaterThan(chip.w * 0.55);
+    }
     expect(frame.search.top).toBeGreaterThanOrEqual(frame.slots.bottom - 4);
     expect(frame.search.bottom).toBeLessThanOrEqual(frame.vh + 1);
     expect(frame.search.height).toBeGreaterThanOrEqual(44);
@@ -643,6 +656,19 @@ test('preview sits with the choices and the bag button stays in the page', async
     expect(stuck.left).toBeGreaterThanOrEqual(-1);
     expect(stuck.right).toBeLessThanOrEqual(stuck.vw + 1);
     expect(stuck.fit).toBe('contain');
+    const deskChips = await page.locator('#slots .slot').evaluateAll((els) => els.map((el) => {
+      const r = el.getBoundingClientRect();
+      const img = el.querySelector('img.em');
+      const ir = img ? img.getBoundingClientRect() : null;
+      return { w: r.width, h: r.height, emoji: ir ? ir.width : 0 };
+    }));
+    expect(deskChips).toHaveLength(3);
+    for (const chip of deskChips) {
+      expect(Math.abs(chip.w - chip.h)).toBeLessThan(1.5);
+      expect(chip.w).toBeGreaterThan(100);
+      expect(chip.emoji).toBeGreaterThan(56);
+      expect(chip.emoji).toBeGreaterThan(chip.w * 0.55);
+    }
     expect(stuck.logos).toHaveLength(3);
     for (const logo of stuck.logos) {
       expect(logo.width).toBeGreaterThan(8);
