@@ -55,7 +55,10 @@ a{color:var(--ink)}
 .note{margin:0;color:var(--muted);font-size:.95rem;line-height:1.45}
 .slots{display:flex;gap:10px;margin:16px 0}
 .slot{flex:1;height:84px;border:1px solid var(--line);border-radius:16px;display:grid;place-items:center;font-size:40px;position:relative;cursor:pointer;background:#fff;padding:0;min-width:0}
-.slot.f{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.slot.f{border-color:#86868b}
+.slot.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.item .e{display:inline-flex;align-items:center;gap:6px}
+.gap{width:1.15em;height:1.15em;border:1px dashed #86868b;border-radius:6px;display:inline-block}
 .slot small{position:absolute;top:0;right:0;width:44px;height:44px;display:grid;place-items:center;font-size:18px;line-height:1;color:var(--muted)}
 .kb{margin-top:8px}
 .kb input{width:100%;min-height:44px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);font-size:16px;background:#f5f5f7}
@@ -116,8 +119,19 @@ footer a{color:var(--muted)}
  #bgs{grid-template-columns:repeat(6, 44px)}
 }
 @media(max-width:899px){
- .stage{margin-left:-22px;margin-right:-22px;border-radius:0;padding:8px 0 12px}
- .mock{width:100%}
+ .stage{position:sticky;top:var(--bar, 48px);z-index:20;height:40dvh;margin-left:-22px;margin-right:-22px;border-radius:0;padding:6px 8px;display:flex;align-items:center;justify-content:center;background:var(--stage);box-shadow:0 1px 0 #e8e8ed}
+ .mock{width:min(100%, calc((40dvh - 12px) * var(--aw) / var(--ah)));max-height:calc(40dvh - 12px);height:auto}
+ .buy{gap:0}
+ .choices{padding-top:0}
+ .choices > .choice:first-child{padding:0;border-top:0}
+ .choices button,.choices input,.choices .grid,#tabs{scroll-margin-top:calc(40dvh + 8px)}
+ #emoji-choice{display:flex;flex-direction:column;height:calc(100dvh - var(--bar, 48px) - 40dvh);padding:8px 0 0;box-sizing:border-box;overflow:hidden}
+ #emoji-choice h3{font-size:1.15rem;margin:0 0 6px;line-height:1.5}
+ #emoji-choice .note{font-size:.9rem;line-height:1.45;margin:0}
+ #emoji-choice .slots{margin:8px 0}
+ #emoji-choice .slot{height:56px;font-size:28px}
+ #emoji-choice .kb{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;margin-top:0}
+ #emoji-choice .grid{flex:1 1 auto;height:auto;min-height:0;margin-top:8px}
 }
 @media(min-width:900px){
  .hero{padding:72px 6vw 0}
@@ -125,8 +139,11 @@ footer a{color:var(--muted)}
  #shop{padding:88px 6vw 72px}
  .buy{display:grid;grid-template-columns:minmax(320px, 1.05fr) minmax(340px, .95fr);gap:56px;align-items:start}
  .stage{position:sticky;top:calc(var(--bar, 64px) + 16px);align-self:start}
- .mock{width:min(100%, calc((100dvh - var(--bar, 64px) - 140px) * var(--aw) / var(--ah)));max-height:calc(100dvh - var(--bar, 64px) - 140px);height:auto}
+ .mock{width:min(100%, calc((100dvh - var(--bar, 64px) - 48px) * var(--aw) / var(--ah)));max-height:calc(100dvh - var(--bar, 64px) - 48px);height:auto}
  .choices{padding-top:0}
+ #emoji-choice{display:block;height:auto;overflow:visible}
+ #emoji-choice .kb{display:block}
+ #emoji-choice .grid{height:312px;flex:none}
 }
 @media (prefers-reduced-motion: reduce){
  html{scroll-behavior:auto}
@@ -150,15 +167,17 @@ footer a{color:var(--muted)}
 <div class="buy">
 <div class="stage" id="stage">
 <div class="mock" id="mock" data-fit="panel" data-product="tee" data-ink="light" style="--px:30.2%;--py:23.5%;--pw:38.5%;--ph:31.3%;--rx:4deg;--ry:-3deg;--swatch:#ffffff"><img class="blank" alt="White T-shirt" data-key="tee:White" src="assets/products/tee/white-520.webp" srcset="assets/products/tee/white-360.webp 360w, assets/products/tee/white-520.webp 520w" sizes="(min-width: 900px) 460px, 100vw" width="520" height="640" decoding="async" fetchpriority="high"><div class="print"></div></div>
-<p class="mockcap" id="sizecap">Scales the trio on the product and on the print.</p>
 </div>
 <div class="choices">
 <section class="choice">
+<div id="emoji-choice">
 <h3>Emojis</h3>
-<p class="note">Pick three. Search, or browse one category at a time.</p>
+<p class="note">Tap a slot, then an emoji. Empty slots stay empty.</p>
 <div class="slots" id="slots"></div>
 <p class="sr" id="triosay" aria-live="polite"></p>
-<div class="kb"><input id="q" placeholder="Search emoji" autocomplete="off" aria-label="Search emoji"><div class="grid" id="grid"></div><div class="tabs" id="tabs"></div></div>
+<div class="kb"><input id="q" placeholder="Search emoji" autocomplete="off" aria-label="Search emoji"><div class="grid" id="grid"></div></div>
+</div>
+<div class="tabs" id="tabs"></div>
 </section>
 <section class="choice">
 <h3>Layout</h3>
@@ -182,6 +201,7 @@ footer a{color:var(--muted)}
 </section>
 <section class="choice">
 <h3>Logo size</h3>
+<p class="note" id="sizecap">Scales the trio on the product and on the print.</p>
 <label>Logo size <span id="szv"></span></label>
 <input type="range" id="sz" min="60" max="140" value="100" aria-label="Logo size">
 </section>
@@ -216,7 +236,7 @@ function tw(e){const zwj=e.indexOf('\u200d')>=0;const codes=[];for(const ch of e
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 const img=(e,lazy=true)=>`<img class="em" alt="${esc(e)}" src="${esc(tw(e))}" ${lazy?'loading="lazy" ':''}decoding="async" onerror="if(!this.dataset.r){this.dataset.r=1;this.src=this.src.replace(/-fe0f/g,'')}">`;
 const twx=s=>s.replace(/\p{Regional_Indicator}{2}|\p{Extended_Pictographic}(\ufe0f|\p{Emoji_Modifier}|\u20e3|\u200d\p{Extended_Pictographic})*/gu,m=>img(m));
-const S={pick:['🔥','😎','🍕'],lay:'row',bg:'none',prod:'tee',col:0,size:'M',cart:[]};
+const S={pick:['🔥','😎','🍕'],slot:0,lay:'row',bg:'none',prod:'tee',col:0,size:'M',cart:[]};
 const PRODS={
  tee:{n:'T-shirt',p:29,sizes:['S','M','L','XL','2XL'],colors:['White','Black','Heather','Navy','Lilac','Pink','Sage'],available:true},
  hoodie:{n:'Hoodie',p:54,sizes:['S','M','L','XL','2XL'],colors:['White','Black','Heather','Navy','Pink'],available:true},
@@ -241,28 +261,29 @@ function renderGrid(){const q=document.getElementById('q').value.trim().toLowerC
   h+=`<div class="cat" id="c_${k}">${esc(n)}</div><div class="cells">`+list.map(x=>`<button type="button" title="${esc(x[1])}" data-emoji="${esc(x[0])}" class="${S.pick.includes(x[0])?'sel':''}">${img(x[0],false)}</button>`).join('')+'</div>'}
  grid.innerHTML=h||'<p class="note" style="padding:20px;text-align:center">No emoji found</p>';grid.scrollTop=0}
 function markSelected(){document.querySelectorAll('#grid button[data-emoji]').forEach(b=>{b.classList.toggle('sel',S.pick.includes(b.dataset.emoji))})}
-function pick(e){const i=S.pick.indexOf(e);let added=false,replaced=false;if(i>=0)S.pick.splice(i,1);else{if(S.pick.length>=3){S.pick.shift();replaced=true}S.pick.push(e);added=true}all();markSelected();if(replaced)toast('The oldest emoji made room for this one.')}
+function nextEmpty(from){for(let step=1;step<=3;step++){const i=(from+step)%3;if(!S.pick[i])return i}return from}
+function pick(e){if(!e)return;const i=S.slot;S.pick[i]=e;S.slot=nextEmpty(i);all();markSelected()}
 function takeEmoji(pool,emoji){const i=pool.findIndex(node=>node.alt===emoji);if(i>=0)return pool.splice(i,1)[0];const holder=document.createElement('div');holder.innerHTML=img(emoji,false);return holder.firstElementChild}
 function slots(){const root=document.getElementById('slots');
  if(root.childElementCount!==3)root.innerHTML=[0,1,2].map(i=>`<button type="button" class="slot" data-slot="${i}"></button>`).join('');
  const pool=[...root.querySelectorAll('img.em')];
- [...root.children].forEach((el,i)=>{const e=S.pick[i]||'';el.classList.toggle('f',!!e);const have=el.querySelector('img.em');
+ [...root.children].forEach((el,i)=>{const e=S.pick[i]||'';el.classList.toggle('f',!!e);el.classList.toggle('on',i===S.slot);el.setAttribute('aria-pressed',i===S.slot?'true':'false');const have=el.querySelector('img.em');
   if(el.dataset.shown===e&&(e?have&&have.alt===e:!have)){if(have){const k=pool.indexOf(have);if(k>=0)pool.splice(k,1)}return}
   const fresh=el.dataset.shown!=null&&!!e;el.dataset.shown=e;
   if(!e){const n=document.createElement('span');n.className='note';n.textContent=String(i+1);el.replaceChildren(n);return}
-  const mark=takeEmoji(pool,e);const x=document.createElement('small');x.textContent='✕';el.replaceChildren(mark,x);
+  const mark=takeEmoji(pool,e);const x=document.createElement('small');x.dataset.clear='1';x.setAttribute('aria-label','Clear slot');x.textContent='✕';el.replaceChildren(mark,x);
   if(fresh){el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop')}});
- const say=document.getElementById('triosay');if(say)say.textContent=S.pick.length?S.pick.join(' ')+' selected':'Trio is empty'}
+ const say=document.getElementById('triosay');if(say)say.textContent=S.pick.some(Boolean)?S.pick.map(e=>e||'empty').join(', ')+' selected':'Trio is empty'}
 function ensureOpts(id,arr,cur){const el=document.getElementById(id);const key=arr.map(a=>a[0]).join('\0');
  if(el.dataset.key!==key){el.dataset.key=key;el.innerHTML=arr.map(a=>`<button type="button" class="opt" data-value="${esc(a[0])}">${esc(a[1])}</button>`).join('')}
  el.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.value===String(cur)))}
-function logoSVG(cx,cy,base){const s=base*sz.value/100,e=S.pick,n=e.length;let pos=[];
- if(S.lay=='row')pos=e.map((_,i)=>[cx+(i-(n-1)/2)*s*1.05,cy]);
- else if(S.lay=='stacked')pos=e.map((_,i)=>[cx,cy+(i-(n-1)/2)*s*1.05]);
- else pos=[[cx,cy-s*.48],[cx-s*.55,cy+s*.45],[cx+s*.55,cy+s*.45]].slice(0,n);
- const b=BGS[bgi];let r=S.lay=='row'||S.lay=='stacked'?s*(n*.55+.15):s*1.25;
- let out=b[0]=='none'?'':`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${b[1]}"/>`;
- return out+e.map((x,i)=>{const href=esc(tw(x));return `<image href="${href}" xlink:href="${href}" x="${pos[i][0]-s/2}" y="${pos[i][1]-s/2}" width="${s}" height="${s}"/>`}).join('')}
+function slotPos(cx,cy,s){if(S.lay=='row')return [0,1,2].map(i=>[cx+(i-1)*s*1.05,cy]);
+ if(S.lay=='stacked')return [0,1,2].map(i=>[cx,cy+(i-1)*s*1.05]);
+ return [[cx,cy-s*.48],[cx-s*.55,cy+s*.45],[cx+s*.55,cy+s*.45]]}
+function logoSVG(cx,cy,base){const s=base*sz.value/100,e=S.pick,pos=slotPos(cx,cy,s);
+ const b=BGS[bgi];const filled=e.some(Boolean);let r=S.lay=='triangle'?s*1.25:s*(3*.55+.15);
+ let out=b[0]=='none'||!filled?'':`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${b[1]}"/>`;
+ return out+e.map((x,i)=>{if(!x)return '';const href=esc(tw(x));return `<image href="${href}" xlink:href="${href}" x="${pos[i][0]-s/2}" y="${pos[i][1]-s/2}" width="${s}" height="${s}"/>`}).join('')}
 const PHOTO={
  tee:{colors:['White','Black','Heather','Navy','Lilac','Pink','Sage'],w:[360,520],box:['30.2%','23.5%','38.5%','31.3%'],turn:[4,-3]},
  hoodie:{colors:['White','Black','Heather','Navy','Pink'],w:[360,520],box:['35.6%','27.5%','36.5%','27.9%'],turn:[4,-3]},
@@ -292,18 +313,15 @@ function applyPhoto(){const spec=PHOTO[S.prod];const color=COLS[S.col][0];const 
  loader.onload=()=>{photoCache.add(src);commit()};
  loader.onerror=()=>{if(blank.dataset.pending===key){mock.classList.add('flat');mock.classList.remove('waiting')}};
  loader.src=src}
-function hatLogoSVG(){const W=1650,H=750,e=S.pick,n=e.length,fitted=Math.max(n,1),size=Number(sz.value);
+function hatLogoSVG(){const W=1650,H=750,e=S.pick,fitted=3,size=Number(sz.value);
  const unit=S.lay=='row'?{w:1+(fitted-1)*1.05,h:1}:S.lay=='stacked'?{w:1,h:1+(fitted-1)*1.05}:{w:2.1,h:1.93};
  const full=Math.min(W/unit.w,H/unit.h);let s=full*0.88*(size/100);
  const span=S.lay=='row'?{w:s*(1+(fitted-1)*1.05),h:s}:S.lay=='stacked'?{w:s,h:s*(1+(fitted-1)*1.05)}:{w:s*2.1,h:s*1.93};
  s*=Math.min((W*0.93)/span.w,(H*0.93)/span.h,1);
- const cx=W/2,cy=H/2;let pos=[];
- if(S.lay=='row')pos=e.map((_,i)=>[cx+(i-(n-1)/2)*s*1.05,cy]);
- else if(S.lay=='stacked')pos=e.map((_,i)=>[cx,cy+(i-(n-1)/2)*s*1.05]);
- else pos=[[cx,cy-s*.48],[cx-s*.55,cy+s*.45],[cx+s*.55,cy+s*.45]].slice(0,n);
- const b=BGS[bgi];let r=S.lay=='triangle'?s*1.25:s*(n*.55+.15);r=Math.min(r,cy-24);
- const bg=b[0]=='none'||!n?'':`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${b[1]}"/>`;
- const marks=e.map((x,i)=>{const href=esc(tw(x));return `<image href="${href}" xlink:href="${href}" x="${pos[i][0]-s/2}" y="${pos[i][1]-s/2}" width="${s}" height="${s}"/>`}).join('');
+ const cx=W/2,cy=H/2,pos=slotPos(cx,cy,s);
+ const b=BGS[bgi];let r=S.lay=='triangle'?s*1.25:s*(fitted*.55+.15);r=Math.min(r,cy-24);
+ const bg=b[0]=='none'||!e.some(Boolean)?'':`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${b[1]}"/>`;
+ const marks=e.map((x,i)=>{if(!x)return '';const href=esc(tw(x));return `<image href="${href}" xlink:href="${href}" x="${pos[i][0]-s/2}" y="${pos[i][1]-s/2}" width="${s}" height="${s}"/>`}).join('');
  return {vb:`0 0 ${W} ${H}`,markup:bg+marks}}
 function mountMock(markup,cx,cy,base,viewBox){const r=base*1.4*2.05;const vb=viewBox||`${cx-r} ${cy-r} ${r*2} ${r*2}`;
  const doc=new DOMParser().parseFromString(`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="${vb}" preserveAspectRatio="xMidYMid meet">${markup}</svg>`,'image/svg+xml');
@@ -351,19 +369,21 @@ function placeToast(){const el=document.getElementById('toast');const drawer=doc
  el.style.bottom=Math.max(base,Math.round(innerHeight-sum.top+12))+'px'}
 function money(n){return '$'+n.toFixed(2)}
 function lineBackground(){const bg=BGS[bgi];return bg[0]==='none'?{shape:'none'}:{shape:'circle',color:bg[1]}}
-function sameDesign(x,background){return x.product===S.prod&&x.color===COLS[S.col][0]&&x.size===S.size&&x.layout===S.lay&&x.logoSize===Number(sz.value)&&x.emojis.join('\0')===S.pick.join('\0')&&x.background.shape===background.shape&&(x.background.color||'')===(background.color||'')}
-function addCart(){if(S.pick.length<3)return toast('Pick exactly 3 emojis first 🙂');const p=PRODS[S.prod];
+function slotList(){return S.pick.map(e=>e||null)}
+function sameDesign(x,background){return x.product===S.prod&&x.color===COLS[S.col][0]&&x.size===S.size&&x.layout===S.lay&&x.logoSize===Number(sz.value)&&x.emojis.map(e=>e||'').join('\0')===slotList().map(e=>e||'').join('\0')&&x.background.shape===background.shape&&(x.background.color||'')===(background.color||'')}
+function addCart(){const slots=slotList();if(!slots.some(Boolean))return toast('Pick at least 1 emoji.');const p=PRODS[S.prod];
  if(!p.available)return toast(p.reason);
  if(p.colors&&!p.colors.includes(COLS[S.col][0]))return toast('That color is not available on this product');
  const background=lineBackground();const found=S.cart.find(x=>sameDesign(x,background));
  if(found){if(found.quantity>=10)return toast('10 is the most of one design.');found.quantity+=1}
- else{if(S.cart.length>=8)return toast('The bag holds 8 designs.');S.cart.push({product:S.prod,emojis:S.pick.slice(),layout:S.lay,logoSize:Number(sz.value),background,color:COLS[S.col][0],size:S.size,quantity:1,n:p.n,displayPrice:p.p})}
+ else{if(S.cart.length>=8)return toast('The bag holds 8 designs.');S.cart.push({product:S.prod,emojis:slots.slice(),slots:slots.slice(),layout:S.lay,logoSize:Number(sz.value),background,color:COLS[S.col][0],size:S.size,quantity:1,n:p.n,displayPrice:p.p})}
  cart();toast('Added to your bag.');toggleCart(true)}
 function setQty(i,delta){const line=S.cart[i];if(!line)return;const next=line.quantity+delta;
  if(next<=0){S.cart.splice(i,1);cart();return}
  if(next>10){toast('10 is the most of one design.');return}
  line.quantity=next;cart()}
-function cart(){cc.textContent=String(S.cart.reduce((a,x)=>a+x.quantity,0));items.innerHTML=S.cart.map((x,i)=>`<div class="item"><span class="e">${x.emojis.map(img).join('')}</span><div class="meta"><b>${esc(x.n)}</b><div class="note">${esc(x.color)} · ${esc(x.size)} · ${esc(x.layout)}</div></div><div class="qty" role="group" aria-label="Quantity"><button type="button" class="opt" data-qty="-1" data-line="${i}" aria-label="Decrease quantity">−</button><b>${x.quantity}</b><button type="button" class="opt" data-qty="1" data-line="${i}" aria-label="Increase quantity">+</button></div><b class="cost">${money(x.displayPrice*x.quantity)}</b><button type="button" class="opt" data-remove="${i}" aria-label="Remove">✕</button></div>`).join('')||'<p class="note">Your bag is empty.</p>';
+function marks(list){return list.map(e=>e?img(e):'<span class="gap" aria-label="Empty"></span>').join('')}
+function cart(){cc.textContent=String(S.cart.reduce((a,x)=>a+x.quantity,0));items.innerHTML=S.cart.map((x,i)=>`<div class="item"><span class="e">${marks(x.emojis)}</span><div class="meta"><b>${esc(x.n)}</b><div class="note">${esc(x.color)} · ${esc(x.size)} · ${esc(x.layout)}</div></div><div class="qty" role="group" aria-label="Quantity"><button type="button" class="opt" data-qty="-1" data-line="${i}" aria-label="Decrease quantity">−</button><b>${x.quantity}</b><button type="button" class="opt" data-qty="1" data-line="${i}" aria-label="Increase quantity">+</button></div><b class="cost">${money(x.displayPrice*x.quantity)}</b><button type="button" class="opt" data-remove="${i}" aria-label="Remove">✕</button></div>`).join('')||'<p class="note">Your bag is empty.</p>';
  const subtotal=S.cart.reduce((a,x)=>a+x.displayPrice*x.quantity,0);const ship=subtotal<=0?0:(subtotal>=60?0:5.99);
  document.getElementById('sub').textContent=money(subtotal);
  document.getElementById('ship').textContent=ship===0&&subtotal>=60?'Free':money(ship);
@@ -372,7 +392,7 @@ function toggleCart(o){if(o===true)drawer.classList.add('open');else if(o===fals
 function schedulePreview(){}
 async function checkout(){if(!S.cart.length)return toast('Your bag is empty');
  const pay=document.getElementById('pay');pay.disabled=true;const label=pay.textContent;pay.textContent='Redirecting…';
- const items=S.cart.map(({product,color,size,quantity,emojis,layout,logoSize,background})=>({product,color,size,quantity,emojis,layout,logoSize,background}));
+ const items=S.cart.map(({product,color,size,quantity,emojis,slots,layout,logoSize,background})=>({product,color,size,quantity,emojis,slots:slots||emojis,layout,logoSize,background}));
  try{const res=await fetch('/api/checkout',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({items})});
   const text=await res.text();let data=null;try{data=JSON.parse(text)}catch(e){}
   if(!res.ok||!data||!data.url){toast(!data?'This preview can’t take payment. Checkout runs on the Vercel deployment.':(data.error||'Checkout failed'));return}
@@ -385,16 +405,16 @@ function loadShopConfig(){fetch('/api/config',{headers:{accept:'application/json
 function bindTap(id,fn){const root=document.getElementById(id);if(!root)return;let swallow=0,track=null;
  root.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'){swallow=0;return}const btn=e.target.closest('button');if(!btn||!root.contains(btn)){track=null;return}track={id:e.pointerId,x:e.clientX,y:e.clientY,moved:false}});
  root.addEventListener('pointermove',e=>{if(!track||track.id!==e.pointerId)return;const dx=e.clientX-track.x,dy=e.clientY-track.y;if(dx*dx+dy*dy>100)track.moved=true});
- root.addEventListener('pointerup',e=>{if(e.pointerType==='mouse')return;const btn=e.target.closest('button');const moved=!!(track&&track.id===e.pointerId&&track.moved);track=null;if(!btn||!root.contains(btn)){if(moved)swallow=Date.now()+700;return}swallow=Date.now()+700;if(!moved)fn(btn)});
+ root.addEventListener('pointerup',e=>{if(e.pointerType==='mouse')return;const btn=e.target.closest('button');const moved=!!(track&&track.id===e.pointerId&&track.moved);track=null;if(!btn||!root.contains(btn)){if(moved)swallow=Date.now()+700;return}swallow=Date.now()+700;if(!moved)fn(btn,e)});
  root.addEventListener('pointercancel',e=>{if(e.pointerType==='mouse')return;track=null;swallow=Date.now()+700});
- root.addEventListener('click',e=>{const btn=e.target.closest('button');if(!btn||!root.contains(btn))return;if(Date.now()<swallow){e.preventDefault();return}fn(btn)})}
+ root.addEventListener('click',e=>{const btn=e.target.closest('button');if(!btn||!root.contains(btn))return;if(Date.now()<swallow){e.preventDefault();return}fn(btn,e)})}
 bindTap('lay',b=>setLay(b.dataset.value));
 bindTap('prods',b=>setProd(b.dataset.value));
 bindTap('sizes',b=>setSize(b.dataset.value));
 bindTap('cols',b=>{S.col=Number(b.dataset.col);all()});
 bindTap('bgs',b=>{bgi=Number(b.dataset.bg);all()});
 bindTap('grid',b=>{if(b.dataset.emoji)pick(b.dataset.emoji)});
-bindTap('slots',b=>{const i=Number(b.dataset.slot);if(!S.pick[i])return;S.pick.splice(i,1);all();markSelected()});
+bindTap('slots',(b,e)=>{const i=Number(b.dataset.slot);if(e&&e.target.closest('[data-clear]')){S.pick[i]=null;S.slot=i;all();markSelected();return}S.slot=i;all()});
 bindTap('tabs',b=>jump(b.dataset.cat));
 bindTap('items',b=>{if(b.dataset.remove!=null){S.cart.splice(Number(b.dataset.remove),1);cart();return}if(b.dataset.qty!=null)setQty(Number(b.dataset.line),Number(b.dataset.qty))});
 document.getElementById('sz').addEventListener('input',draw);

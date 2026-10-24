@@ -146,6 +146,82 @@ test('design token round-trips and checkout metadata survives a client price', a
   assert.equal(design.layout, 'row');
 });
 
+test('an empty middle slot stays a gap in checkout metadata and the print file', async () => {
+  const slots = ['🔥', null, '🍕'];
+  const stripe = fakeStripe();
+  await createCheckoutSession({
+    items: [sampleItem({ emojis: slots, slots, layout: 'row', background: { shape: 'none' } })],
+    stripe,
+    siteUrl: SITE,
+  });
+  const packed = JSON.parse(stripe.calls[0].metadata.i0);
+  assert.deepEqual(packed.slots, slots);
+  assert.deepEqual(packed.e, slots);
+  assert.match(stripe.calls[0].line_items[0].price_data.product_data.name, /🔥🍕/);
+  assert.equal(stripe.calls[0].line_items[0].price_data.product_data.name.includes('null'), false);
+  const restored = itemsFromMetadata(stripe.calls[0].metadata);
+  assert.deepEqual(restored[0].emojis, slots);
+  assert.deepEqual(restored[0].slots, slots);
+  assert.deepEqual(decodeDesign(encodeDesign(restored[0])).emojis, slots);
+  const order = buildPrintfulOrder({ session: completedSession(stripe.calls[0].metadata), siteUrl: SITE });
+  const token = new URL(order.items[0].files[0].url).searchParams.get('design');
+  assert.deepEqual(decodeDesign(token).emojis, slots);
+
+  function marks(svg) {
+    return [...svg.matchAll(/translate\(([-\d.]+) ([-\d.]+)\) scale\(([-\d.]+)\)/g)].map((mark) => {
+      const x = Number(mark[1]);
+      const y = Number(mark[2]);
+      const glyph = Number(mark[3]) * 36;
+      return { x, y, glyph, cx: x + glyph / 2, cy: y + glyph / 2 };
+    });
+  }
+  for (const product of ['tee', 'hoodie', 'mug', 'hat']) {
+    const design = { product, layout: 'row', logoSize: 100, background: { shape: 'none' } };
+    const full = marks(composeSvg({ ...design, emojis: ['🔥', '😎', '🍕'] }, [SVG, SVG, SVG]));
+    const gapped = marks(composeSvg({ ...design, emojis: slots }, [SVG, SVG]));
+    assert.equal(gapped.length, 2, product);
+    assert.equal(gapped[0].glyph, full[0].glyph, product);
+    assert.ok(gapped[1].cx - gapped[0].cx > gapped[0].glyph * 1.9, product);
+    assert.ok(Math.abs(gapped[0].cx - full[0].cx) < 1, product);
+    assert.ok(Math.abs(gapped[1].cx - full[2].cx) < 1, product);
+    const width = product === 'hat' ? HAT_PRINT_W : PRINT_PX;
+    assert.ok(Math.abs((gapped[0].cx + gapped[1].cx) / 2 - width / 2) < gapped[0].glyph * 0.15, product);
+  }
+  const triangle = marks(composeSvg({
+    product: 'tee', emojis: slots, layout: 'triangle', logoSize: 100, background: { shape: 'none' },
+  }, [SVG, SVG]));
+  assert.ok(triangle[1].cy > triangle[0].cy);
+  assert.ok(triangle[1].cx - triangle[0].cx > triangle[0].glyph * 0.3);
+  const stacked = marks(composeSvg({
+    product: 'hoodie', emojis: slots, layout: 'stacked', logoSize: 100, background: { shape: 'none' },
+  }, [SVG, SVG]));
+  assert.ok(Math.abs(stacked[0].cx - stacked[1].cx) < 1);
+  assert.ok(stacked[1].cy - stacked[0].cy > stacked[0].glyph * 1.9);
+  const fetched = [];
+  const png = await renderLogoPng({
+    product: 'tee', emojis: slots, layout: 'row', logoSize: 100, background: { shape: 'none' },
+  }, async () => { fetched.push(1); return SVG; });
+  assert.equal(fetched.length, 2);
+  assert.equal(png.readUInt32BE(16), PRINT_PX);
+
+  await assert.rejects(
+    () => createCheckoutSession({
+      items: [sampleItem({ emojis: [null, null, null], slots: [null, null, null] })],
+      stripe: fakeStripe(),
+      siteUrl: SITE,
+    }),
+    (err) => err instanceof HttpError && /at least 1/.test(err.message),
+  );
+  await assert.rejects(
+    () => createCheckoutSession({
+      items: [sampleItem({ emojis: ['🔥', '🍕'] })],
+      stripe: fakeStripe(),
+      siteUrl: SITE,
+    }),
+    (err) => err instanceof HttpError && /3 emoji slots/.test(err.message),
+  );
+});
+
 test('printful order is a draft unless PRINTFUL_AUTO_CONFIRM=true', async () => {
   const stripe = fakeStripe();
   await createCheckoutSession({ items: [sampleItem({ product: 'mug', color: 'White', size: '11 oz' })], stripe, siteUrl: SITE });
