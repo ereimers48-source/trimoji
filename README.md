@@ -85,7 +85,26 @@ Trucker hat (Yupoong 6006, five-panel mesh back), one size. Confirmed from `GET 
 | Charcoal | Charcoal | 4814 |
 | Navy | Navy | 4816 |
 
-On `checkout.session.completed`, `POST /api/stripe-webhook` checks `STRIPE_WEBHOOK_SECRET`, then `POST https://api.printful.com/orders?confirm=false` (or `confirm=true` when `PRINTFUL_AUTO_CONFIRM=true`) with `X-PF-Store-Id`. The print file is `GET /api/print-file?design=…`, a transparent PNG of the three Twemoji SVGs (CC-BY): 1800×1800 for tees, hoodies, and mugs, and 1650×750 at 300 DPI for the trucker hat. Tokens without a product still render the square file. Printful fetches that URL, so `SITE_URL` must be the public deployment (`https://trimojiapparel.com`).
+Phone case (Printful Tough Case for iPhone, product 601), $29. The blank is White. Glossy and Matte are the finish stored as the color, and the iPhone model is the size. The print file is one 1392×2220 PNG at 300 DPI for every model (`printType` `default`). The logo stays out of the top 28% of that file so it clears the camera area. That inset is a guess until a Printful mockup is checked, and the shop preview is a drawn case rather than a generated mockup.
+
+| Model | Glossy | Matte |
+| --- | --- | --- |
+| iPhone 15 | 17714 | 17715 |
+| iPhone 15 Plus | 17716 | 17717 |
+| iPhone 15 Pro | 17718 | 17719 |
+| iPhone 15 Pro Max | 17720 | 17721 |
+| iPhone 16 | 20302 | 20306 |
+| iPhone 16 Plus | 20303 | 20307 |
+| iPhone 16 Pro | 20304 | 20308 |
+| iPhone 16 Pro Max | 20305 | 20309 |
+| iPhone 17 | 33985 | 33989 |
+| iPhone 17 Air | 33986 | 33990 |
+| iPhone 17 Pro | 33987 | 33991 |
+| iPhone 17 Pro Max | 33988 | 33992 |
+| iPhone 18 Pro | 52384 | 52385 |
+| iPhone 18 Pro Max | 52386 | 52387 |
+
+On `checkout.session.completed`, `POST /api/stripe-webhook` checks `STRIPE_WEBHOOK_SECRET`, then `POST https://api.printful.com/orders?confirm=false` (or `confirm=true` when `PRINTFUL_AUTO_CONFIRM=true`) with `X-PF-Store-Id`. The print file is `GET /api/print-file?design=…`, a transparent PNG of the three Twemoji SVGs (CC-BY): 1800×1800 for tees, hoodies, and mugs, 1650×750 at 300 DPI for the trucker hat, and 1392×2220 at 300 DPI for the phone case. Tokens without a product still render the square file. Printful fetches that URL, so `SITE_URL` must be the public deployment (`https://trimojiapparel.com`).
 
 ## Local check
 
