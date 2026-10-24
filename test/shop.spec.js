@@ -782,6 +782,36 @@ test('the same emoji can repeat in every slot or leave a gap', async ({ page }, 
   expect(errors, errors.join('\n')).toEqual([]);
 });
 
+test('policy pages are linked from the shop and the bag', async ({ page }) => {
+  const errors = track(page);
+  await page.goto('/');
+  await expect(page.locator('footer nav a')).toHaveText(['Privacy', 'Terms', 'Shipping', 'Returns', 'Contact']);
+  await page.locator('#cartbtn').click();
+  await expect(page.locator('#drawer a[href="/shipping"]')).toBeVisible();
+  await expect(page.locator('#drawer a[href="/returns"]')).toBeVisible();
+  const pages = [
+    ['/privacy', 'Privacy Policy', 'does not sell personal information'],
+    ['/terms', 'Terms of Service', 'made to order'],
+    ['/shipping', 'Shipping Policy', '2–7 business days'],
+    ['/returns', 'Returns & Refunds', '30 days'],
+    ['/contact', 'Contact', 'hello@trimojiapparel.com'],
+  ];
+  for (const [path, title, line] of pages) {
+    await page.goto(path);
+    await expect(page).toHaveURL(new RegExp(`${path}$`));
+    await expect(page.locator('h1')).toHaveText(title);
+    await expect(page.locator('main')).toContainText(line);
+    await expect(page.locator('main')).toContainText('hello@trimojiapparel.com');
+    await expect(page.locator('footer')).toContainText('© Trimoji');
+    const text = await page.locator('main').innerText();
+    expect(text).not.toMatch(/\bLLC\b|Street|Avenue|\bSuite\b/);
+  }
+  await page.goto('/success.html');
+  await expect(page.locator('main')).toContainText('Tracking is emailed when it ships');
+  await expect(page.locator('footer nav a[href="/shipping"]')).toBeVisible();
+  expect(errors, errors.join('\n')).toEqual([]);
+});
+
 test('reduced motion keeps the page still', async ({ page }) => {
   const errors = track(page);
   await page.emulateMedia({ reducedMotion: 'reduce' });

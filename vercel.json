@@ -1,4 +1,37 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "framework": null
+  "framework": null,
+  "rewrites": [
+    { "source": "/privacy", "destination": "/privacy.html" },
+    { "source": "/terms", "destination": "/terms.html" },
+    { "source": "/shipping", "destination": "/shipping.html" },
+    { "source": "/returns", "destination": "/returns.html" },
+    { "source": "/contact", "destination": "/contact.html" }
+  ],
+  "redirects": [
+    {
+      "source": "/",
+      "has": [{ "type": "host", "value": "www.trimojiapparel.com" }],
+      "destination": "https://trimojiapparel.com/",
+      "permanent": true
+    },
+    {
+      "source": "/",
+      "has": [{ "type": "host", "value": "trimoji.vercel.app" }],
+      "destination": "https://trimojiapparel.com/",
+      "permanent": true
+    },
+    {
+      "source": "/:path((?!api(?:/|$)).*)",
+      "has": [{ "type": "host", "value": "www.trimojiapparel.com" }],
+      "destination": "https://trimojiapparel.com/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path((?!api(?:/|$)).*)",
+      "has": [{ "type": "host", "value": "trimoji.vercel.app" }],
+      "destination": "https://trimojiapparel.com/:path*",
+      "permanent": true
+    }
+  ]
 }
