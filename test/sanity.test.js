@@ -13,7 +13,7 @@ import { decodeDesign, encodeDesign, itemsFromMetadata, resolveSiteUrl } from '.
 import { HttpError } from '../lib/http.js';
 import { priceCart } from '../lib/prices.js';
 import { buildPrintfulOrder } from '../lib/printful.js';
-import { HAT_PRINT_H, HAT_PRINT_W, PRINT_PX, composeSvg, renderLogoPng } from '../lib/render.js';
+import { CASE_CAMERA_TOP, CASE_PRINT_H, CASE_PRINT_W, HAT_PRINT_H, HAT_PRINT_W, PRINT_PX, composeSvg, renderLogoPng } from '../lib/render.js';
 import { pageRedirect } from '../lib/redirect.js';
 import { runtime } from '../lib/runtime.js';
 import { resolveVariant } from '../lib/variants.js';
@@ -143,6 +143,16 @@ test('server prices ignore the client and add US shipping under $60', () => {
   const hat = priceCart([sampleItem({ product: 'hat', color: 'Navy', size: 'One size', price: 1 })]);
   assert.equal(hat.lines[0].unitAmount, 3300);
   assert.equal(hat.shipping, 599);
+  const phone = priceCart([sampleItem({ product: 'case', color: 'Matte', size: 'iPhone 16 Pro', price: 1 })]);
+  assert.equal(phone.lines[0].unitAmount, 2900);
+  assert.equal(phone.shipping, 599);
+  assert.equal(phone.total, 3499);
+  const freeCase = priceCart([
+    sampleItem({ product: 'case', color: 'Glossy', size: 'iPhone 15', price: 0 }),
+    sampleItem({ product: 'hoodie', color: 'Navy', size: 'M' }),
+  ]);
+  assert.equal(freeCase.subtotal, 2900 + 5400);
+  assert.equal(freeCase.shipping, 0);
 });
 
 test('variant map matches the Printful catalog lookup', () => {
@@ -174,6 +184,22 @@ test('variant map matches the Printful catalog lookup', () => {
   assert.equal(resolveVariant('hat', 'White', 'One size').variantId, 4810);
   assert.equal(resolveVariant('hat', 'Charcoal', 'One size').variantId, 4814);
   assert.equal(resolveVariant('hat', 'Navy', 'One size').variantId, 4816);
+  assert.deepEqual(resolveVariant('case', 'Glossy', 'iPhone 16 Pro'), {
+    variantId: 20304,
+    printType: 'default',
+    name: 'Phone case',
+    unitAmount: 2900,
+    printfulColor: 'White',
+    catalogProductId: 601,
+  });
+  assert.equal(resolveVariant('case', 'Matte', 'iPhone 16 Pro').variantId, 20308);
+  assert.equal(resolveVariant('case', 'Glossy', 'iPhone 15').variantId, 17714);
+  assert.equal(resolveVariant('case', 'Matte', 'iPhone 15').variantId, 17715);
+  assert.equal(resolveVariant('case', 'Glossy', 'iPhone 18 Pro Max').variantId, 52386);
+  assert.equal(resolveVariant('case', 'Matte', 'iPhone 18 Pro Max').variantId, 52387);
+  assert.equal(resolveVariant('case', 'Matte', 'iPhone 17 Air').variantId, 33990);
+  assert.throws(() => resolveVariant('case', 'White', 'iPhone 16'), HttpError);
+  assert.throws(() => resolveVariant('case', 'Glossy', 'iPhone 14'), HttpError);
 });
 
 test('design token round-trips and checkout metadata survives a client price', async () => {
@@ -233,7 +259,7 @@ test('an empty middle slot stays a gap in checkout metadata and the print file',
       return { x, y, glyph, cx: x + glyph / 2, cy: y + glyph / 2 };
     });
   }
-  for (const product of ['tee', 'hoodie', 'mug', 'hat']) {
+  for (const product of ['tee', 'hoodie', 'mug', 'hat', 'case']) {
     const design = { product, layout: 'row', logoSize: 100, background: { shape: 'none' } };
     const full = marks(composeSvg({ ...design, emojis: ['🔥', '😎', '🍕'] }, [SVG, SVG, SVG]));
     const gapped = marks(composeSvg({ ...design, emojis: slots }, [SVG, SVG]));
@@ -242,8 +268,13 @@ test('an empty middle slot stays a gap in checkout metadata and the print file',
     assert.ok(gapped[1].cx - gapped[0].cx > gapped[0].glyph * 1.9, product);
     assert.ok(Math.abs(gapped[0].cx - full[0].cx) < 1, product);
     assert.ok(Math.abs(gapped[1].cx - full[2].cx) < 1, product);
-    const width = product === 'hat' ? HAT_PRINT_W : PRINT_PX;
+    const width = product === 'hat' ? HAT_PRINT_W : product === 'case' ? CASE_PRINT_W : PRINT_PX;
     assert.ok(Math.abs((gapped[0].cx + gapped[1].cx) / 2 - width / 2) < gapped[0].glyph * 0.15, product);
+    if (product === 'case') {
+      const clear = CASE_PRINT_H * CASE_CAMERA_TOP;
+      assert.ok(gapped[0].y >= clear - 0.5, `case camera ${gapped[0].y}`);
+      assert.ok(full[0].y >= clear - 0.5, `case camera full ${full[0].y}`);
+    }
   }
   const triangle = marks(composeSvg({
     product: 'tee', emojis: slots, layout: 'triangle', logoSize: 100, background: { shape: 'none' },
@@ -573,6 +604,85 @@ test('print file is a transparent PNG from Twemoji SVG', async () => {
   }
 });
 
+test('phone case print file stays below the camera and checks out at $29', async () => {
+  const item = sampleItem({
+    product: 'case',
+    color: 'Glossy',
+    size: 'iPhone 17 Pro Max',
+    emojis: ['🔥', '😎', '🍕'],
+    slots: ['🔥', '😎', '🍕'],
+    layout: 'row',
+    logoSize: 100,
+    price: 0,
+  });
+  const stripe = fakeStripe();
+  await createCheckoutSession({ items: [item], stripe, siteUrl: SITE });
+  assert.equal(stripe.calls[0].line_items[0].price_data.unit_amount, 2900);
+  assert.match(stripe.calls[0].line_items[0].price_data.product_data.name, /Phone case/);
+  assert.equal(stripe.calls[0].line_items[1].price_data.unit_amount, 599);
+  const order = buildPrintfulOrder({ session: completedSession(stripe.calls[0].metadata), siteUrl: SITE });
+  assert.equal(order.items[0].variant_id, 33988);
+  assert.equal(order.items[0].retail_price, '29.00');
+  assert.equal(order.items[0].files[0].type, 'default');
+  assert.equal(order.items[0].options, undefined);
+  const token = new URL(order.items[0].files[0].url).searchParams.get('design');
+  const design = decodeDesign(token);
+  assert.equal(design.product, 'case');
+  assert.deepEqual(design.emojis, ['🔥', '😎', '🍕']);
+  assert.deepEqual(design.background, { shape: 'none' });
+
+  function bounds(svg) {
+    const boxes = [...svg.matchAll(/translate\(([-\d.]+) ([-\d.]+)\) scale\(([-\d.]+)\)/g)].map((mark) => {
+      const x = Number(mark[1]);
+      const y = Number(mark[2]);
+      const glyph = Number(mark[3]) * 36;
+      return { x, y, r: x + glyph, b: y + glyph };
+    });
+    return {
+      top: Math.min(...boxes.map((box) => box.y)),
+      bottom: Math.max(...boxes.map((box) => box.b)),
+      left: Math.min(...boxes.map((box) => box.x)),
+      right: Math.max(...boxes.map((box) => box.r)),
+    };
+  }
+  const clear = CASE_PRINT_H * CASE_CAMERA_TOP;
+  for (const layout of ['row', 'stacked', 'triangle']) {
+    for (const logoSize of [60, 100, 140]) {
+      const box = bounds(composeSvg({
+        product: 'case',
+        emojis: ['🔥', null, '🍕'],
+        layout,
+        logoSize,
+        background: { shape: 'none' },
+      }, [SVG, SVG]));
+      assert.ok(box.top >= clear - 0.5, `${layout} ${logoSize} top ${box.top}`);
+      assert.ok(box.left > 4, `${layout} ${logoSize} left ${box.left}`);
+      assert.ok(box.right < CASE_PRINT_W - 4, `${layout} ${logoSize} right ${box.right}`);
+      assert.ok(box.bottom < CASE_PRINT_H - 4, `${layout} ${logoSize} bottom ${box.bottom}`);
+    }
+  }
+
+  const png = await renderLogoPng(design, async () => SVG);
+  assert.equal(png.readUInt32BE(16), CASE_PRINT_W);
+  assert.equal(png.readUInt32BE(20), CASE_PRINT_H);
+  assert.equal(png[25], 6);
+  let offset = 8;
+  let dpi = null;
+  while (offset + 12 <= png.length) {
+    const length = png.readUInt32BE(offset);
+    const type = png.subarray(offset + 4, offset + 8).toString('ascii');
+    if (type === 'pHYs') dpi = Math.round(png.readUInt32BE(offset + 8) * 0.0254);
+    offset += 12 + length;
+    if (type === 'IEND') break;
+  }
+  assert.equal(dpi, 300);
+  const pixels = decodeRgba(png);
+  const alpha = (bitmap, x, y) => bitmap.pixels[(y * bitmap.width + x) * 4 + 3];
+  assert.equal(alpha(pixels, 0, 0), 0);
+  assert.equal(alpha(pixels, Math.round(CASE_PRINT_W / 2), Math.round(clear * 0.5)), 0);
+  assert.ok(alpha(pixels, Math.round(CASE_PRINT_W / 2), Math.round(CASE_PRINT_H * 0.64)) > 200);
+});
+
 test('HTTP handlers: checkout redirect, webhook, and print file', async () => {
   const previous = {
     key: process.env.STRIPE_SECRET_KEY,
@@ -738,6 +848,9 @@ test('the static shop asks the server for checkout and test mode', () => {
   assert.match(html, /xlink:href/);
     assert.match(html, /function all\(\)\{slots\(\);controls\(\);draw\(\);syncProduct\(\)\}/);
   assert.match(html, /Trucker hat/);
+  assert.match(html, /Phone case/);
+  assert.match(html, /aria-label="iPhone model"/);
+  assert.match(html, /1392\/2220/);
   assert.match(html, /setAttribute\('data-hat','trucker'\)/);
   assert.match(html, /assets\/products\//);
   assert.match(html, /prefers-reduced-motion/);

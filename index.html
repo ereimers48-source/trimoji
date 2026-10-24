@@ -39,6 +39,10 @@ a{color:var(--ink)}
 .mock[data-product="hoodie"]{aspect-ratio:520/680;--aw:520;--ah:680}
 .mock[data-product="mug"]{aspect-ratio:640/520;--aw:640;--ah:520}
 .mock[data-product="hat"]{aspect-ratio:560/520;--aw:560;--ah:520}
+.mock[data-product="case"]{aspect-ratio:1392/2220;--aw:1392;--ah:2220}
+#cols.finish{display:flex;flex-wrap:wrap;gap:8px;grid-template-columns:none;width:auto}
+#sizes.models{display:block}
+#sizes.models select{width:100%;min-height:48px;padding:0 12px;border-radius:12px;border:1px solid var(--line);background:#fff;font:inherit;font-size:16px;color:inherit}
 .mock .blank{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center;display:block}
 .mock.flat .blank{opacity:0}
 .mock .print{position:absolute;left:var(--px);top:var(--py);width:var(--pw);height:var(--ph);transform:perspective(680px) rotateX(var(--rx)) rotateY(var(--ry));transform-origin:center;mix-blend-mode:multiply;pointer-events:none;overflow:visible}
@@ -190,11 +194,11 @@ footer a{color:var(--muted)}
 <div class="opts" id="prods"></div>
 </section>
 <section class="choice">
-<h3>Color</h3>
+<h3 id="colorhead">Color</h3>
 <div class="opts" id="cols"></div>
 </section>
 <section class="choice">
-<h3>Size</h3>
+<h3 id="sizehead">Size</h3>
 <div class="opts" id="sizes"></div>
 </section>
 <section class="choice">
@@ -243,9 +247,10 @@ const PRODS={
  tee:{n:'T-shirt',p:29,sizes:['S','M','L','XL','2XL'],colors:['White','Black','Heather','Navy','Lilac','Pink','Sage'],available:true},
  hoodie:{n:'Hoodie',p:54,sizes:['S','M','L','XL','2XL'],colors:['White','Black','Heather','Navy','Pink'],available:true},
  mug:{n:'Mug',p:19,sizes:['11 oz'],colors:['White'],available:true},
- hat:{n:'Trucker hat',p:33,sizes:['One size'],colors:['White','Black','Charcoal','Navy'],available:true}
+ hat:{n:'Trucker hat',p:33,sizes:['One size'],colors:['White','Black','Charcoal','Navy'],available:true},
+ case:{n:'Phone case',p:29,sizes:['iPhone 15','iPhone 15 Plus','iPhone 15 Pro','iPhone 15 Pro Max','iPhone 16','iPhone 16 Plus','iPhone 16 Pro','iPhone 16 Pro Max','iPhone 17','iPhone 17 Air','iPhone 17 Pro','iPhone 17 Pro Max','iPhone 18 Pro','iPhone 18 Pro Max'],colors:['Glossy','Matte'],available:true,defaultSize:'iPhone 16'}
 };
-const COLS=[['White','#ffffff'],['Black','#1f1f24'],['Heather','#b9b9c0'],['Navy','#1f2a4d'],['Lilac','#cbb8f5'],['Pink','#f7c6d9'],['Sage','#b6cdb1'],['Charcoal','#554b56']];
+const COLS=[['White','#ffffff'],['Black','#1f1f24'],['Heather','#b9b9c0'],['Navy','#1f2a4d'],['Lilac','#cbb8f5'],['Pink','#f7c6d9'],['Sage','#b6cdb1'],['Charcoal','#554b56'],['Glossy','#ffffff'],['Matte','#ececee']];
 const reduceMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 let cat='fu',gridKey='',draws=0;
 function tabs(){const root=document.getElementById('tabs');
@@ -289,7 +294,8 @@ const PHOTO={
  tee:{colors:['White','Black','Heather','Navy','Lilac','Pink','Sage'],w:[360,520],box:['30.2%','23.5%','38.5%','31.3%'],turn:[4,-3]},
  hoodie:{colors:['White','Black','Heather','Navy','Pink'],w:[360,520],box:['35.6%','27.5%','36.5%','27.9%'],turn:[4,-3]},
  mug:{colors:['White'],w:[420,640],box:['33.6%','29.8%','29.7%','36.5%'],turn:[2,-12]},
- hat:{colors:['White','Black','Charcoal','Navy'],w:[400,560],box:['13%','27.9%','74%','36.3%'],turn:[2,-1]}
+ hat:{colors:['White','Black','Charcoal','Navy'],w:[400,560],box:['13%','27.9%','74%','36.3%'],turn:[2,-1]},
+ case:{colors:['Glossy','Matte'],w:[],box:['0%','0%','100%','100%'],turn:[0,0]}
 };
 const photoCache=new Set();
 function preloadPhotos(){for(const [prod,spec] of Object.entries(PHOTO)){for(const color of spec.colors){for(const w of spec.w){const url=`assets/products/${prod}/${color.toLowerCase()}-${w}.webp`;const im=new Image();im.onload=()=>photoCache.add(url);im.src=url}}}}
@@ -299,7 +305,13 @@ function applyPhoto(){const spec=PHOTO[S.prod];const color=COLS[S.col][0];const 
  mock.style.setProperty('--px',spec.box[0]);mock.style.setProperty('--py',spec.box[1]);mock.style.setProperty('--pw',spec.box[2]);mock.style.setProperty('--ph',spec.box[3]);
  mock.style.setProperty('--rx',spec.turn[0]+'deg');mock.style.setProperty('--ry',spec.turn[1]+'deg');
  if(S.prod==='hat')print.setAttribute('data-hat','trucker');else print.removeAttribute('data-hat');
- const blank=mock.querySelector('img.blank');const known=spec.colors.includes(color);
+ const blank=mock.querySelector('img.blank');
+ if(S.prod==='case'){const src='assets/products/case/white.svg';blank.alt=`${color} Phone case`;mock.dataset.finish=color.toLowerCase();mock.classList.remove('waiting');mock.classList.remove('flat');
+  const link=document.getElementById('preload-blank');if(link){link.href=src;link.imageSrcset=''}
+  if(blank.dataset.key!=='case'){blank.dataset.key='case';blank.dataset.pending='';blank.src=src;blank.removeAttribute('srcset')}
+  return}
+ delete mock.dataset.finish;
+ const known=spec.colors.includes(color);
  if(!known){mock.classList.add('flat');mock.classList.remove('waiting');return}
  const [sm,lg]=spec.w;const base=`assets/products/${S.prod}/${color.toLowerCase()}`;const src=`${base}-${lg}.webp`;const set=`${base}-${sm}.webp ${sm}w, ${src} ${lg}w`;const key=`${S.prod}:${color}`;
  const link=document.getElementById('preload-blank');if(link){link.href=src;link.imageSrcset=set;link.imageSizes=blank.sizes||'(min-width: 900px) 460px, 100vw'}
@@ -321,6 +333,15 @@ function hatLogoSVG(){const W=1650,H=750,e=S.pick,fitted=3,size=Number(sz.value)
  const cx=W/2,cy=H/2,pos=slotPos(cx,cy,s);
  const marks=e.map((x,i)=>{if(!x)return '';const href=esc(tw(x));return `<image href="${href}" xlink:href="${href}" x="${pos[i][0]-s/2}" y="${pos[i][1]-s/2}" width="${s}" height="${s}"/>`}).join('');
  return {vb:`0 0 ${W} ${H}`,markup:marks}}
+function caseLogoSVG(){const W=1392,H=2220,cam=0.28,e=S.pick,fitted=3,size=Number(sz.value);
+ const rw=W,rh=H*(1-cam);
+ const unit=S.lay=='row'?{w:1+(fitted-1)*1.05,h:1}:S.lay=='stacked'?{w:1,h:1+(fitted-1)*1.05}:{w:2.1,h:1.93};
+ const full=Math.min(rw/unit.w,rh/unit.h);let s=full*0.88*(size/100);
+ const span=S.lay=='row'?{w:s*(1+(fitted-1)*1.05),h:s}:S.lay=='stacked'?{w:s,h:s*(1+(fitted-1)*1.05)}:{w:s*2.1,h:s*1.93};
+ s*=Math.min((rw*0.93)/span.w,(rh*0.93)/span.h,1);
+ const cx=W/2,cy=H*cam+rh/2,pos=slotPos(cx,cy,s);
+ const marks=e.map((x,i)=>{if(!x)return '';const href=esc(tw(x));return `<image href="${href}" xlink:href="${href}" x="${pos[i][0]-s/2}" y="${pos[i][1]-s/2}" width="${s}" height="${s}"/>`}).join('');
+ return {vb:`0 0 ${W} ${H}`,markup:marks}}
 function mountMock(markup,cx,cy,base,viewBox){const r=base*1.4*2.05;const vb=viewBox||`${cx-r} ${cy-r} ${r*2} ${r*2}`;
  const doc=new DOMParser().parseFromString(`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="${vb}" preserveAspectRatio="xMidYMid meet">${markup}</svg>`,'image/svg+xml');
  const parsed=doc.documentElement;const slot=mock.querySelector('.print');
@@ -335,6 +356,7 @@ function mountMock(markup,cx,cy,base,viewBox){const r=base*1.4*2.05;const vb=vie
  slot.replaceChildren(svg)}
 function draw(){szv.textContent=sz.value+'%';applyPhoto();
  if(S.prod=='hat'){const hat=hatLogoSVG();mountMock(hat.markup,0,0,0,hat.vb)}
+ else if(S.prod=='case'){const phone=caseLogoSVG();mountMock(phone.markup,0,0,0,phone.vb)}
  else{const spot=S.prod=='tee'?[200,190,42]:S.prod=='hoodie'?[200,225,38]:[197,225,48];
   mountMock(logoSVG(spot[0],spot[1],spot[2]),spot[0],spot[1],spot[2])}
  draws+=1;if(draws>1&&!reduceMotion&&document.activeElement?.id!=='sz')nudge();
@@ -343,11 +365,23 @@ function draw(){szv.textContent=sz.value+'%';applyPhoto();
 function setLay(v){S.lay=v;all()}
 function setProd(v){S.prod=v;const p=PRODS[v];
  if(p.colors&&!p.colors.includes(COLS[S.col][0])){const idx=COLS.findIndex(c=>c[0]===p.colors[0]);if(idx>=0)S.col=idx}
- if(!p.sizes.includes(S.size))S.size=p.sizes[Math.min(1,p.sizes.length-1)];
+ if(!p.sizes.includes(S.size))S.size=p.defaultSize&&p.sizes.includes(p.defaultSize)?p.defaultSize:p.sizes[Math.min(1,p.sizes.length-1)];
  all()}
 function setSize(v){S.size=v;all()}
 function controls(){ensureOpts('lay',[['row','Row'],['triangle','Triangle'],['stacked','Stacked']],S.lay);
  ensureOpts('prods',Object.entries(PRODS).map(([k,v])=>[k,v.available?v.n:v.n+' · soon']),S.prod);
+ const sizesEl=document.getElementById('sizes');
+ const colorHead=document.getElementById('colorhead');const sizeHead=document.getElementById('sizehead');
+ if(S.prod==='case'){if(colorHead)colorHead.textContent='Finish';if(sizeHead)sizeHead.textContent='Model';
+  const models=PRODS.case.sizes;const key='case:'+models.join('\0');sizesEl.classList.add('models');
+  if(sizesEl.dataset.key!==key){sizesEl.dataset.key=key;sizesEl.innerHTML=`<select id="model" aria-label="iPhone model">${models.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('')}</select>`;
+   sizesEl.querySelector('select').addEventListener('change',e=>setSize(e.target.value))}
+  const model=document.getElementById('model');if(model)model.value=S.size;
+  const finishes=PRODS.case.colors;const ckey='case:'+finishes.join('\0');cols.classList.add('finish');
+  if(cols.dataset.key!==ckey){cols.dataset.key=ckey;cols.innerHTML=finishes.map(name=>{const i=COLS.findIndex(c=>c[0]===name);return `<button type="button" class="opt" data-col="${i}">${esc(name)}</button>`}).join('')}
+  cols.querySelectorAll('button').forEach(b=>b.classList.toggle('on',Number(b.dataset.col)===S.col));return}
+ if(colorHead)colorHead.textContent='Color';if(sizeHead)sizeHead.textContent='Size';
+ sizesEl.classList.remove('models');cols.classList.remove('finish');
  ensureOpts('sizes',PRODS[S.prod].sizes.map(s=>[s,s]),S.size);
  const allowed=PRODS[S.prod].colors||[];const key=allowed.join('\0');
  if(cols.dataset.key!==key){cols.dataset.key=key;cols.innerHTML=COLS.map((c,i)=>allowed.includes(c[0])?`<button type="button" class="sw" data-col="${i}" title="${esc(c[0])}" style="background:${c[1]}"></button>`:'').join('')}

@@ -156,7 +156,8 @@ test('configurator, bag, and Stripe checkout', async ({ page }, testInfo) => {
     }
     return [...rows.values()];
   });
-  expect(productRows.every((count) => count > 1)).toBeTruthy();
+  expect(productRows.reduce((sum, count) => sum + count, 0)).toBe(5);
+  expect(productRows.slice(0, -1).every((count) => count > 1)).toBeTruthy();
 
   await press(page.locator('#prods button[data-value="hoodie"]'), testInfo);
   await expect(page.locator('#price')).toContainText('$54.00');
@@ -181,6 +182,38 @@ test('configurator, bag, and Stripe checkout', async ({ page }, testInfo) => {
   await expect(page.locator('#drawer')).toHaveClass(/open/);
   await expect(page.locator('#items')).toContainText('Trucker hat');
   await expect(page.locator('#sub')).toHaveText('$33.00');
+  await press(page.locator('#items button[data-remove="0"]'), testInfo);
+  await expect(page.locator('#cc')).toHaveText('0');
+  await press(page.locator('#closecart'), testInfo);
+
+  await press(page.locator('#prods button[data-value="case"]'), testInfo);
+  await expect(page.locator('#prods button[data-value="case"]')).toHaveText('Phone case');
+  await expect(page.locator('#price')).toContainText('$29.00');
+  await expect(page.locator('#colorhead')).toHaveText('Finish');
+  await expect(page.locator('#sizehead')).toHaveText('Model');
+  await expect(page.locator('#model option')).toHaveCount(14);
+  await expect(page.locator('#model')).toHaveValue('iPhone 16');
+  await page.locator('#model').selectOption('iPhone 17 Pro Max');
+  await expect(page.locator('#model')).toHaveValue('iPhone 17 Pro Max');
+  const finishes = await page.locator('#cols button').evaluateAll((els) => els.map((el) => el.textContent));
+  expect(finishes).toEqual(['Glossy', 'Matte']);
+  await press(page.locator('#cols button', { hasText: 'Matte' }), testInfo);
+  await expect(page.locator('#mock')).toHaveAttribute('data-product', 'case');
+  await expect(page.locator('#mock')).toHaveAttribute('data-finish', 'matte');
+  await expect(page.locator('#mock [data-hat="trucker"]')).toHaveCount(0);
+  await expect(page.locator('#mock img.blank')).toHaveAttribute('src', /\/case\/white\.svg$/);
+  await expect.poll(() => page.locator('#mock img.blank').evaluate((el) => el.naturalWidth)).toBeGreaterThan(100);
+  await expect(page.locator('#mock circle')).toHaveCount(0);
+  const caseArt = await logoImages(page);
+  expect(caseArt).toHaveLength(3);
+  expect(Math.min(...caseArt.map((image) => image.y))).toBeGreaterThanOrEqual(2220 * 0.28 - 1);
+  await press(page.locator('#addbtn'), testInfo);
+  await expect(page.locator('#items')).toContainText('Phone case');
+  await expect(page.locator('#items')).toContainText('Matte');
+  await expect(page.locator('#items')).toContainText('iPhone 17 Pro Max');
+  await expect(page.locator('#sub')).toHaveText('$29.00');
+  await expect(page.locator('#ship')).toHaveText('$5.99');
+  await expect(page.locator('#tot')).toHaveText('$34.99');
   await press(page.locator('#items button[data-remove="0"]'), testInfo);
   await expect(page.locator('#cc')).toHaveText('0');
   await press(page.locator('#closecart'), testInfo);
@@ -729,7 +762,7 @@ test('an empty middle slot stays empty on the product, in the bag, and in checko
     }
   }
   assertRowGap(await logoImages(page), full, 'tee');
-  for (const product of ['hoodie', 'mug', 'hat']) {
+  for (const product of ['hoodie', 'mug', 'hat', 'case']) {
     await press(page.locator(`#prods button[data-value="${product}"]`), testInfo);
     await press(page.locator('#lay button[data-value="row"]'), testInfo);
     assertRowGap(await logoImages(page), null, product);
