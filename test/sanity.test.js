@@ -7,6 +7,7 @@ import { OPTIONS as checkoutOptions, POST as checkoutPost } from '../api/checkou
 import { GET as configGet } from '../api/config.js';
 import { GET as printGet } from '../api/print-file.js';
 import { POST as webhookPost } from '../api/stripe-webhook.js';
+import { comingSoonEnabled, routeRequest } from '../lib/coming-soon.js';
 import { publicConfig } from '../lib/config.js';
 import { createCheckoutSession } from '../lib/checkout.js';
 import { decodeDesign, encodeDesign, itemsFromMetadata, resolveSiteUrl } from '../lib/design.js';
@@ -17,6 +18,7 @@ import { CASE_CAMERA_TOP, CASE_PRINT_H, CASE_PRINT_W, HAT_PRINT_H, HAT_PRINT_W, 
 import { pageRedirect } from '../lib/redirect.js';
 import { runtime } from '../lib/runtime.js';
 import { resolveVariant } from '../lib/variants.js';
+import { handleWaitlist, waitlistMailto } from '../lib/waitlist.js';
 import { handleStripeWebhook } from '../lib/webhook.js';
 
 const SITE = 'https://trimojiapparel.com';
@@ -880,7 +882,7 @@ test('the static shop asks the server for checkout and test mode', () => {
 
 test('policy pages share a footer and old hosts keep /api', () => {
   const footer = '<nav aria-label="Policies"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/shipping">Shipping</a><a href="/returns">Returns</a><a href="/contact">Contact</a></nav>';
-  for (const page of ['index.html', 'success.html', 'cancel.html', 'privacy.html', 'terms.html', 'shipping.html', 'returns.html', 'contact.html']) {
+  for (const page of ['index.html', 'coming-soon.html', 'success.html', 'cancel.html', 'privacy.html', 'terms.html', 'shipping.html', 'returns.html', 'contact.html']) {
     const html = readFileSync(new URL(`../${page}`, import.meta.url), 'utf8');
     assert.ok(html.includes(footer), page);
     assert.match(html, /© Trimoji/);
@@ -925,4 +927,78 @@ test('policy pages share a footer and old hosts keep /api', () => {
   }
   assert.equal(pageRedirect('trimojiapparel.com', '/'), null);
   assert.equal(pageRedirect('trimoji-git-preview.vercel.app', '/privacy'), null);
+});
+
+test('coming soon is the default and one flag opens the shop', () => {
+  assert.equal(comingSoonEnabled({}), true);
+  assert.equal(comingSoonEnabled({ COMING_SOON: '' }), true);
+  assert.equal(comingSoonEnabled({ COMING_SOON: 'true' }), true);
+  assert.equal(comingSoonEnabled({ COMING_SOON: 'false' }), false);
+  assert.equal(comingSoonEnabled({ COMING_SOON: '0' }), false);
+  assert.equal(comingSoonEnabled({ COMING_SOON: 'no' }), false);
+  assert.equal(comingSoonEnabled({ COMING_SOON: 'off' }), false);
+  assert.equal(comingSoonEnabled({ COMING_SOON: 'OFF' }), false);
+  assert.deepEqual(routeRequest('/', {}), { type: 'file', file: 'coming-soon.html', robots: null });
+  assert.deepEqual(routeRequest('/index.html', {}), { type: 'file', file: 'coming-soon.html', robots: null });
+  assert.deepEqual(routeRequest('/shop-preview', {}), { type: 'file', file: 'index.html', robots: 'noindex, nofollow' });
+  assert.deepEqual(routeRequest('/shop-preview/', {}), { type: 'file', file: 'index.html', robots: 'noindex, nofollow' });
+  assert.deepEqual(routeRequest('/privacy', {}), { type: 'static' });
+  assert.deepEqual(routeRequest('/', { COMING_SOON: 'false' }), { type: 'static' });
+  assert.deepEqual(routeRequest('/index.html', { COMING_SOON: 'false' }), { type: 'static' });
+  assert.deepEqual(routeRequest('/shop-preview', { COMING_SOON: 'false' }), { type: 'missing' });
+});
+
+test('waitlist emails go to hello when there is no store', async () => {
+  const mail = await handleWaitlist('  Ada@Example.com  ');
+  assert.equal(mail.delivery, 'mailto');
+  assert.equal(mail.mailto, waitlistMailto('ada@example.com'));
+  assert.match(mail.mailto, /^mailto:hello@trimojiapparel\.com\?/);
+  assert.match(decodeURIComponent(mail.mailto), /ada@example.com/);
+  await assert.rejects(() => handleWaitlist('not-an-email'), /valid email/);
+  let posted = null;
+  const stored = await handleWaitlist('ada@example.com', {
+    webhookUrl: 'https://example.test/hook',
+    fetchImpl: async (url, init) => {
+      posted = { url, init };
+      return { ok: true };
+    },
+  });
+  assert.equal(stored.delivery, 'stored');
+  assert.equal(posted.url, 'https://example.test/hook');
+  assert.equal(JSON.parse(posted.init.body).email, 'ada@example.com');
+  await assert.rejects(() => handleWaitlist('ada@example.com', {
+    webhookUrl: 'https://example.test/hook',
+    fetchImpl: async () => ({ ok: false }),
+  }), /Could not save/);
+});
+
+test('coming soon page is public and the shop preview is not linked', () => {
+  const html = readFileSync(new URL('../coming-soon.html', import.meta.url), 'utf8');
+  assert.match(html, /Three emojis\.<br>One you\./);
+  assert.match(html, /Custom 3-emoji logos on tees, hoodies, mugs, hats, and phone cases\./);
+  assert.match(html, /og:image" content="https:\/\/trimojiapparel\.com\/assets\/og\.png"/);
+  assert.match(html, /https:\/\/www\.instagram\.com\/trimojiapparel\//);
+  assert.doesNotMatch(html, /tiktok/i);
+  assert.doesNotMatch(html, /shop-preview/);
+  assert.doesNotMatch(html, /formspree/i);
+  const shop = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  assert.doesNotMatch(shop, /shop-preview/);
+  const robots = readFileSync(new URL('../robots.txt', import.meta.url), 'utf8');
+  assert.match(robots, /Disallow: \/shop-preview/);
+  const readme = readFileSync(new URL('../README.md', import.meta.url), 'utf8');
+  assert.match(readme, /COMING_SOON/);
+  assert.match(readme, /WAITLIST_WEBHOOK_URL/);
+  const checkout = readFileSync(new URL('../api/checkout.js', import.meta.url), 'utf8');
+  assert.doesNotMatch(checkout, /COMING_SOON|comingSoon/);
+  const png = readFileSync(new URL('../assets/og.png', import.meta.url));
+  assert.equal(png.subarray(0, 8).toString('hex'), '89504e470d0a1a0a');
+  assert.equal(png.subarray(12, 16).toString('ascii'), 'IHDR');
+  assert.equal(png.readUInt32BE(16), 1200);
+  assert.equal(png.readUInt32BE(20), 630);
+  const config = JSON.parse(readFileSync(new URL('../vercel.json', import.meta.url), 'utf8'));
+  for (const source of ['/shop-preview', '/shop-preview/']) {
+    const rule = config.headers.find((item) => item.source === source);
+    assert.equal(rule.headers[0].key, 'X-Robots-Tag');
+    assert.match(rule.headers[0].value, /noindex/);
+  }
 });

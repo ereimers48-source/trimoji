@@ -54,7 +54,7 @@ test('configurator, bag, and Stripe checkout', async ({ page }, testInfo) => {
     }));
   }
 
-  await page.goto('/');
+  await page.goto('/shop-preview');
   await expect(page.locator('.hero h1')).toContainText('Three emojis.');
   await expect(page.locator('a.btn[href="#shop"]')).toHaveCount(1);
   await expect(page.locator('#mock image')).toHaveCount(3);
@@ -276,7 +276,7 @@ test('configurator, bag, and Stripe checkout', async ({ page }, testInfo) => {
 
 test('emoji categories stay on the tapped tab', async ({ page }, testInfo) => {
   const errors = track(page);
-  await page.goto('/');
+  await page.goto('/shop-preview');
   await expect(page.locator('#tabs button')).toHaveCount(9);
   await expect(page.locator('#tabs button.on')).toHaveCount(1);
   await expect(page.locator('#tabs button[data-cat="fu"]')).toHaveAttribute('aria-pressed', 'true');
@@ -348,7 +348,7 @@ test('emoji categories stay on the tapped tab', async ({ page }, testInfo) => {
 
 test('trucker logo fills the front panel', async ({ page }) => {
   const errors = track(page);
-  await page.goto('/');
+  await page.goto('/shop-preview');
   async function logoBox() {
     return page.locator('#mock').evaluate((mock) => {
       const print = mock.querySelector('.print');
@@ -450,7 +450,7 @@ test('trucker logo fills the front panel', async ({ page }) => {
 
 test('preview sits with the choices and the bag button stays in the page', async ({ page }, testInfo) => {
   const errors = track(page);
-  await page.goto('/');
+  await page.goto('/shop-preview');
   await expect(page.locator('#mock img.blank')).toBeVisible();
   await expect(page.locator('#testmode')).toBeVisible();
   await page.evaluate(() => fitBar());
@@ -728,7 +728,7 @@ test('an empty middle slot stays empty on the product, in the bag, and in checko
   page.on('request', (req) => {
     if (req.method() === 'POST' && req.url().includes('/api/checkout')) payload = req.postDataJSON();
   });
-  await page.goto('/');
+  await page.goto('/shop-preview');
   await expect(page.locator('#mock image')).toHaveCount(3);
   await press(page.locator('#lay button[data-value="row"]'), testInfo);
   const full = await logoImages(page);
@@ -811,7 +811,7 @@ test('the same emoji can repeat in every slot or leave a gap', async ({ page }, 
   page.on('request', (req) => {
     if (req.method() === 'POST' && req.url().includes('/api/checkout')) payload = req.postDataJSON();
   });
-  await page.goto('/');
+  await page.goto('/shop-preview');
   await press(page.locator('#lay button[data-value="row"]'), testInfo);
   const full = await logoImages(page);
   for (let n = 0; n < 3; n += 1) await press(page.locator('#slots [data-clear]').first(), testInfo);
@@ -854,7 +854,7 @@ test('the same emoji can repeat in every slot or leave a gap', async ({ page }, 
 
 test('policy pages are linked from the shop and the bag', async ({ page }) => {
   const errors = track(page);
-  await page.goto('/');
+  await page.goto('/shop-preview');
   await expect(page.locator('footer nav a')).toHaveText(['Privacy', 'Terms', 'Shipping', 'Returns', 'Contact']);
   await page.locator('#cartbtn').click();
   await expect(page.locator('#drawer a[href="/shipping"]')).toBeVisible();
@@ -885,7 +885,7 @@ test('policy pages are linked from the shop and the bag', async ({ page }) => {
 test('reduced motion keeps the page still', async ({ page }) => {
   const errors = track(page);
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('/');
+  await page.goto('/shop-preview');
   await expect(page.locator('#mock image')).toHaveCount(3);
   const motion = await page.locator('#mock').evaluate((el) => getComputedStyle(el).animationName);
   expect(motion).toBe('none');

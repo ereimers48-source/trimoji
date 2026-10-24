@@ -120,7 +120,7 @@ function scan(mode) {
 
 test('text stays apart across phone, tablet, and desktop widths', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop', 'one viewport sweep covers every width');
-  await page.goto('/');
+  await page.goto('/shop-preview');
   await expect(page.locator('#mock image').first()).toBeVisible();
   await page.evaluate(() => {
     document.getElementById('testmode').hidden = false;
