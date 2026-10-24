@@ -45,6 +45,8 @@ When you are ready to charge real cards:
 
 `POST /api/checkout` accepts the cart (product, color, size, quantity, three emojis, layout, logo size). Prices are recomputed on the server. Client prices are ignored. The print file is transparent behind the emojis.
 
+`GET /api/order?session_id=cs_…` reads that Checkout Session with the secret key and returns only an order reference, the item names, finishes, sizes, quantities, emoji, and the subtotal, shipping, and total. The reference is the same 32-character id sent to Printful as `external_id` (the first 32 hex characters of a SHA-256 of the Stripe session id). It does not return the email, shipping address, or payment details. The success page shows that receipt when the link includes `session_id`. The full Stripe session id is stored on the Printful order as the packing-slip message, because that create-order call has no separate notes field.
+
 | Product | Price | Printful catalog | Print file |
 | --- | --- | --- | --- |
 | T-shirt | $29 | Bella+Canvas 3001, product `71` | `front` |
@@ -89,7 +91,7 @@ Trucker hat (Yupoong 6006, five-panel mesh back), one size. Confirmed from `GET 
 | Charcoal | Charcoal | 4814 |
 | Navy | Navy | 4816 |
 
-Phone case (Printful Tough Case for iPhone, product 601), $29. The blank is White. Glossy and Matte are the finish stored as the color, and the iPhone model is the size. The print file is one 1392×2220 PNG at 300 DPI for every model (`printType` `default`). The logo stays out of the top 28% of that file so it clears the camera area. That inset is a guess until a Printful mockup is checked, and the shop preview is a drawn case rather than a generated mockup.
+Tough phone case (Printful Tough Case for iPhone, product 601), $29. The blank is White. Glossy and Matte are the finish stored as the color, and the iPhone model is the size. The print file is one 1392×2220 PNG at 300 DPI for every model (`printType` `default`). The logo stays out of the top 28% of that file so it clears the camera area, and it stays off the bottom 16%. Short layouts sit near the middle of the case. Those insets are a guess until a Printful mockup is checked, and the shop preview is a drawn case rather than a generated mockup. The bag, the Stripe line, and the Printful line use the name Tough phone case.
 
 | Model | Glossy | Matte |
 | --- | --- | --- |

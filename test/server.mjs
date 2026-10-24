@@ -3,12 +3,22 @@ import { readFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { routeRequest } from '../lib/coming-soon.js';
+import { metadataForItems, normalizeCart } from '../lib/design.js';
 import { pageRedirect } from '../lib/redirect.js';
 
 process.env.STRIPE_SECRET_KEY = 'sk_test_playwright';
 process.env.SITE_URL = 'http://127.0.0.1:4173';
 
 const { runtime } = await import('../lib/runtime.js');
+const previewOrder = metadataForItems(normalizeCart([{
+  product: 'case',
+  color: 'Glossy',
+  size: 'iPhone 16',
+  quantity: 1,
+  emojis: ['🔥', '😎', '🍕'],
+  layout: 'row',
+  logoSize: 100,
+}]));
 runtime.createStripe = () => ({
   checkout: {
     sessions: {
@@ -18,11 +28,40 @@ runtime.createStripe = () => ({
           url: 'https://checkout.stripe.com/c/pay/cs_test_playwright',
         };
       },
+      async retrieve(id) {
+        if (id !== 'cs_test_playwright') {
+          const error = new Error('No such checkout.session');
+          error.statusCode = 404;
+          error.code = 'resource_missing';
+          throw error;
+        }
+        return {
+          id,
+          object: 'checkout.session',
+          payment_status: 'paid',
+          status: 'complete',
+          amount_total: 3499,
+          currency: 'usd',
+          metadata: previewOrder,
+          customer_details: { email: 'secret@example.com', name: 'Ada Lovelace' },
+          shipping_details: {
+            name: 'Ada Lovelace',
+            address: {
+              line1: '1 Secret St',
+              city: 'Austin',
+              state: 'TX',
+              postal_code: '78701',
+              country: 'US',
+            },
+          },
+        };
+      },
     },
   },
 });
 
 const { GET: configGet } = await import('../api/config.js');
+const { GET: orderGet } = await import('../api/order.js');
 const { POST: checkoutPost } = await import('../api/checkout.js');
 const { POST: waitlistPost } = await import('../api/waitlist.js');
 
@@ -66,6 +105,10 @@ const server = createServer(async (req, res) => {
     }
     if (url.pathname === '/api/config' && req.method === 'GET') {
       await send(res, await configGet());
+      return;
+    }
+    if (url.pathname === '/api/order' && req.method === 'GET') {
+      await send(res, await orderGet(new Request(url)));
       return;
     }
     if ((url.pathname === '/api/checkout' || url.pathname === '/api/waitlist') && req.method === 'POST') {
