@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { printfulExternalId } from '../lib/printful.js';
 
 const live = process.env.QA_LIVE === '1';
 
@@ -187,7 +188,7 @@ test('configurator, bag, and Stripe checkout', async ({ page }, testInfo) => {
   await press(page.locator('#closecart'), testInfo);
 
   await press(page.locator('#prods button[data-value="case"]'), testInfo);
-  await expect(page.locator('#prods button[data-value="case"]')).toHaveText('Phone case');
+  await expect(page.locator('#prods button[data-value="case"]')).toHaveText('Tough phone case');
   await expect(page.locator('#price')).toContainText('$29.00');
   await expect(page.locator('#colorhead')).toHaveText('Finish');
   await expect(page.locator('#sizehead')).toHaveText('Model');
@@ -207,8 +208,47 @@ test('configurator, bag, and Stripe checkout', async ({ page }, testInfo) => {
   const caseArt = await logoImages(page);
   expect(caseArt).toHaveLength(3);
   expect(Math.min(...caseArt.map((image) => image.y))).toBeGreaterThanOrEqual(2220 * 0.28 - 1);
+  for (const layout of ['Row', 'Triangle', 'Stacked']) {
+    await press(page.locator('#lay button', { hasText: layout }), testInfo);
+    const placed = await page.locator('#mock image').evaluateAll((els) => {
+      const boxes = els.map((el) => {
+        const y = Number(el.getAttribute('y'));
+        const x = Number(el.getAttribute('x'));
+        const h = Number(el.getAttribute('height'));
+        const w = Number(el.getAttribute('width'));
+        const screen = el.getBoundingClientRect();
+        return { top: y, bottom: y + h, left: x, right: x + w, screen };
+      });
+      const mock = document.getElementById('mock').getBoundingClientRect();
+      return {
+        top: Math.min(...boxes.map((box) => box.top)),
+        bottom: Math.max(...boxes.map((box) => box.bottom)),
+        left: Math.min(...boxes.map((box) => box.left)),
+        right: Math.max(...boxes.map((box) => box.right)),
+        screenTop: Math.min(...boxes.map((box) => box.screen.top)),
+        screenBottom: Math.max(...boxes.map((box) => box.screen.bottom)),
+        screenLeft: Math.min(...boxes.map((box) => box.screen.left)),
+        screenRight: Math.max(...boxes.map((box) => box.screen.right)),
+        mockTop: mock.top,
+        mockBottom: mock.bottom,
+        mockLeft: mock.left,
+        mockRight: mock.right,
+        mockHeight: mock.height,
+      };
+    });
+    expect(placed.top, layout).toBeGreaterThanOrEqual(2220 * 0.28 - 1);
+    expect(placed.bottom, layout).toBeLessThanOrEqual(2220 * 0.84 + 1);
+    expect(placed.left, layout).toBeGreaterThan(4);
+    expect(placed.right, layout).toBeLessThan(1392 - 4);
+    expect(placed.screenTop, layout).toBeGreaterThanOrEqual(placed.mockTop - 1);
+    expect(placed.screenBottom, layout).toBeLessThanOrEqual(placed.mockBottom + 1);
+    expect(placed.screenLeft, layout).toBeGreaterThanOrEqual(placed.mockLeft - 1);
+    expect(placed.screenRight, layout).toBeLessThanOrEqual(placed.mockRight + 1);
+    expect(placed.mockBottom - placed.screenBottom, layout).toBeGreaterThan(placed.mockHeight * 0.08);
+  }
+  await press(page.locator('#lay button', { hasText: 'Row' }), testInfo);
   await press(page.locator('#addbtn'), testInfo);
-  await expect(page.locator('#items')).toContainText('Phone case');
+  await expect(page.locator('#items')).toContainText('Tough phone case');
   await expect(page.locator('#items')).toContainText('Matte');
   await expect(page.locator('#items')).toContainText('iPhone 17 Pro Max');
   await expect(page.locator('#sub')).toHaveText('$29.00');
@@ -878,6 +918,16 @@ test('policy pages are linked from the shop and the bag', async ({ page }) => {
   }
   await page.goto('/success.html');
   await expect(page.locator('main')).toContainText('Tracking is emailed when it ships');
+  await expect(page.locator('#order')).toBeHidden();
+  await page.goto('/success.html?session_id=cs_test_playwright');
+  await expect(page.locator('#order .label')).toHaveText('Order reference');
+  await expect(page.locator('#ref')).toHaveText(printfulExternalId('cs_test_playwright'));
+  await expect(page.locator('#lines')).toContainText('Tough phone case');
+  await expect(page.locator('#lines')).toContainText('Glossy');
+  await expect(page.locator('#lines')).toContainText('iPhone 16');
+  await expect(page.locator('#sum')).toContainText('Total $34.99');
+  await expect(page.locator('main')).not.toContainText('secret@example.com');
+  await expect(page.locator('main')).not.toContainText('1 Secret St');
   await expect(page.locator('footer nav a[href="/shipping"]')).toBeVisible();
   expect(errors, errors.join('\n')).toEqual([]);
 });

@@ -22,6 +22,12 @@ main{flex:1;width:min(36rem,100%);margin:0 auto;padding:12vh 22px 64px;text-alig
 h1{font-size:min(2.75rem,9vw);font-weight:600;letter-spacing:-.04em;line-height:1.15;margin:0 0 12px}
 p{color:var(--muted);font-size:1.15rem;line-height:1.5;margin:0}
 a.btn{display:inline-flex;align-items:center;justify-content:center;margin-top:22px;background:var(--accent);color:#fff;text-decoration:none;font-weight:500;border-radius:980px;padding:12px 22px;min-height:44px}
+#order{margin-top:28px;text-align:left}
+#order .label{margin:0;color:var(--muted);font-size:.8rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+#ref{margin:4px 0 16px;color:var(--ink);font-size:1rem;font-weight:600;letter-spacing:.04em;word-break:break-all}
+#lines{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+#lines li{padding:12px 0;border-bottom:1px solid var(--line);color:var(--ink);font-size:1rem;line-height:1.4}
+#sum{margin:12px 0 0;color:var(--ink);font-size:1.05rem;font-weight:600}
 footer{color:var(--muted);font-size:.9rem;line-height:1.5;padding:28px 22px calc(36px + env(safe-area-inset-bottom));border-top:1px solid var(--line);text-align:left}
 footer nav{display:flex;flex-wrap:wrap;gap:2px 18px;margin:0 0 8px}
 footer nav a,footer p a{color:var(--muted);text-decoration:none}
@@ -37,6 +43,12 @@ footer p{margin:0 0 8px;font-size:.9rem;color:var(--muted)}
 <main>
 <h1>You’re in.</h1>
 <p>Payment received. Your three-emoji logo will be printed and shipped to the address you entered. Tracking is emailed when it ships.</p>
+<div id="order" hidden>
+<p class="label">Order reference</p>
+<p id="ref"></p>
+<ul id="lines"></ul>
+<p id="sum"></p>
+</div>
 <a class="btn" href="/">Design another</a>
 </main>
 <footer>
@@ -48,6 +60,32 @@ footer p{margin:0 0 8px;font-size:.9rem;color:var(--muted)}
 fetch('/api/config',{headers:{accept:'application/json'}}).then(r=>r.ok?r.json():null).then(d=>{
   if(d&&d.stripeTestMode===true){var el=document.getElementById('testmode');if(el)el.hidden=false}
 }).catch(function(){});
+function money(cents){return '$'+(Number(cents)/100).toFixed(2)}
+function showOrder(data){
+  if(!data||typeof data.reference!=='string'||!Array.isArray(data.items))return;
+  var ref=document.getElementById('ref'),lines=document.getElementById('lines'),sum=document.getElementById('sum'),box=document.getElementById('order');
+  if(!ref||!lines||!sum||!box)return;
+  ref.textContent=data.reference;
+  lines.replaceChildren();
+  data.items.forEach(function(item){
+    var li=document.createElement('li');
+    var marks=Array.isArray(item.emojis)?item.emojis.filter(Boolean).join(' '):'';
+    li.textContent=item.quantity+' × '+item.name+' · '+item.color+' · '+item.size+(marks?' · '+marks:'')+' · '+money(item.amount);
+    lines.appendChild(li);
+  });
+  var bits=[];
+  if(Number(data.shipping)>0)bits.push('Shipping '+money(data.shipping));
+  bits.push('Total '+money(data.total));
+  sum.textContent=bits.join(' · ');
+  box.hidden=false;
+}
+var sessionId=new URLSearchParams(location.search).get('session_id');
+if(sessionId&&sessionId.indexOf('{')<0){
+  fetch('/api/order?session_id='+encodeURIComponent(sessionId),{headers:{accept:'application/json'}})
+    .then(function(r){return r.ok?r.json():null})
+    .then(showOrder)
+    .catch(function(){});
+}
 </script>
 </body>
 </html>

@@ -13,10 +13,12 @@ import { createCheckoutSession } from '../lib/checkout.js';
 import { decodeDesign, encodeDesign, itemsFromMetadata, resolveSiteUrl } from '../lib/design.js';
 import { HttpError } from '../lib/http.js';
 import { priceCart } from '../lib/prices.js';
-import { buildPrintfulOrder } from '../lib/printful.js';
-import { CASE_CAMERA_TOP, CASE_PRINT_H, CASE_PRINT_W, HAT_PRINT_H, HAT_PRINT_W, PRINT_PX, composeSvg, renderLogoPng } from '../lib/render.js';
+import { buildPrintfulOrder, printfulExternalId } from '../lib/printful.js';
+import { GET as orderGet } from '../api/order.js';
+import { CASE_BOTTOM_INSET, CASE_CAMERA_TOP, CASE_LOGO_CENTER, CASE_PRINT_H, CASE_PRINT_W, HAT_PRINT_H, HAT_PRINT_W, PRINT_PX, composeSvg, renderLogoPng } from '../lib/render.js';
 import { pageRedirect } from '../lib/redirect.js';
 import { runtime } from '../lib/runtime.js';
+import { orderReference, publicOrder } from '../lib/order.js';
 import { resolveVariant } from '../lib/variants.js';
 import { handleWaitlist, waitlistMailto } from '../lib/waitlist.js';
 import { handleStripeWebhook } from '../lib/webhook.js';
@@ -189,7 +191,7 @@ test('variant map matches the Printful catalog lookup', () => {
   assert.deepEqual(resolveVariant('case', 'Glossy', 'iPhone 16 Pro'), {
     variantId: 20304,
     printType: 'default',
-    name: 'Phone case',
+    name: 'Tough phone case',
     unitAmount: 2900,
     printfulColor: 'White',
     catalogProductId: 601,
@@ -381,7 +383,8 @@ test('printful order is a draft unless PRINTFUL_AUTO_CONFIRM=true', async () => 
   await createCheckoutSession({ items: [sampleItem({ product: 'mug', color: 'White', size: '11 oz' })], stripe, siteUrl: SITE });
   const session = completedSession(stripe.calls[0].metadata);
   const order = buildPrintfulOrder({ session, siteUrl: SITE });
-  assert.equal(order.external_id, 'cs_test_123');
+  assert.equal(order.external_id, printfulExternalId('cs_test_123'));
+  assert.equal(order.packing_slip.message, 'Stripe session cs_test_123');
   assert.equal(order.recipient.country_code, 'US');
   assert.equal(order.recipient.state_code, 'TX');
   assert.equal(order.recipient.email, 'ada@example.com');
@@ -426,6 +429,9 @@ test('printful order is a draft unless PRINTFUL_AUTO_CONFIRM=true', async () => 
   assert.equal(seen[0].init.headers['X-PF-Store-Id'], '18937301');
   assert.equal(seen[0].init.headers.Authorization, 'Bearer pf_test_token');
   const body = JSON.parse(seen[0].init.body);
+  assert.equal(body.external_id, printfulExternalId(session.id));
+  assert.ok(body.external_id.length <= 32);
+  assert.equal(body.packing_slip.message, `Stripe session ${session.id}`);
   assert.equal(body.items[0].variant_id, 1320);
 
   seen.length = 0;
@@ -438,6 +444,82 @@ test('printful order is a draft unless PRINTFUL_AUTO_CONFIRM=true', async () => 
   });
   assert.equal(live.confirm, true);
   assert.equal(new URL(seen[0].url).searchParams.get('confirm'), 'true');
+});
+
+test('printful external id is 32 characters and stable per session', () => {
+  const long = `cs_test_${'a'.repeat(58)}`;
+  const id = printfulExternalId(long);
+  assert.equal(id.length, 32);
+  assert.match(id, /^[0-9a-f]{32}$/);
+  assert.equal(printfulExternalId(long), id);
+  assert.notEqual(printfulExternalId(`${long}b`), id);
+  assert.notEqual(printfulExternalId('cs_test_123'), printfulExternalId('cs_test_124'));
+  const session = completedSession({ v: '1', n: '1', i0: JSON.stringify({
+    p: 'tee', c: 'Black', s: 'L', q: 1, e: ['🔥', '😎', '🍕'], slots: ['🔥', '😎', '🍕'], l: 'row', z: 100,
+  }) });
+  session.id = long;
+  const order = buildPrintfulOrder({ session, siteUrl: SITE });
+  assert.equal(order.external_id, id);
+  assert.equal(order.packing_slip.message, `Stripe session ${long}`);
+});
+
+test('a replayed checkout is safe when Printful says the external id already exists', async () => {
+  const stripe = fakeStripe();
+  await createCheckoutSession({ items: [sampleItem()], stripe, siteUrl: SITE });
+  const session = completedSession(stripe.calls[0].metadata);
+  const env = {
+    STRIPE_WEBHOOK_SECRET: SECRET,
+    PRINTFUL_API_TOKEN: 'pf_test_token',
+    PRINTFUL_STORE_ID: '18937301',
+    SITE_URL: SITE,
+  };
+  const payload = JSON.stringify({
+    id: 'evt_replay',
+    object: 'event',
+    type: 'checkout.session.completed',
+    data: { object: session },
+  });
+  const stripeLib = new Stripe('sk_test_placeholder');
+  const header = Stripe.webhooks.generateTestHeaderString({ payload, secret: SECRET });
+  const duplicate = await handleStripeWebhook({
+    rawBody: payload,
+    signature: header,
+    env,
+    stripe: stripeLib,
+    fetchImpl: async () => new Response(JSON.stringify({
+      code: 400,
+      result: 'Order with External ID already exists',
+      error: { reason: 'BadRequest', message: 'Order with External ID already exists' },
+    }), { status: 400 }),
+  });
+  assert.equal(duplicate.duplicate, true);
+  assert.equal(duplicate.received, true);
+  const confirmed = await handleStripeWebhook({
+    rawBody: payload,
+    signature: header,
+    env,
+    stripe: stripeLib,
+    fetchImpl: async () => new Response(JSON.stringify({
+      code: 400,
+      result: 'Order already exists and cannot be updated',
+      error: { reason: 'BadRequest', message: 'Order already exists and cannot be updated' },
+    }), { status: 400 }),
+  });
+  assert.equal(confirmed.duplicate, true);
+  await assert.rejects(
+    () => handleStripeWebhook({
+      rawBody: payload,
+      signature: header,
+      env,
+      stripe: stripeLib,
+      fetchImpl: async () => new Response(JSON.stringify({
+        code: 400,
+        result: 'Invalid External ID specified',
+        error: { reason: 'BadRequest', message: 'Invalid External ID specified' },
+      }), { status: 400 }),
+    }),
+    (err) => err instanceof HttpError && err.status === 400 && err.message === 'Invalid External ID specified',
+  );
 });
 
 test('webhook rejects a bad signature and ignores other events', async () => {
@@ -620,9 +702,10 @@ test('phone case print file stays below the camera and checks out at $29', async
   const stripe = fakeStripe();
   await createCheckoutSession({ items: [item], stripe, siteUrl: SITE });
   assert.equal(stripe.calls[0].line_items[0].price_data.unit_amount, 2900);
-  assert.match(stripe.calls[0].line_items[0].price_data.product_data.name, /Phone case/);
+  assert.match(stripe.calls[0].line_items[0].price_data.product_data.name, /Tough phone case/);
   assert.equal(stripe.calls[0].line_items[1].price_data.unit_amount, 599);
   const order = buildPrintfulOrder({ session: completedSession(stripe.calls[0].metadata), siteUrl: SITE });
+  assert.equal(order.items[0].name, 'Trimoji Tough phone case');
   assert.equal(order.items[0].variant_id, 33988);
   assert.equal(order.items[0].retail_price, '29.00');
   assert.equal(order.items[0].files[0].type, 'default');
@@ -657,10 +740,11 @@ test('phone case print file stays below the camera and checks out at $29', async
         logoSize,
         background: { shape: 'none' },
       }, [SVG, SVG]));
+      const floor = CASE_PRINT_H * (1 - CASE_BOTTOM_INSET);
       assert.ok(box.top >= clear - 0.5, `${layout} ${logoSize} top ${box.top}`);
       assert.ok(box.left > 4, `${layout} ${logoSize} left ${box.left}`);
       assert.ok(box.right < CASE_PRINT_W - 4, `${layout} ${logoSize} right ${box.right}`);
-      assert.ok(box.bottom < CASE_PRINT_H - 4, `${layout} ${logoSize} bottom ${box.bottom}`);
+      assert.ok(box.bottom <= floor + 0.5, `${layout} ${logoSize} bottom ${box.bottom}`);
     }
   }
 
@@ -682,7 +766,10 @@ test('phone case print file stays below the camera and checks out at $29', async
   const alpha = (bitmap, x, y) => bitmap.pixels[(y * bitmap.width + x) * 4 + 3];
   assert.equal(alpha(pixels, 0, 0), 0);
   assert.equal(alpha(pixels, Math.round(CASE_PRINT_W / 2), Math.round(clear * 0.5)), 0);
-  assert.ok(alpha(pixels, Math.round(CASE_PRINT_W / 2), Math.round(CASE_PRINT_H * 0.64)) > 200);
+  assert.ok(alpha(pixels, Math.round(CASE_PRINT_W / 2), Math.round(CASE_PRINT_H * CASE_LOGO_CENTER)) > 200);
+  assert.equal(alpha(pixels, Math.round(CASE_PRINT_W / 2), Math.round(CASE_PRINT_H * 0.92)), 0);
+  const rowBox = bounds(composeSvg(design, [SVG, SVG, SVG]));
+  assert.ok(Math.abs((rowBox.top + rowBox.bottom) / 2 - CASE_PRINT_H * CASE_LOGO_CENTER) < 2);
 });
 
 test('HTTP handlers: checkout redirect, webhook, and print file', async () => {
@@ -850,7 +937,9 @@ test('the static shop asks the server for checkout and test mode', () => {
   assert.match(html, /xlink:href/);
     assert.match(html, /function all\(\)\{slots\(\);controls\(\);draw\(\);syncProduct\(\)\}/);
   assert.match(html, /Trucker hat/);
-  assert.match(html, /Phone case/);
+  assert.match(html, /Tough phone case/);
+  assert.match(html, /function caseLogoSVG\(\)\{const W=1392,H=2220,cam=0\.28,inset=0\.16/);
+  assert.match(html, /let cy=H\*0\.48/);
   assert.match(html, /aria-label="iPhone model"/);
   assert.match(html, /1392\/2220/);
   assert.match(html, /setAttribute\('data-hat','trucker'\)/);
@@ -1000,5 +1089,77 @@ test('coming soon page is public and the shop preview is not linked', () => {
     const rule = config.headers.find((item) => item.source === source);
     assert.equal(rule.headers[0].key, 'X-Robots-Tag');
     assert.match(rule.headers[0].value, /noindex/);
+  }
+});
+
+test('order receipt uses the session id and hides the customer', async () => {
+  assert.equal(orderReference('cs_test_playwright'), printfulExternalId('cs_test_playwright'));
+  assert.throws(() => orderReference('not-a-session'), (err) => err instanceof HttpError && err.status === 400);
+  const metadata = {
+    v: '1',
+    n: '1',
+    i0: JSON.stringify({
+      p: 'case', c: 'Glossy', s: 'iPhone 16', q: 1, e: ['🔥', '😎', '🍕'], slots: ['🔥', '😎', '🍕'], l: 'row', z: 100,
+    }),
+  };
+  const session = {
+    id: 'cs_test_playwright',
+    object: 'checkout.session',
+    payment_status: 'paid',
+    amount_total: 3499,
+    currency: 'usd',
+    metadata,
+    customer_details: { email: 'secret@example.com', name: 'Ada Lovelace' },
+    shipping_details: { address: { line1: '1 Secret St' } },
+  };
+  const order = publicOrder(session);
+  assert.equal(order.reference, printfulExternalId('cs_test_playwright'));
+  assert.equal(order.items[0].name, 'Tough phone case');
+  assert.deepEqual(order.items[0].emojis, ['🔥', '😎', '🍕']);
+  assert.equal(order.items[0].amount, 2900);
+  assert.equal(order.shipping, 599);
+  assert.equal(order.total, 3499);
+  assert.deepEqual(Object.keys(order).sort(), ['currency', 'items', 'reference', 'shipping', 'subtotal', 'total']);
+  const packed = JSON.stringify(order);
+  assert.equal(packed.includes('secret@'), false);
+  assert.equal(packed.includes('Secret'), false);
+  assert.equal(packed.includes('sk_'), false);
+  assert.equal(packed.includes('cs_test_playwright'), false);
+  assert.throws(() => publicOrder({ ...session, payment_status: 'unpaid' }), (err) => err instanceof HttpError && err.status === 404);
+
+  const previous = process.env.STRIPE_SECRET_KEY;
+  const originalStripe = runtime.createStripe;
+  process.env.STRIPE_SECRET_KEY = 'sk_test_placeholder';
+  const calls = [];
+  runtime.createStripe = () => ({
+    checkout: {
+      sessions: {
+        async retrieve(id) {
+          calls.push(id);
+          if (id !== session.id) {
+            const error = new Error('No such checkout.session');
+            error.statusCode = 404;
+            error.code = 'resource_missing';
+            throw error;
+          }
+          return session;
+        },
+      },
+    },
+  });
+  try {
+    const ok = await orderGet(new Request(`${SITE}/api/order?session_id=cs_test_playwright`));
+    assert.equal(ok.status, 200);
+    assert.equal(ok.headers.get('cache-control'), 'no-store');
+    assert.deepEqual(await ok.json(), order);
+    const missing = await orderGet(new Request(`${SITE}/api/order?session_id=cs_test_missing01`));
+    assert.equal(missing.status, 404);
+    const bad = await orderGet(new Request(`${SITE}/api/order?session_id=nope`));
+    assert.equal(bad.status, 400);
+    assert.deepEqual(calls, ['cs_test_playwright', 'cs_test_missing01']);
+  } finally {
+    runtime.createStripe = originalStripe;
+    if (previous === undefined) delete process.env.STRIPE_SECRET_KEY;
+    else process.env.STRIPE_SECRET_KEY = previous;
   }
 });

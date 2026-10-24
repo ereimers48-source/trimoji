@@ -248,7 +248,7 @@ const PRODS={
  hoodie:{n:'Hoodie',p:54,sizes:['S','M','L','XL','2XL'],colors:['White','Black','Heather','Navy','Pink'],available:true},
  mug:{n:'Mug',p:19,sizes:['11 oz'],colors:['White'],available:true},
  hat:{n:'Trucker hat',p:33,sizes:['One size'],colors:['White','Black','Charcoal','Navy'],available:true},
- case:{n:'Phone case',p:29,sizes:['iPhone 15','iPhone 15 Plus','iPhone 15 Pro','iPhone 15 Pro Max','iPhone 16','iPhone 16 Plus','iPhone 16 Pro','iPhone 16 Pro Max','iPhone 17','iPhone 17 Air','iPhone 17 Pro','iPhone 17 Pro Max','iPhone 18 Pro','iPhone 18 Pro Max'],colors:['Glossy','Matte'],available:true,defaultSize:'iPhone 16'}
+ case:{n:'Tough phone case',p:29,sizes:['iPhone 15','iPhone 15 Plus','iPhone 15 Pro','iPhone 15 Pro Max','iPhone 16','iPhone 16 Plus','iPhone 16 Pro','iPhone 16 Pro Max','iPhone 17','iPhone 17 Air','iPhone 17 Pro','iPhone 17 Pro Max','iPhone 18 Pro','iPhone 18 Pro Max'],colors:['Glossy','Matte'],available:true,defaultSize:'iPhone 16'}
 };
 const COLS=[['White','#ffffff'],['Black','#1f1f24'],['Heather','#b9b9c0'],['Navy','#1f2a4d'],['Lilac','#cbb8f5'],['Pink','#f7c6d9'],['Sage','#b6cdb1'],['Charcoal','#554b56'],['Glossy','#ffffff'],['Matte','#ececee']];
 const reduceMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -306,7 +306,7 @@ function applyPhoto(){const spec=PHOTO[S.prod];const color=COLS[S.col][0];const 
  mock.style.setProperty('--rx',spec.turn[0]+'deg');mock.style.setProperty('--ry',spec.turn[1]+'deg');
  if(S.prod==='hat')print.setAttribute('data-hat','trucker');else print.removeAttribute('data-hat');
  const blank=mock.querySelector('img.blank');
- if(S.prod==='case'){const src='assets/products/case/white.svg';blank.alt=`${color} Phone case`;mock.dataset.finish=color.toLowerCase();mock.classList.remove('waiting');mock.classList.remove('flat');
+ if(S.prod==='case'){const src='assets/products/case/white.svg';blank.alt=`${color} Tough phone case`;mock.dataset.finish=color.toLowerCase();mock.classList.remove('waiting');mock.classList.remove('flat');
   const link=document.getElementById('preload-blank');if(link){link.href=src;link.imageSrcset=''}
   if(blank.dataset.key!=='case'){blank.dataset.key='case';blank.dataset.pending='';blank.src=src;blank.removeAttribute('srcset')}
   return}
@@ -333,13 +333,16 @@ function hatLogoSVG(){const W=1650,H=750,e=S.pick,fitted=3,size=Number(sz.value)
  const cx=W/2,cy=H/2,pos=slotPos(cx,cy,s);
  const marks=e.map((x,i)=>{if(!x)return '';const href=esc(tw(x));return `<image href="${href}" xlink:href="${href}" x="${pos[i][0]-s/2}" y="${pos[i][1]-s/2}" width="${s}" height="${s}"/>`}).join('');
  return {vb:`0 0 ${W} ${H}`,markup:marks}}
-function caseLogoSVG(){const W=1392,H=2220,cam=0.28,e=S.pick,fitted=3,size=Number(sz.value);
- const rw=W,rh=H*(1-cam);
+function caseLogoSVG(){const W=1392,H=2220,cam=0.28,inset=0.16,e=S.pick,fitted=3,size=Number(sz.value);
+ const top=H*cam,limit=H*(1-inset),rh=limit-top,rw=W;
  const unit=S.lay=='row'?{w:1+(fitted-1)*1.05,h:1}:S.lay=='stacked'?{w:1,h:1+(fitted-1)*1.05}:{w:2.1,h:1.93};
  const full=Math.min(rw/unit.w,rh/unit.h);let s=full*0.88*(size/100);
  const span=S.lay=='row'?{w:s*(1+(fitted-1)*1.05),h:s}:S.lay=='stacked'?{w:s,h:s*(1+(fitted-1)*1.05)}:{w:s*2.1,h:s*1.93};
  s*=Math.min((rw*0.93)/span.w,(rh*0.93)/span.h,1);
- const cx=W/2,cy=H*cam+rh/2,pos=slotPos(cx,cy,s);
+ let cy=H*0.48,pos=slotPos(W/2,cy,s);
+ const ys=pos.map(p=>p[1]),minY=Math.min(...ys)-s/2,maxY=Math.max(...ys)+s/2;
+ let shift=0;if(minY<top)shift=top-minY;if(maxY+shift>limit)shift-=maxY+shift-limit;
+ if(shift)pos=pos.map(p=>[p[0],p[1]+shift]);
  const marks=e.map((x,i)=>{if(!x)return '';const href=esc(tw(x));return `<image href="${href}" xlink:href="${href}" x="${pos[i][0]-s/2}" y="${pos[i][1]-s/2}" width="${s}" height="${s}"/>`}).join('');
  return {vb:`0 0 ${W} ${H}`,markup:marks}}
 function mountMock(markup,cx,cy,base,viewBox){const r=base*1.4*2.05;const vb=viewBox||`${cx-r} ${cy-r} ${r*2} ${r*2}`;
