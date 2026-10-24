@@ -895,7 +895,7 @@ test('the same emoji can repeat in every slot or leave a gap', async ({ page }, 
 test('policy pages are linked from the shop and the bag', async ({ page }) => {
   const errors = track(page);
   await page.goto('/shop-preview');
-  await expect(page.locator('footer nav a')).toHaveText(['Privacy', 'Terms', 'Shipping', 'Returns', 'Contact']);
+  await expect(page.locator('footer nav a')).toHaveText(['Privacy', 'Terms', 'Shipping', 'Returns', 'Contact', 'Stories']);
   await page.locator('#cartbtn').click();
   await expect(page.locator('#drawer a[href="/shipping"]')).toBeVisible();
   await expect(page.locator('#drawer a[href="/returns"]')).toBeVisible();

@@ -1,0 +1,1 @@
+export { photoGET as GET } from './stories-admin.js';

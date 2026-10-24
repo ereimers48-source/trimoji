@@ -22,6 +22,9 @@ Checkout runs on Vercel. GitHub Pages stays a static preview: the cart still wor
 | `PRINTFUL_AUTO_CONFIRM` | `false` (or leave unset). Orders are Printful drafts (`confirm=false`). Set to the exact string `true` only when a paid order should be submitted for fulfillment immediately. |
 | `COMING_SOON` | Unset, or any value other than `false`, `0`, `no`, or `off`. The homepage is the coming-soon page and the shop is only at `/shop-preview`. Set `false` and redeploy to open the shop at `/`. |
 | `WAITLIST_WEBHOOK_URL` | Optional. When unset, Notify me opens an email to `hello@trimojiapparel.com` because the site has no address database. When set, `POST /api/waitlist` forwards `{ "email" }` to that URL and the page says the person is on the list. |
+| `BLOB_READ_WRITE_TOKEN` | Vercel Blob read-write token. Story records and photos are stored as private blobs. Submitting a story fails until this is set. |
+| `STORIES_ADMIN_TOKEN` | A long random secret. `/stories-admin` is `noindex` and lists pending stories only when this token is sent as the `x-stories-token` header, `Authorization: Bearer`, or the `token` query. |
+| `STORIES_PUBLIC` | Leave unset. `/stories` stays `noindex`, and the coming-soon footer does not link to it. Set `true` (or `1`, `yes`, `on`) and redeploy when the page should be indexed and linked from the coming-soon page. |
 
 4. Deploy. The shop is the deployment URL. A yellow **Test mode** banner appears when `STRIPE_SECRET_KEY` starts with `sk_test_`. The key itself is never sent to the browser (`GET /api/config` returns only `{ "stripeTestMode": true }`).
 5. Create the Stripe webhook in **test mode** (the Test mode toggle in the Stripe Dashboard must be on):
@@ -54,7 +57,9 @@ When you are ready to charge real cards:
 | Mug | $19 | White Glossy Mug, product `19`, 11 oz only | `default` |
 | Trucker hat | $33 | Yupoong 6006, product `100`, technique `dtfilm` | `front_dtf_hat`, 1650×750 at 300 DPI |
 
-US shipping is $5.99, and free when the merchandise subtotal is $60 or more. That flat amount is what Stripe charges the customer. Printful bills the store its own fulfillment shipping when an order is confirmed. The same facts are on `/shipping`. `/privacy`, `/terms`, `/returns`, and `/contact` are linked from the footer. Contact mail is hello@trimojiapparel.com.
+US shipping is $5.99, and free when the merchandise subtotal is $60 or more. That flat amount is what Stripe charges the customer. Printful bills the store its own fulfillment shipping when an order is confirmed. The same facts are on `/shipping`. `/privacy`, `/terms`, `/returns`, `/contact`, and `/stories` are linked from the shop footer. The coming-soon footer adds Stories only when `STORIES_PUBLIC` is on. Contact mail is hello@trimojiapparel.com.
+
+`/stories` collects customer notes (three emojis, first name, optional city, a 20–600 character story, optional photo, optional email, and consent). Every note is stored as pending. `GET /api/stories` returns approved stories only and never includes the email. Photos are private blobs; a pending photo is not served on the public photo URL. Approve, reject, or delete from `/stories-admin`. Spam controls are a hidden honeypot field and a limit of 5 submissions per IP per hour.
 
 Variant IDs were read from `GET https://api.printful.com/products/{id}` on 2026-10-22.
 

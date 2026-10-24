@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Stories — Trimoji</title>
+<meta name="robots" content="noindex, nofollow" data-stories-robots>
+<link rel="canonical" href="https://trimojiapparel.com/stories">
+<meta property="og:url" content="https://trimojiapparel.com/stories">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7' fill='%230071e3'/%3E%3C/svg%3E">
+<style>
+:root{--ink:#1d1d1f;--muted:#6e6e73;--line:#d2d2d7;--accent:#0071e3;--sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Inter,system-ui,sans-serif}
+*{box-sizing:border-box}
+html{overflow-anchor:none}
+body{min-height:100dvh;display:flex;flex-direction:column;margin:0;overflow-anchor:none;font-family:var(--sans);color:var(--ink);background:#fff;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);touch-action:manipulation}
+button,input,textarea{font:inherit;color:inherit;touch-action:manipulation}
+.topbar{position:sticky;top:0;z-index:30;background:#fff;padding-top:env(safe-area-inset-top)}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:48px;padding:0 22px;border-bottom:1px solid #e8e8ed}
+.logo{font-weight:600;font-size:1.05rem;letter-spacing:-.03em;text-decoration:none;color:var(--ink);line-height:1}
+.nav-links a{color:var(--ink);text-decoration:none;font-size:.95rem;min-height:44px;padding:0 10px;display:inline-flex;align-items:center}
+main{flex:1;width:min(40rem,100%);margin:0 auto;padding:48px 22px 64px}
+h1{margin:0;font-size:min(2.5rem,9vw);font-weight:600;letter-spacing:-.035em;line-height:1.12}
+.lede{margin:14px 0 28px;color:var(--muted);font-size:1.0625rem}
+h2{margin:36px 0 8px;font-size:1.28rem;font-weight:600;letter-spacing:-.022em;line-height:1.25}
+.stories{display:grid;gap:14px}
+article{border:1px solid var(--line);border-radius:18px;padding:18px 18px 8px}
+.emojis{margin:0 0 8px;font-size:2.5rem;line-height:1.2;letter-spacing:.04em}
+.who{margin:0 0 8px;color:var(--muted);font-size:.95rem}
+.story{margin:0 0 14px;font-size:1.05rem;white-space:pre-wrap;overflow-wrap:anywhere}
+article img{width:100%;height:180px;object-fit:cover;border-radius:12px;margin:0 0 14px;background:#f5f5f7;display:block}
+.empty{margin:0 0 8px;padding:18px;border-radius:18px;background:#f5f5f7;font-size:1.05rem}
+form{display:flex;flex-direction:column;gap:12px;margin-top:16px}
+label,legend{font-size:.95rem;font-weight:500}
+fieldset{margin:0;padding:0;border:0;display:flex;flex-direction:column;gap:8px}
+.emoji-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+input,textarea{width:100%;min-height:48px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:#f5f5f7;font-size:16px}
+textarea{min-height:140px;resize:vertical}
+.emoji-row input{text-align:center;font-size:1.6rem;padding:8px}
+input:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:2px;background:#fff}
+.hint{margin:0;color:var(--muted);font-size:.9rem}
+.check{display:flex;gap:10px;align-items:flex-start;font-weight:400}
+.check input{width:22px;height:22px;min-height:22px;margin-top:2px;accent-color:var(--accent)}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:12px 22px;border:0;border-radius:980px;background:var(--accent);color:#fff;font-size:1.05rem;font-weight:500;cursor:pointer}
+.btn:disabled{opacity:.6}
+#form-status{min-height:1.45em;margin:0;color:var(--muted);font-size:.95rem}
+.hp{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+footer{color:var(--muted);font-size:.9rem;line-height:1.5;padding:28px 22px calc(36px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
+footer nav{display:flex;flex-wrap:wrap;gap:2px 18px;margin:0 0 8px}
+footer nav a,footer p a{color:var(--muted);text-decoration:none}
+footer nav a{min-height:44px;display:inline-flex;align-items:center}
+footer p{margin:0 0 8px;font-size:.9rem}
+@media (hover:hover) and (pointer:fine){
+ .btn:hover{background:#0077ed}
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+<nav class="nav" aria-label="Shop"><a class="logo" href="/">Trimoji</a><div class="nav-links"><a href="/#shop">Shop</a></div></nav>
+</header>
+<main>
+<h1>Your 3 emojis, your story</h1>
+<p class="lede">Real stories from real people. Written by you, not by AI.</p>
+<div id="list" class="stories" aria-live="polite"></div>
+<p id="empty" class="empty">No stories yet. If you ordered a Trimoji, yours can be the first — tell us why those three emojis are yours.</p>
+<h2>Share your story</h2>
+<p class="hint">We read every note. It goes on the site only after we approve it.</p>
+<form id="share">
+<fieldset>
+<legend>Your three emojis</legend>
+<div class="emoji-row">
+<input id="emoji1" name="emoji1" maxlength="16" required aria-label="First emoji" autocomplete="off" inputmode="text">
+<input id="emoji2" name="emoji2" maxlength="16" required aria-label="Second emoji" autocomplete="off" inputmode="text">
+<input id="emoji3" name="emoji3" maxlength="16" required aria-label="Third emoji" autocomplete="off" inputmode="text">
+</div>
+</fieldset>
+<p class="hint">The same emoji can be used more than once.</p>
+<label for="firstName">First name</label>
+<input id="firstName" name="firstName" maxlength="40" required autocomplete="given-name">
+<label for="city">City <span class="hint">(optional)</span></label>
+<input id="city" name="city" maxlength="60" autocomplete="address-level2" placeholder="City, state">
+<label for="story">Your story</label>
+<textarea id="story" name="story" minlength="20" maxlength="600" required placeholder="Why these three?"></textarea>
+<p class="hint" id="count">20 to 600 characters</p>
+<label for="photo">Photo <span class="hint">(optional, JPG, PNG, or WebP, under 5 MB)</span></label>
+<input id="photo" name="photo" type="file" accept="image/jpeg,image/png,image/webp">
+<label for="email">Email <span class="hint">(optional, never shown on the site)</span></label>
+<input id="email" name="email" type="email" maxlength="254" autocomplete="email" inputmode="email">
+<label class="check"><input id="consent" name="consent" type="checkbox" value="yes" required> I agree Trimoji can share my story and photo on trimojiapparel.com and our social channels.</label>
+<div class="hp" aria-hidden="true"><label for="company">Company</label><input id="company" name="company" type="text" tabindex="-1" autocomplete="off"></div>
+<button class="btn" id="send" type="submit">Share your story</button>
+<p id="form-status" role="status"></p>
+</form>
+</main>
+<footer>
+<nav aria-label="Policies"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/shipping">Shipping</a><a href="/returns">Returns</a><a href="/contact">Contact</a><a href="/stories">Stories</a></nav>
+<p>Shipping is $5.99 flat, free over $60.</p>
+<p>© Trimoji. Emoji graphics by <a href="https://github.com/jdecked/twemoji">Twemoji</a>, © Twitter, Inc. and other contributors, licensed under <a href="https://creativecommons.org/licenses/by/4.0/">CC-BY 4.0</a>.</p>
+</footer>
+<script>
+const ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const list = document.getElementById('list');
+const empty = document.getElementById('empty');
+const form = document.getElementById('share');
+const status = document.getElementById('form-status');
+const storyBox = document.getElementById('story');
+const count = document.getElementById('count');
+function paint(stories) {
+  list.replaceChildren();
+  const rows = Array.isArray(stories) ? stories : [];
+  empty.hidden = rows.length > 0;
+  for (const story of rows) {
+    const card = document.createElement('article');
+    const emojis = document.createElement('p');
+    emojis.className = 'emojis';
+    emojis.textContent = Array.isArray(story.emojis) ? story.emojis.join('  ') : '';
+    const who = document.createElement('p');
+    who.className = 'who';
+    who.textContent = story.city ? story.firstName + ' · ' + story.city : (story.firstName || '');
+    const body = document.createElement('p');
+    body.className = 'story';
+    body.textContent = story.story || '';
+    card.append(emojis, who, body);
+    if (story.photo === true && ID.test(story.id || '')) {
+      const img = document.createElement('img');
+      img.alt = '';
+      img.src = '/api/stories-photo?id=' + story.id;
+      card.append(img);
+    }
+    list.append(card);
+  }
+}
+function recount() {
+  count.textContent = storyBox.value.length + ' / 600';
+}
+storyBox.addEventListener('input', recount);
+recount();
+fetch('/api/stories', { headers: { accept: 'application/json' } })
+  .then((res) => res.ok ? res.json() : Promise.reject())
+  .then((data) => paint(data.stories))
+  .catch(() => { status.textContent = 'Stories are unavailable right now.'; });
+form.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const file = document.getElementById('photo').files[0];
+  if (file && file.size > 5 * 1024 * 1024) {
+    status.textContent = 'Use a JPG, PNG, or WebP photo under 5 MB.';
+    return;
+  }
+  const button = document.getElementById('send');
+  button.disabled = true;
+  status.textContent = '';
+  try {
+    const res = await fetch('/api/stories', { method: 'POST', body: new FormData(form) });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Could not send that.');
+    form.reset();
+    recount();
+    status.textContent = 'Thanks. Your story is waiting for review and will not appear here until we approve it.';
+  } catch (err) {
+    status.textContent = err.message || 'Could not send that.';
+  } finally {
+    button.disabled = false;
+  }
+});
+</script>
+</body>
+</html>
