@@ -983,7 +983,7 @@ test('policy pages share a footer and old hosts keep /api', () => {
     'privacy.html': [/Privacy Policy/, /hello@trimojiapparel\.com/, /does not sell personal information/],
     'terms.html': [/Terms of Service/, /made to order/i, /United States/],
     'shipping.html': [/Shipping Policy/, /Printful/, /2–7 business days/, /\$5\.99/, /\$60 or more/, /tracking number is emailed/i],
-    'returns.html': [/change of mind/, /30 days/, /photo/, /replacement or refund/i, /hello@trimojiapparel\.com/],
+    'returns.html': [/Returns &amp; Refund Policy/, /change of mind/, /30 days/, /clear photo/, /free replacement/, /full refund/, /mailto:hello@trimojiapparel\.com/, /Damaged, defective, or incorrect items/, /Sizing/, /Order changes and cancellations/, /Lost or delayed packages/, /5 to 10 business days/, /Shipping address/],
     'contact.html': [/mailto:hello@trimojiapparel\.com/],
   };
   for (const [page, patterns] of Object.entries(mains)) {
@@ -994,6 +994,12 @@ test('policy pages share a footer and old hosts keep /api', () => {
   }
   const index = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   assert.match(index, /href="\/shipping">Shipping<\/a> · <a href="\/returns">Returns<\/a>/);
+  const made = 'Custom-made to order. See our <a href="/returns">Returns policy</a>.';
+  assert.equal(index.split(made).length - 1, 2);
+  assert.doesNotMatch(index, /Returns policy<\/a>[^<]*target=/);
+  const returns = readFileSync(new URL('../returns.html', import.meta.url), 'utf8');
+  assert.doesNotMatch(returns, /noindex/i);
+  assert.match(returns, /rel="canonical" href="https:\/\/trimojiapparel\.com\/returns"/);
   const success = readFileSync(new URL('../success.html', import.meta.url), 'utf8');
   assert.match(success, /Tracking is emailed when it ships/);
   const config = JSON.parse(readFileSync(new URL('../vercel.json', import.meta.url), 'utf8'));
