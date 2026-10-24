@@ -894,27 +894,53 @@ test('the same emoji can repeat in every slot or leave a gap', async ({ page }, 
 
 test('policy pages are linked from the shop and the bag', async ({ page }) => {
   const errors = track(page);
+  await page.goto('/');
+  await expect(page.locator('h1')).toContainText('Three emojis');
+  await expect(page.locator('footer nav a')).toHaveText(['Privacy', 'Terms', 'Shipping', 'Returns', 'Contact']);
   await page.goto('/shop-preview');
   await expect(page.locator('footer nav a')).toHaveText(['Privacy', 'Terms', 'Shipping', 'Returns', 'Contact']);
+  const bagPolicy = page.locator('.buybar a[href="/returns"]');
+  await expect(page.locator('.buybar')).toContainText('Custom-made to order. See our Returns policy.');
+  await expect(bagPolicy).toHaveText('Returns policy');
+  expect(await bagPolicy.getAttribute('target')).toBeNull();
   await page.locator('#cartbtn').click();
   await expect(page.locator('#drawer a[href="/shipping"]')).toBeVisible();
-  await expect(page.locator('#drawer a[href="/returns"]')).toBeVisible();
+  await expect(page.locator('#drawer a[href="/returns"]')).toHaveCount(2);
+  const checkoutPolicy = page.locator('#drawer a[href="/returns"]', { hasText: 'Returns policy' });
+  await expect(page.locator('#drawer')).toContainText('Custom-made to order. See our Returns policy.');
+  await expect(checkoutPolicy).toBeVisible();
+  expect(await checkoutPolicy.getAttribute('target')).toBeNull();
   const pages = [
     ['/privacy', 'Privacy Policy', 'does not sell personal information'],
     ['/terms', 'Terms of Service', 'made to order'],
     ['/shipping', 'Shipping Policy', '2–7 business days'],
-    ['/returns', 'Returns & Refunds', '30 days'],
+    ['/returns', 'Returns & Refund Policy', '30 days'],
     ['/contact', 'Contact', 'hello@trimojiapparel.com'],
   ];
   for (const [path, title, line] of pages) {
-    await page.goto(path);
+    const response = await page.goto(path);
     await expect(page).toHaveURL(new RegExp(`${path}$`));
     await expect(page.locator('h1')).toHaveText(title);
     await expect(page.locator('main')).toContainText(line);
     await expect(page.locator('main')).toContainText('hello@trimojiapparel.com');
+    await expect(page.locator('footer nav a')).toHaveText(['Privacy', 'Terms', 'Shipping', 'Returns', 'Contact']);
     await expect(page.locator('footer')).toContainText('© Trimoji');
     const text = await page.locator('main').innerText();
     expect(text).not.toMatch(/\bLLC\b|Street|Avenue|\bSuite\b/);
+    if (path === '/returns') {
+      expect(response.headers()['x-robots-tag'] || '').not.toMatch(/noindex/i);
+      await expect(page.locator('meta[name="robots"]')).toHaveCount(0);
+      await expect(page.locator('main h2')).toHaveText([
+        'Damaged, defective, or incorrect items',
+        'Sizing',
+        'Order changes and cancellations',
+        'Lost or delayed packages',
+        'Refunds',
+        'Shipping address',
+        'Contact',
+      ]);
+      await expect(page.locator('main a[href="mailto:hello@trimojiapparel.com"]').last()).toHaveText('hello@trimojiapparel.com');
+    }
   }
   await page.goto('/success.html');
   await expect(page.locator('main')).toContainText('Tracking is emailed when it ships');
@@ -929,6 +955,7 @@ test('policy pages are linked from the shop and the bag', async ({ page }) => {
   await expect(page.locator('main')).not.toContainText('secret@example.com');
   await expect(page.locator('main')).not.toContainText('1 Secret St');
   await expect(page.locator('footer nav a[href="/shipping"]')).toBeVisible();
+  await expect(page.locator('footer nav a[href="/returns"]')).toHaveText('Returns');
   expect(errors, errors.join('\n')).toEqual([]);
 });
 
