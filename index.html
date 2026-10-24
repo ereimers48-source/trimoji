@@ -53,8 +53,10 @@ a{color:var(--ink)}
 .choice{padding:26px 0;border-top:1px solid var(--line)}
 .choice h3{margin:0 0 4px;font-size:1.35rem;font-weight:600;letter-spacing:-.02em;line-height:1.2}
 .note{margin:0;color:var(--muted);font-size:.95rem;line-height:1.45}
-.slots{display:flex;gap:10px;margin:16px 0}
-.slot{flex:1;height:84px;border:1px solid var(--line);border-radius:16px;display:grid;place-items:center;font-size:40px;position:relative;cursor:pointer;background:#fff;padding:0;min-width:0}
+.slots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:16px 0}
+.slot{aspect-ratio:1;width:100%;height:auto;border:1px solid var(--line);border-radius:16px;display:grid;place-items:center;font-size:40px;position:relative;cursor:pointer;background:#fff;padding:0;min-width:0}
+.slot img.em{width:68%;height:68%;vertical-align:middle}
+.slot .note{font-size:1.5rem;line-height:1}
 .slot.f{border-color:#86868b}
 .slot.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
 .item .e{display:inline-flex;align-items:center;gap:6px}
@@ -117,7 +119,7 @@ footer a{color:var(--muted)}
  .opt:hover:not(.on){border-color:#86868b}
 }
 @media(max-width:899px){
- html{--pin:40dvh;--preview-compact:clamp(64px, 16dvh, calc(var(--pin) - 156px));--slotbar:64px}
+ html{--pin:40dvh;--preview-compact:clamp(64px, 16dvh, calc(var(--pin) - 156px));--slotbar:calc((100vw - 44px - 20px) / 3 + 8px)}
  .stage{position:sticky;top:var(--bar, 48px);z-index:20;height:var(--pin);margin-left:-22px;margin-right:-22px;border-radius:0;padding:6px 8px;display:flex;align-items:center;justify-content:center;background:var(--stage);box-shadow:0 1px 0 #e8e8ed;transition:height .32s ease}
  .mock{width:min(100%, calc((var(--pin) - 12px) * var(--aw) / var(--ah)));max-height:calc(var(--pin) - 12px);height:auto;transition:max-height .32s ease, width .32s ease}
  .buy{gap:0}
@@ -128,7 +130,6 @@ footer a{color:var(--muted)}
  #emoji-choice h3{font-size:1.15rem;margin:0 0 6px;line-height:1.5}
  #emoji-choice .note{font-size:.9rem;line-height:1.45;margin:0}
  .slotbar .slots{margin:8px 0}
- .slotbar .slot{height:56px;font-size:28px}
  .kb{display:block;margin-top:0}
  #grid{height:auto;margin-top:8px;overflow:visible}
  html.compact .stage{height:var(--preview-compact)}
@@ -136,7 +137,6 @@ footer a{color:var(--muted)}
  html.compact #emoji-choice h3,html.compact #emoji-choice > .note{display:none}
  html.compact .slotbar{position:sticky;top:calc(var(--bar, 48px) + var(--preview-compact));z-index:19;margin-left:-22px;margin-right:-22px;padding:0 22px 2px;background:#fff;box-shadow:0 1px 0 #e8e8ed}
  html.compact .slotbar .slots{margin:0}
- html.compact .slotbar .slot{height:44px;font-size:24px}
 }
 @media(min-width:900px){
  .hero{padding:64px 6vw 0}
