@@ -1006,7 +1006,7 @@ test('the static shop asks the server for checkout and test mode', () => {
   assert.doesNotMatch(html, /id="showcase"/);
   assert.doesNotMatch(html, /mug example/);
   assert.doesNotMatch(html, /Dad hat/);
-  assert.doesNotMatch(html, /backdrop-filter/);
+  assert.match(html, /html\.slots-stuck \.slotbar::before\{[^}]*backdrop-filter/);
   assert.doesNotMatch(html, /assets\/svg\//);
   assert.doesNotMatch(html, /<a href="#builder"><button/);
   const readme = readFileSync(new URL('../README.md', import.meta.url), 'utf8');
