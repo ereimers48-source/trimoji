@@ -1008,7 +1008,38 @@ test('policy pages share a footer and old hosts keep /api', () => {
     assert.doesNotMatch(html, /\bLLC\b|\bL\.L\.C\b|Incorporated/);
   }
   const mains = {
-    'privacy.html': [/Privacy Policy/, /hello@trimojiapparel\.com/, /does not sell personal information/],
+    'privacy.html': [
+      /Privacy Policy/,
+      /Last updated Oct 25, 2026/,
+      /sole proprietor/,
+      /Pleasant Hill, California/,
+      /tees, hoodies, mugs, trucker hats, and Tough phone cases/,
+      /Accounts are optional/,
+      /We do not store a password/,
+      /one-time link/,
+      /saved designs/,
+      /order history with status and tracking/,
+      /Stripe Tax/,
+      /card number/,
+      /Your email and phone are not sent to Printful/,
+      /Resend/,
+      /Vercel Blob/,
+      /trimoji_session/,
+      /HttpOnly/,
+      /SameSite=Lax/,
+      /30 days/,
+      /does not sell personal information/,
+      /does not share personal information/,
+      /CCPA/,
+      /CPRA/,
+      /right to know/,
+      /right to delete/,
+      /right to correct/,
+      /Delete my account and data/,
+      /not directed to children under 13/,
+      /jsDelivr/,
+      /hello@trimojiapparel\.com/,
+    ],
     'terms.html': [/Terms of Service/, /made to order/i, /United States/],
     'shipping.html': [/Shipping Policy/, /Printful/, /2–7 business days/, /\$5\.99/, /\$60 or more/, /tracking number is emailed/i],
     'returns.html': [/Returns &amp; Refund Policy/, /change of mind/, /30 days/, /clear photo/, /free replacement/, /full refund/, /mailto:hello@trimojiapparel\.com/, /Damaged, defective, or incorrect items/, /Sizing/, /Order changes and cancellations/, /Lost or delayed packages/, /5 to 10 business days/, /Shipping address/],
@@ -1019,6 +1050,12 @@ test('policy pages share a footer and old hosts keep /api', () => {
     const main = html.slice(html.indexOf('<main>'), html.indexOf('</main>'));
     for (const pattern of patterns) assert.match(main, pattern, `${page} ${pattern}`);
     assert.doesNotMatch(main, /\b\d{5}\b|Street|Avenue|\bSuite\b|P\.O\. Box/i, page);
+    if (page === 'privacy.html') {
+      assert.doesNotMatch(main, /There are no customer accounts/);
+      assert.doesNotMatch(main, /shirts, hoodies, hats, and mugs/);
+      assert.doesNotMatch(main, /gtag|googletagmanager|posthog|plausible|facebook\.net/i);
+      assert.match(main, /no analytics or advertising tools/);
+    }
   }
   const index = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   assert.match(index, /href="\/shipping">Shipping<\/a> · <a href="\/returns">Returns<\/a>/);
