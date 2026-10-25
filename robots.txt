@@ -2,3 +2,5 @@ User-agent: *
 Allow: /
 Disallow: /shop-preview
 Disallow: /stories-admin
+
+Sitemap: https://trimojiapparel.com/sitemap.xml

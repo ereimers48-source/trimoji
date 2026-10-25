@@ -57,6 +57,11 @@ test('configurator, bag, and Stripe checkout', async ({ page }, testInfo) => {
 
   await page.goto('/shop-preview');
   await expect(page.locator('.hero h1')).toContainText('Three emojis.');
+  await expect(page.locator('.hero h1')).toContainText('One you.');
+  await expect(page).toHaveTitle('Trimoji — Three emojis. One you.');
+  await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /three emojis/i);
+  await expect(page.locator('meta[property="og:image"]')).toHaveAttribute('content', 'https://trimojiapparel.com/assets/og.png');
+  await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary_large_image');
   await expect(page.locator('a.btn[href="#shop"]')).toHaveCount(1);
   await expect(page.locator('#mock image')).toHaveCount(3);
   await expect(page.locator('#mock img.blank')).toHaveAttribute('src', /\/tee\/white-/);
@@ -973,6 +978,22 @@ test('policy pages are linked from the shop and the bag', async ({ page }) => {
   await page.goto('/');
   await expect(page.locator('h1')).toContainText('Three emojis');
   await expect(page.locator('footer nav a')).toHaveText(['Privacy', 'Terms', 'Shipping', 'Returns', 'Contact']);
+  const og = await page.request.get('/assets/og.png');
+  expect(og.status()).toBe(200);
+  expect(og.headers()['content-type'] || '').toContain('image/png');
+  expect(og.headers()['cache-control']).toBe('public, max-age=86400');
+  expect((await page.request.get('/assets/products/tee/white-520.webp')).headers()['cache-control']).toBe('public, max-age=86400');
+  expect((await page.request.get('/favicon.ico')).status()).toBe(200);
+  expect((await page.request.get('/apple-touch-icon.png')).status()).toBe(200);
+  expect((await page.request.get('/site.webmanifest')).status()).toBe(200);
+  const sitemap = await (await page.request.get('/sitemap.xml')).text();
+  expect(sitemap).toContain('<loc>https://trimojiapparel.com/</loc>');
+  expect(sitemap).toContain('<loc>https://trimojiapparel.com/returns</loc>');
+  expect(sitemap).toContain('<loc>https://trimojiapparel.com/contact</loc>');
+  expect(sitemap).not.toMatch(/stories|account|shop-preview/);
+  const robots = await (await page.request.get('/robots.txt')).text();
+  expect(robots).toContain('Sitemap: https://trimojiapparel.com/sitemap.xml');
+  expect(robots).toContain('Disallow: /shop-preview');
   await page.goto('/shop-preview');
   await expect(page.locator('footer nav a')).toHaveText(['Privacy', 'Terms', 'Shipping', 'Returns', 'Contact', 'Stories', 'Account']);
   await expect(page.locator('.nav-links a[href="/account"]')).toHaveText('Account');
@@ -1012,6 +1033,13 @@ test('policy pages are linked from the shop and the bag', async ({ page }) => {
     await expect(page.locator('footer')).toContainText('© Trimoji');
     const text = await page.locator('main').innerText();
     expect(text).not.toMatch(/\bLLC\b|Street|Avenue|\bSuite\b/);
+    await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /.+/);
+    await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', /.+/);
+    await expect(page.locator('meta[property="og:description"]')).toHaveAttribute('content', /.+/);
+    await expect(page.locator('meta[property="og:image"]')).toHaveAttribute('content', 'https://trimojiapparel.com/assets/og.png');
+    await expect(page.locator('meta[property="og:url"]')).toHaveAttribute('content', `https://trimojiapparel.com${path}`);
+    await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary_large_image');
+    await expect(page.locator('link[rel="icon"][href="/favicon.ico"]')).toHaveCount(1);
     if (path === '/returns') {
       expect(response.headers()['x-robots-tag'] || '').not.toMatch(/noindex/i);
       await expect(page.locator('meta[name="robots"]')).toHaveCount(0);
