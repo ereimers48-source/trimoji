@@ -675,6 +675,23 @@ test('print file is a transparent PNG from Twemoji SVG', async () => {
     logoSize,
     background: { shape: 'none' },
   }, [SVG, SVG, SVG]);
+  const teeRow = glyphBounds(composeSvg({
+    product: 'tee',
+    emojis: ['🔥', '😎', '🍕'],
+    layout: 'row',
+    logoSize: 100,
+    background: { shape: 'none' },
+  }, [SVG, SVG, SVG]));
+  assert.ok(Math.abs(teeRow.height - 560) < 1, `tee row glyph ${teeRow.height}`);
+  assert.ok(teeRow.width > PRINT_PX * 0.94, `tee row width ${teeRow.width}`);
+  const teeSmall = glyphBounds(composeSvg({
+    product: 'tee',
+    emojis: ['🔥', '😎', '🍕'],
+    layout: 'row',
+    logoSize: 60,
+    background: { shape: 'none' },
+  }, [SVG, SVG, SVG]));
+  assert.ok(teeSmall.height < teeRow.height * 0.7, `tee 60% glyph ${teeSmall.height}`);
   const row = glyphBounds(hatArt('row', 100));
   assert.ok(row.width > HAT_PRINT_W * 0.85, `row width ${row.width}`);
   assert.ok(row.left > HAT_PRINT_W * 0.02 && row.right < HAT_PRINT_W * 0.98);
