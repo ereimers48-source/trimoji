@@ -30,7 +30,7 @@ import {
 import { createCheckoutSession } from '../lib/checkout.js';
 import { fetchPrintfulOrderStatus, printfulExternalId } from '../lib/printful.js';
 import { runtime } from '../lib/runtime.js';
-import { signInMessage, smtpConfig } from '../lib/mailer.js';
+import { deliverSignIn, signInMessage, smtpConfig } from '../lib/mailer.js';
 import { handleStripeWebhook } from '../lib/webhook.js';
 
 const SECRET = '0123456789abcdef0123456789abcdef';
@@ -183,13 +183,13 @@ test('sign-in responses do not reveal whether an email exists', async () => {
   console.error = (message) => logs.push(String(message));
   const previousAccount = runtime.accountStore;
   const previousMailer = runtime.mailer;
-  const saved = ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'SMTP_FROM', 'SESSION_SECRET', 'SITE_URL']
+  const saved = ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'SMTP_FROM', 'RESEND_API_KEY', 'SESSION_SECRET', 'SITE_URL']
     .map((key) => [key, process.env[key]]);
   runtime.accountStore = store;
   runtime.mailer = null;
   process.env.SESSION_SECRET = SECRET;
   process.env.SITE_URL = SITE;
-  for (const key of ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'SMTP_FROM']) delete process.env[key];
+  for (const key of ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'SMTP_FROM', 'RESEND_API_KEY']) delete process.env[key];
   try {
     const first = await requestPost(new Request('http://127.0.0.1:4173/api/auth/request', {
       method: 'POST',
@@ -463,7 +463,7 @@ test('account pages stay private until ACCOUNTS_PUBLIC is on', () => {
   assert.match(shop, /Save design/);
   assert.match(shop, /function all\(\)\{slots\(\);controls\(\);draw\(\);syncProduct\(\)\}/);
   const readme = readFileSync(new URL('../README.md', import.meta.url), 'utf8');
-  for (const name of ['SESSION_SECRET', 'SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'SMTP_FROM', 'ACCOUNTS_PUBLIC']) {
+  for (const name of ['SESSION_SECRET', 'RESEND_API_KEY', 'SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'SMTP_FROM', 'ACCOUNTS_PUBLIC']) {
     assert.match(readme, new RegExp(name));
   }
 });
@@ -519,5 +519,247 @@ test('checkout uses the signed-in email from the session cookie', async () => {
     else process.env.STRIPE_SECRET_KEY = previous.key;
     if (previous.secret === undefined) delete process.env.SESSION_SECRET;
     else process.env.SESSION_SECRET = previous.secret;
+  }
+});
+
+function captureErrors(fn) {
+  const logs = [];
+  const original = console.error;
+  console.error = (message) => logs.push(String(message));
+  return Promise.resolve()
+    .then(fn)
+    .finally(() => {
+      console.error = original;
+    })
+    .then(() => logs);
+}
+
+test('RESEND_API_KEY sends the sign-in message and SMTP stays the fallback', async () => {
+  const store = createMemoryAccountStore();
+  const previousFetch = runtime.fetch;
+  const previousGlobal = globalThis.fetch;
+  const calls = [];
+  const key = 're_test_key_marker';
+  runtime.fetch = async (url, options) => {
+    calls.push({ url, options });
+    return new Response(JSON.stringify({ id: 'email_123' }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  };
+  try {
+    const sent = await requestSignIn({
+      email: 'Ada@Example.com',
+      store,
+      now: NOW,
+      env: { SESSION_SECRET: SECRET, SITE_URL: SITE, RESEND_API_KEY: key },
+      ip: '7.7.7.1',
+    });
+    assert.equal(sent.message, SIGNIN_MESSAGE);
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].url, 'https://api.resend.com/emails');
+    assert.equal(calls[0].options.method, 'POST');
+    assert.equal(calls[0].options.headers.Authorization, `Bearer ${key}`);
+    assert.equal(calls[0].options.headers['Content-Type'], 'application/json');
+    assert.match(calls[0].options.headers['Idempotency-Key'], /^sign-in\/[a-f0-9]{64}$/);
+    const body = JSON.parse(calls[0].options.body);
+    assert.deepEqual(Object.keys(body).sort(), ['from', 'html', 'reply_to', 'subject', 'text', 'to']);
+    assert.equal(body.from, 'Trimoji <hello@trimojiapparel.com>');
+    assert.equal(body.to, 'ada@example.com');
+    assert.equal(body.subject, 'Sign in to Trimoji');
+    assert.equal(body.reply_to, 'hello@trimojiapparel.com');
+    const link = body.text.match(/https?:\/\/\S+/)[0];
+    const expected = signInMessage({ to: body.to, link, from: body.from });
+    assert.equal(body.text, expected.text);
+    assert.equal(body.html, expected.html);
+    assert.equal(calls[0].options.headers['Idempotency-Key'].includes(new URL(link).searchParams.get('token')), false);
+    const verified = await verifySignIn({
+      token: new URL(link).searchParams.get('token'),
+      store,
+      env: env(),
+      now: NOW + 1000,
+      secure: true,
+    });
+    assert.equal(verified.ok, true);
+
+    calls.length = 0;
+    await requestSignIn({
+      email: 'from@example.com',
+      store,
+      now: NOW,
+      env: {
+        SESSION_SECRET: SECRET,
+        SITE_URL: SITE,
+        RESEND_API_KEY: `  ${key}  `,
+        SMTP_FROM: 'Studio <orders@trimojiapparel.com>',
+        SMTP_HOST: '127.0.0.1',
+        SMTP_PORT: '1',
+        SMTP_USER: 'smtp-user',
+        SMTP_PASS: 'smtp-secret-pass',
+      },
+      ip: '7.7.7.2',
+    });
+    const named = JSON.parse(calls[0].options.body);
+    assert.equal(named.from, 'Studio <orders@trimojiapparel.com>');
+    assert.equal(calls[0].options.headers.Authorization, `Bearer ${key}`);
+
+    calls.length = 0;
+    await deliverSignIn({
+      to: 'bare@example.com',
+      link: 'https://trimojiapparel.com/api/auth/verify?token=abc',
+      env: { RESEND_API_KEY: key, SMTP_FROM: 'orders@trimojiapparel.com' },
+    });
+    assert.equal(JSON.parse(calls[0].options.body).from, 'Trimoji <orders@trimojiapparel.com>');
+
+    calls.length = 0;
+    await deliverSignIn({
+      to: 'bad-from@example.com',
+      link: 'https://trimojiapparel.com/api/auth/verify?token=abc',
+      env: { RESEND_API_KEY: key, SMTP_FROM: 'not an email' },
+    });
+    assert.equal(JSON.parse(calls[0].options.body).from, 'Trimoji <hello@trimojiapparel.com>');
+
+    const injected = mailer();
+    calls.length = 0;
+    await requestSignIn({
+      email: 'ada@example.com',
+      store,
+      now: NOW,
+      env: { ...env(), RESEND_API_KEY: key },
+      mailer: injected,
+      ip: '7.7.7.3',
+    });
+    assert.equal(calls.length, 0);
+    assert.equal(injected.messages[0].from, 'Trimoji <hello@trimojiapparel.com>');
+    assert.equal(injected.messages[0].to, 'ada@example.com');
+
+    runtime.fetch = undefined;
+    const globalCalls = [];
+    globalThis.fetch = async (url, options) => {
+      globalCalls.push({ url, options });
+      return new Response(JSON.stringify({ id: 'email_456' }), { status: 200 });
+    };
+    await deliverSignIn({
+      to: 'global@example.com',
+      link: 'https://trimojiapparel.com/api/auth/verify?token=abc',
+      env: { RESEND_API_KEY: key },
+    });
+    assert.equal(globalCalls[0].url, 'https://api.resend.com/emails');
+    assert.equal(globalCalls[0].options.headers.Authorization, `Bearer ${key}`);
+  } finally {
+    runtime.fetch = previousFetch;
+    globalThis.fetch = previousGlobal;
+  }
+});
+
+test('mail failures stay generic and log only the provider status and error name', async () => {
+  const store = createMemoryAccountStore();
+  const previousFetch = runtime.fetch;
+  const key = 're_secret_marker';
+  const raw = 'fixed-token-value-that-is-long-enough-0123456789abcd';
+  runtime.fetch = async () => new Response(JSON.stringify({
+    name: 'validation_error',
+    message: `Invalid to ada@example.com key ${key} <html>BODYMARKER</html>`,
+  }), { status: 422, headers: { 'content-type': 'application/json' } });
+  try {
+    const logs = await captureErrors(async () => {
+      await assert.rejects(
+        () => requestSignIn({
+          email: 'ada@example.com',
+          store,
+          now: NOW,
+          env: { SESSION_SECRET: SECRET, SITE_URL: SITE, RESEND_API_KEY: key },
+          ip: '7.7.7.4',
+          token: raw,
+        }),
+        (err) => err.status === 503 && err.message === SEND_FAILURE && !err.message.includes(key),
+      );
+    });
+    assert.deepEqual(logs, ['sign-in mail failed via resend status=422 name=validation_error']);
+    assert.equal(logs.join('\n').includes(key), false);
+    assert.equal(logs.join('\n').includes('ada@example.com'), false);
+    assert.equal(logs.join('\n').includes('BODYMARKER'), false);
+    assert.equal(logs.join('\n').includes(raw), false);
+    assert.equal(await store.getToken(hashToken(raw)), null);
+
+    runtime.fetch = async () => new Response(`plain ${key} BODYMARKER ada@example.com`, { status: 500 });
+    const plainLogs = await captureErrors(() => assert.rejects(
+      () => deliverSignIn({
+        to: 'ada@example.com',
+        link: `https://trimojiapparel.com/api/auth/verify?token=${raw}`,
+        env: { RESEND_API_KEY: key },
+      }),
+      (err) => err.status === 503 && err.message === SEND_FAILURE,
+    ));
+    assert.deepEqual(plainLogs, ['sign-in mail failed via resend status=500 name=Error']);
+
+    runtime.fetch = async () => new Response(JSON.stringify({ name: key, message: `body ${key}` }), { status: 401 });
+    const secretLogs = await captureErrors(() => assert.rejects(
+      () => deliverSignIn({
+        to: 'ada@example.com',
+        link: `https://trimojiapparel.com/api/auth/verify?token=${raw}`,
+        env: { RESEND_API_KEY: key },
+      }),
+      (err) => err.status === 503 && err.message === SEND_FAILURE && !err.message.includes(key),
+    ));
+    assert.deepEqual(secretLogs, ['sign-in mail failed via resend status=401 name=unknown']);
+    assert.equal(secretLogs.join('\n').includes(key), false);
+
+    const network = new TypeError(`connect failed ${key} ada@example.com BODYMARKER`);
+    network.code = 'ECONNRESET';
+    runtime.fetch = async () => { throw network; };
+    const networkLogs = await captureErrors(() => assert.rejects(
+      () => deliverSignIn({
+        to: 'ada@example.com',
+        link: `https://trimojiapparel.com/api/auth/verify?token=${raw}`,
+        env: { RESEND_API_KEY: key },
+      }),
+      (err) => err.status === 503 && err.message === SEND_FAILURE,
+    ));
+    assert.deepEqual(networkLogs, ['sign-in mail failed via resend status=none name=TypeError code=ECONNRESET']);
+
+    let called = false;
+    runtime.fetch = async () => { called = true; return new Response('no', { status: 500 }); };
+    const smtpLogs = await captureErrors(() => assert.rejects(
+      () => requestSignIn({
+        email: 'ada@example.com',
+        store,
+        now: NOW,
+        env: {
+          SESSION_SECRET: SECRET,
+          SITE_URL: SITE,
+          SMTP_HOST: '127.0.0.1',
+          SMTP_PORT: '1',
+          SMTP_USER: 'smtp-user',
+          SMTP_PASS: 'smtp-secret-pass',
+          SMTP_FROM: 'hello@trimojiapparel.com',
+        },
+        ip: '7.7.7.5',
+        token: raw,
+      }),
+      (err) => err.status === 503 && err.message === SEND_FAILURE && !err.message.includes('smtp-secret-pass'),
+    ));
+    assert.equal(called, false);
+    assert.deepEqual(smtpLogs, ['sign-in mail failed via smtp name=Error code=ESOCKET']);
+    assert.equal(smtpLogs.join('\n').includes('smtp-secret-pass'), false);
+    assert.equal(smtpLogs.join('\n').includes('ada@example.com'), false);
+    assert.equal(await store.getToken(hashToken(raw)), null);
+
+    called = false;
+    await assert.rejects(
+      () => requestSignIn({
+        email: 'ada@example.com',
+        store,
+        now: NOW,
+        env: { ...env(), RESEND_API_KEY: '   ' },
+        ip: '7.7.7.6',
+        token: raw,
+      }),
+      (err) => err.status === 503 && err.message === SEND_FAILURE,
+    );
+    assert.equal(called, false);
+    assert.equal(await store.getToken(hashToken(raw)), null);
+  } finally {
+    runtime.fetch = previousFetch;
   }
 });
