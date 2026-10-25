@@ -18,7 +18,9 @@ a{color:var(--accent);touch-action:manipulation}
 .logo{font-weight:600;font-size:1.05rem;letter-spacing:-.03em;text-decoration:none;color:var(--ink);line-height:1}
 .nav-links a{color:var(--ink);text-decoration:none;font-size:.95rem;min-height:44px;padding:0 10px;display:inline-flex;align-items:center}
 main{flex:1;width:min(40rem,100%);margin:0 auto;padding:48px 22px 64px}
-h1{margin:0 0 20px;font-size:min(2.75rem,9vw);font-weight:600;letter-spacing:-.035em;line-height:1.15}
+h1{margin:0 0 8px;font-size:min(2.75rem,9vw);font-weight:600;letter-spacing:-.035em;line-height:1.15}
+.updated{margin:0 0 20px;font-size:1.0625rem}
+h2{margin:28px 0 8px;font-size:1.28rem;font-weight:600;letter-spacing:-.022em;line-height:1.25}
 p{margin:0 0 16px;font-size:1.0625rem}
 footer{color:var(--muted);font-size:.9rem;line-height:1.5;padding:28px 22px calc(36px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
 footer nav{display:flex;flex-wrap:wrap;gap:2px 18px;margin:0 0 8px}
@@ -33,12 +35,48 @@ footer p{margin:0 0 8px;font-size:.9rem}
 </header>
 <main>
 <h1>Privacy Policy</h1>
-<p>Trimoji sells custom printed shirts, hoodies, hats, and mugs. This page describes what is handled when you place an order.</p>
-<p>There are no customer accounts. The bag stays in your browser until you leave the page. It is not stored on a Trimoji server.</p>
-<p>Checkout is on Stripe. Stripe collects your name, email, and US shipping address, and processes the card payment. Trimoji does not receive or store your card number.</p>
-<p>Trimoji keeps the order: the product, color, size, emojis, layout, and logo size, plus the name, email, and shipping address Stripe shares. After payment, the product and shipping address are sent to Printful to print and ship. Your email and phone are not sent to Printful. Trimoji emails tracking to the address from checkout.</p>
-<p>Emoji images in the builder are loaded from jsDelivr. Trimoji does not sell personal information.</p>
+<p class="updated">Last updated Oct 25, 2026.</p>
+<p>Trimoji (trimojiapparel.com) is operated by a sole proprietor in Pleasant Hill, California. Trimoji sells custom 3-emoji products: tees, hoodies, mugs, trucker hats, and Tough phone cases. This page says what is collected, why, who receives it, and how to ask for a copy, a correction, or deletion.</p>
 <p>Privacy questions go to <a href="mailto:hello@trimojiapparel.com">hello@trimojiapparel.com</a>.</p>
+
+<h2>What is collected</h2>
+<p>You can shop without an account. The bag stays in your browser until you leave the page. It is not stored on a Trimoji server.</p>
+<p>Checkout is on Stripe. Stripe collects your name, email, and US shipping address, and processes the card payment. Stripe Tax uses that address to calculate sales tax. Card details go to Stripe only. Trimoji does not receive or store your card number. Checkout does not ask for a phone number.</p>
+<p>After a paid order, Trimoji keeps a record for the checkout email: the product, color, size, emojis, layout, and logo size, the amount paid, the shipping city and state, an order reference, and the order status. The full shipping address from checkout is not copied into that record. The page after checkout shows the items and the amounts. It does not show your email, shipping address, or card.</p>
+<p>Accounts are optional. Sign-in is a one-time link emailed to you. The link works once and expires in 15 minutes. We do not store a password. When you are signed in, Trimoji stores the email, a name if you save one, a US shipping address if you save one, saved designs (up to 24), and order history with status and tracking. A signed-in checkout sends that email to Stripe so the order can be tied to the account. An order paid with the same email is saved when the order is created, including an order placed before you signed in. Sign in with that email later to see it.</p>
+<p>If you start signing in so you can save a design, the design is kept in this browser's local storage until you return. That is the emojis, product, color, size, layout, and logo size. It is stored on your account only after you are signed in and you save it.</p>
+<p>Sharing a story is optional. The form on the Stories page collects three emojis, your first name, an optional city, a story of 20 to 600 characters, an optional photo (JPG, PNG, or WebP, under 5 MB), an optional email, and a checkbox. The checkbox is your agreement that Trimoji may post the story and photo on trimojiapparel.com and on Trimoji's social channels. The email is never shown on the public page. A story is kept as pending and is shown only after it is approved.</p>
+<p>Notify me, on the coming-soon page, asks for an email. Trimoji does not keep that address in its own database. Your email app opens a message to hello@trimojiapparel.com. If a notify webhook is configured, the email is sent to that webhook instead, and it is still not stored on the site.</p>
+
+<h2>Why</h2>
+<p>This information is used to take payment, calculate tax, print and ship the order, send the sign-in link, send the order confirmation and the shipping email, and show your account: the saved address, saved designs, and order history with status and tracking. A story is used to review what you wrote and, if it is approved, to publish the first name, city if you gave one, the story, the emojis, and the photo.</p>
+
+<h2>Who receives it</h2>
+<p>Stripe receives the checkout details and the card payment, and calculates tax with Stripe Tax. Card details stay with Stripe.</p>
+<p>Printful prints and ships the order. Printful receives your name and shipping address, and the product to print (including a print file made from the emojis). Your email and phone are not sent to Printful. The packing slip note is the Stripe checkout id, so the shipment can be matched. That note is not your email or phone.</p>
+<p>Resend sends the sign-in email, the order confirmation, and the shipping email. The sign-in email contains the one-time link. The order confirmation includes the items, the amount paid, tax when Stripe adds it, and the shipping address. The shipping email includes the carrier, the tracking number, and the city and state.</p>
+<p>Vercel hosts the site. Account records, story records, and any photo uploaded with a story are stored in private Vercel Blob storage. Product designs are emoji choices, not uploaded pictures. Your browser loads emoji images in the builder from jsDelivr. That image request does not include your name, email, or order.</p>
+<p>Vercel keeps hosting logs for requests to the site, so the site can be operated. Trimoji's own error logs are written so they do not include your email address or sign-in link. Sign-in requests and story submissions are counted for an hour. That count is stored under a hash of the network address, not the address itself.</p>
+<p>Trimoji does not sell personal information. Trimoji does not share personal information for cross-context behavioral advertising. Stripe, Printful, Resend, and Vercel receive information only to take payment, calculate tax, print and ship, send email, or host the site. There are no analytics or advertising tools on the site.</p>
+
+<h2>How long it is kept</h2>
+<p>The order record and the account are kept until you delete the account or you ask us to delete them. A used sign-in link is deleted. The link stops working after 15 minutes.</p>
+<p>Deleting the account removes the stored email, name, saved address, designs, and orders from Trimoji, and signs you out. A revocation note is kept so an old sign-in cookie cannot be reused. That note is a hash of the email and a time. It does not include your name, address, designs, or orders. Stripe and Printful may still keep the payment and fulfillment records they hold. Email us if you also want those copies requested for deletion.</p>
+<p>A story and its photo stay while they are pending or published. The story form has no delete button. Email us and we will remove a story or photo.</p>
+
+<h2>Cookies and this browser</h2>
+<p>Signing in sets one cookie, named trimoji_session. It is HttpOnly, so scripts on the page cannot read it. It is SameSite=Lax. On https it is also Secure. It lasts 30 days. It holds a signed record of your email and when the session ends. It does not hold a password. Signing out or deleting the account clears the cookie. There are no analytics cookies and no advertising cookies.</p>
+<p>The bag is not a cookie. Local storage on your device is used only while you are signing in to save a design, under the name trimoji-pending-design. When you come back, the builder reads that design and then removes it.</p>
+
+<h2>Your rights, including California</h2>
+<p>After you sign in you can see the email, the saved name and address, saved designs, and orders with status and tracking. You can correct the name and shipping address on the account page. You can delete a saved design there. You can delete the account and the data stored with it yourself: sign in and choose Delete my account and data.</p>
+<p>You can also email <a href="mailto:hello@trimojiapparel.com">hello@trimojiapparel.com</a> and ask what we have, ask for a correction, or ask for deletion. If you are a California resident, the California Consumer Privacy Act (CCPA) and the California Privacy Rights Act (CPRA) give you the right to know, the right to delete, and the right to correct. Trimoji does not sell personal information, and does not share personal information for advertising. We will not treat you differently for asking.</p>
+
+<h2>Children</h2>
+<p>Trimoji is not directed to children under 13. We do not knowingly collect personal information from anyone under 13. If you believe a child under 13 has given us personal information, email us and we will delete it.</p>
+
+<h2>Changes to this policy</h2>
+<p>If this policy changes, the new version is posted on this page and the Last updated date at the top is changed.</p>
 </main>
 <footer>
 <nav aria-label="Policies"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/shipping">Shipping</a><a href="/returns">Returns</a><a href="/contact">Contact</a><a href="/stories">Stories</a></nav>

@@ -1000,6 +1000,14 @@ test('policy pages are linked from the shop and the bag', async ({ page }) => {
     await expect(page.locator('h1')).toHaveText(title);
     await expect(page.locator('main')).toContainText(line);
     await expect(page.locator('main')).toContainText('hello@trimojiapparel.com');
+    if (path === '/privacy') {
+      await expect(page.locator('main')).toContainText('Last updated Oct 25, 2026.');
+      await expect(page.locator('main')).toContainText('Accounts are optional');
+      await expect(page.locator('main')).toContainText('We do not store a password');
+      await expect(page.locator('main')).toContainText('Tough phone cases');
+      await expect(page.locator('main')).not.toContainText('There are no customer accounts');
+      await expect(page.locator('main')).not.toContainText('shirts, hoodies, hats, and mugs');
+    }
     await expect(page.locator('footer nav a')).toHaveText(['Privacy', 'Terms', 'Shipping', 'Returns', 'Contact', 'Stories']);
     await expect(page.locator('footer')).toContainText('© Trimoji');
     const text = await page.locator('main').innerText();
