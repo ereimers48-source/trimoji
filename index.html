@@ -144,7 +144,7 @@ footer a{color:var(--muted)}
  .opt:hover:not(.on){border-color:#86868b}
 }
 @media(max-width:899px){
- html{--pin:40dvh;--preview-compact:clamp(72px, 19dvh, calc(var(--pin) - 108px));--slotbar:calc((0.82 * (100vw - 44px) - 20px) / 3 + 8px)}
+ html{--pin:40dvh;--preview-compact:clamp(176px, 24dvh, min(210px, calc(var(--pin) - 96px)));--slotbar:calc((0.82 * (100vw - 44px) - 20px) / 3 + 8px)}
  .stage{position:sticky;top:var(--bar, 48px);z-index:20;height:var(--pin);margin-left:-22px;margin-right:-22px;border-radius:0;padding:6px 8px;display:flex;align-items:center;justify-content:center;background:var(--stage);box-shadow:0 1px 0 #e8e8ed;transition:height .32s ease,padding .32s ease}
  .mock{width:min(100%, calc((var(--pin) - 12px) * var(--aw) / var(--ah)));max-height:calc(var(--pin) - 12px);height:auto;transition:max-height .32s ease, width .32s ease, height .32s ease}
  .buy{gap:0}
@@ -311,8 +311,17 @@ function ensureOpts(id,arr,cur){const el=document.getElementById(id);const key=a
 function slotPos(cx,cy,s){if(S.lay=='row')return [0,1,2].map(i=>[cx+(i-1)*s*1.05,cy]);
  if(S.lay=='stacked')return [0,1,2].map(i=>[cx,cy+(i-1)*s*1.05]);
  return [[cx,cy-s*.48],[cx-s*.55,cy+s*.45],[cx+s*.55,cy+s*.45]]}
-function logoSVG(cx,cy,base){const s=base*sz.value/100,e=S.pick,pos=slotPos(cx,cy,s);
- return e.map((x,i)=>{if(!x)return '';const href=esc(tw(x));return `<image href="${href}" xlink:href="${href}" x="${pos[i][0]-s/2}" y="${pos[i][1]-s/2}" width="${s}" height="${s}"/>`}).join('')}
+function apparelLogoSVG(){
+ // Preview placement for the square tee, hoodie, and mug file. Same numbers as
+ // lib/render.js (1800px canvas, 560px glyph at 100%, stop at 97% of the file)
+ // so 100% is the chest print Printful receives. This does not change that file.
+ const W=1800,H=1800,e=S.pick,fitted=3,size=Number(sz.value);
+ let s=560*(size/100);
+ const span=S.lay=='row'?{w:s*(1+(fitted-1)*1.05),h:s}:S.lay=='stacked'?{w:s,h:s*(1+(fitted-1)*1.05)}:{w:s*2.1,h:s*1.93};
+ s*=Math.min((W*0.97)/span.w,(H*0.97)/span.h,1);
+ const pos=slotPos(W/2,H/2,s);
+ const marks=e.map((x,i)=>{if(!x)return '';const href=esc(tw(x));return `<image href="${href}" xlink:href="${href}" x="${pos[i][0]-s/2}" y="${pos[i][1]-s/2}" width="${s}" height="${s}"/>`}).join('');
+ return {vb:`0 0 ${W} ${H}`,markup:marks}}
 const PHOTO={
  tee:{colors:['White','Black','Heather','Navy','Lilac','Pink','Sage'],w:[360,520],box:['30.2%','23.5%','38.5%','31.3%'],turn:[4,-3]},
  hoodie:{colors:['White','Black','Heather','Navy','Pink'],w:[360,520],box:['35.6%','27.5%','36.5%','27.9%'],turn:[4,-3]},
@@ -383,8 +392,7 @@ function mountMock(markup,cx,cy,base,viewBox){const r=base*1.4*2.05;const vb=vie
 function draw(){szv.textContent=sz.value+'%';applyPhoto();
  if(S.prod=='hat'){const hat=hatLogoSVG();mountMock(hat.markup,0,0,0,hat.vb)}
  else if(S.prod=='case'){const phone=caseLogoSVG();mountMock(phone.markup,0,0,0,phone.vb)}
- else{const spot=S.prod=='tee'?[200,190,42]:S.prod=='hoodie'?[200,225,38]:[197,225,48];
-  mountMock(logoSVG(spot[0],spot[1],spot[2]),spot[0],spot[1],spot[2])}
+ else{const art=apparelLogoSVG();mountMock(art.markup,0,0,0,art.vb)}
  draws+=1;if(draws>1&&!reduceMotion&&document.activeElement?.id!=='sz')nudge();
  if(!PRODS[S.prod].available)price.innerHTML='<span class="note">Unavailable</span>';
  else price.innerHTML='$'+PRODS[S.prod].p.toFixed(2);schedulePreview()}

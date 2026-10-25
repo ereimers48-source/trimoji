@@ -412,6 +412,8 @@ test('trucker logo fills the front panel', async ({ page }) => {
         top: (top - mockBox.top) / mockBox.height,
         bottom: (bottom - mockBox.top) / mockBox.height,
         printAspect: printBox.width / printBox.height,
+        printWidth: printBox.width ? (right - left) / printBox.width : 0,
+        printHeight: printBox.height ? (bottom - top) / printBox.height : 0,
       };
     });
   }
@@ -432,7 +434,30 @@ test('trucker logo fills the front panel', async ({ page }) => {
     expect(placed.cy, product).toBeLessThan(0.62);
     expect(placed.top, product).toBeGreaterThan(0.12);
     expect(placed.bottom, product).toBeLessThan(0.78);
+    expect(placed.printWidth, product).toBeGreaterThan(0.9);
+    expect(placed.printWidth, product).toBeLessThan(0.99);
   }
+  await page.locator('#prods button[data-value="tee"]').click();
+  await page.locator('#lay button[data-value="row"]').click();
+  expect(await page.locator('#sz').inputValue()).toBe('100');
+  await setSize(60);
+  const teeSmall = await logoBox();
+  await setSize(100);
+  const teeFull = await logoBox();
+  expect(teeSmall.printWidth).toBeLessThan(teeFull.printWidth * 0.75);
+  expect(teeSmall.printWidth).toBeGreaterThan(teeFull.printWidth * 0.5);
+  await setSize(140);
+  const teeMax = await logoBox();
+  expect(teeMax.printWidth).toBeGreaterThan(teeFull.printWidth * 0.97);
+  expect(teeMax.printWidth).toBeLessThan(1);
+  await page.locator('#lay button[data-value="triangle"]').click();
+  await setSize(100);
+  const teeTri = await logoBox();
+  await setSize(140);
+  const teeTriMax = await logoBox();
+  expect(teeTriMax.height).toBeGreaterThan(teeTri.height * 1.15);
+  await setSize(100);
+  await page.locator('#lay button[data-value="row"]').click();
   await page.locator('#prods button[data-value="hat"]').click();
   await page.locator('#cols button[title="Navy"]').click();
   await page.locator('#lay button[data-value="row"]').click();
@@ -581,11 +606,12 @@ test('preview sits with the choices and the bag button stays in the page', async
     expect(frame.choicePos).toBe('static');
     expect(frame.stageTop).toBeGreaterThanOrEqual(frame.bar - 2);
     expect(frame.stageTop).toBeLessThan(frame.bar + 4);
-    expect(frame.stageH / frame.vh).toBeGreaterThan(0.12);
-    expect(frame.stageH / frame.vh).toBeLessThan(0.22);
-    expect(frame.stageH / frame.vh).toBeLessThan(openPreview - 0.15);
+    expect(frame.stageH).toBeGreaterThanOrEqual(168);
+    expect(frame.stageH / frame.vh).toBeGreaterThan(0.18);
+    expect(frame.stageH / frame.vh).toBeLessThan(0.32);
+    expect(frame.stageH / frame.vh).toBeLessThan(openPreview - 0.08);
     expect(frame.pinH / frame.vh).toBeGreaterThan(0.18);
-    expect(frame.pinH / frame.vh).toBeLessThan(0.4);
+    expect(frame.pinH / frame.vh).toBeLessThan(0.46);
     expect(frame.pinH / frame.vh).toBeLessThan(0.55);
     expect(frame.mock.top).toBeGreaterThanOrEqual(frame.stageTop - 1);
     expect(frame.mock.top - frame.stageTop).toBeLessThan(2);
@@ -693,7 +719,7 @@ test('preview sits with the choices and the bag button stays in the page', async
       expect(pinned.searchStatic, target).toBeTruthy();
       expect(pinned.gridStatic, target).toBeTruthy();
       expect(pinned.pinRatio, target).toBeLessThan(0.55);
-      expect(pinned.pinRatio, target).toBeLessThan(0.4);
+      expect(pinned.pinRatio, target).toBeLessThan(0.46);
       expect(pinned.slotsUnder, target).toBeTruthy();
       expect(pinned.searchCovers, target).toBeFalsy();
       expect(pinned.gridCovers, target).toBeFalsy();
@@ -809,8 +835,10 @@ test('compact preview fills the phone band for every mockup', async ({ page }, t
       expect(frame.sticky, label).toBe('sticky');
       expect(frame.product, label).toBe(product);
       expect(frame.fit, label).toBe('contain');
-      expect(frame.stageH / frame.vh, label).toBeGreaterThan(0.12);
-      expect(frame.stageH / frame.vh, label).toBeLessThan(0.22);
+      expect(frame.stageH, label).toBeGreaterThanOrEqual(168);
+      expect(frame.img.height, label).toBeGreaterThanOrEqual(168);
+      expect(frame.stageH / frame.vh, label).toBeGreaterThan(0.18);
+      expect(frame.stageH / frame.vh, label).toBeLessThan(0.32);
       expect(frame.img.top - frame.stageTop, label).toBeLessThan(2);
       expect(frame.stageBottom - frame.img.bottom, label).toBeLessThan(2);
       expect(frame.img.height, label).toBeGreaterThan(frame.stageH * 0.97);
