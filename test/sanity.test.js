@@ -972,10 +972,16 @@ test('the static shop asks the server for checkout and test mode', () => {
 test('policy pages share a footer and old hosts keep /api', () => {
   const footer = '<nav aria-label="Policies"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/shipping">Shipping</a><a href="/returns">Returns</a><a href="/contact">Contact</a></nav>';
   const storiesFooter = footer.replace('</nav>', '<a href="/stories">Stories</a></nav>');
+  const accountFooter = storiesFooter.replace('</nav>', '<a href="/account">Account</a></nav>');
   for (const page of ['index.html', 'coming-soon.html', 'success.html', 'cancel.html', 'privacy.html', 'terms.html', 'shipping.html', 'returns.html', 'contact.html']) {
     const html = readFileSync(new URL(`../${page}`, import.meta.url), 'utf8');
-    assert.ok(html.includes(page === 'coming-soon.html' ? footer : storiesFooter), page);
-    if (page === 'coming-soon.html') assert.doesNotMatch(html, /href="\/stories"/);
+    const expected = page === 'coming-soon.html' ? footer : page === 'index.html' ? accountFooter : storiesFooter;
+    assert.ok(html.includes(expected), page);
+    if (page === 'coming-soon.html') {
+      assert.doesNotMatch(html, /href="\/stories"/);
+      assert.doesNotMatch(html, /href="\/account"/);
+    }
+    if (page !== 'index.html') assert.doesNotMatch(html, /href="\/account"/);
     assert.match(html, /© Trimoji/);
     assert.doesNotMatch(html, /\bLLC\b|\bL\.L\.C\b|Incorporated/);
   }
@@ -1011,7 +1017,7 @@ test('policy pages share a footer and old hosts keep /api', () => {
     assert.equal(wild.permanent, true);
   }
   assert.equal(config.redirects.some((rule) => rule.has?.some((item) => item.value === 'trimojiapparel.com')), false);
-  for (const path of ['/privacy', '/terms', '/shipping', '/returns', '/contact', '/stories', '/stories-admin']) {
+  for (const path of ['/privacy', '/terms', '/shipping', '/returns', '/contact', '/stories', '/stories-admin', '/account']) {
     assert.ok(config.rewrites.some((rule) => rule.source === path && rule.destination === `${path}.html`));
   }
   for (const host of ['www.trimojiapparel.com', 'trimoji.vercel.app']) {

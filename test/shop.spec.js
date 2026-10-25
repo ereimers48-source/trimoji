@@ -898,7 +898,8 @@ test('policy pages are linked from the shop and the bag', async ({ page }) => {
   await expect(page.locator('h1')).toContainText('Three emojis');
   await expect(page.locator('footer nav a')).toHaveText(['Privacy', 'Terms', 'Shipping', 'Returns', 'Contact']);
   await page.goto('/shop-preview');
-  await expect(page.locator('footer nav a')).toHaveText(['Privacy', 'Terms', 'Shipping', 'Returns', 'Contact', 'Stories']);
+  await expect(page.locator('footer nav a')).toHaveText(['Privacy', 'Terms', 'Shipping', 'Returns', 'Contact', 'Stories', 'Account']);
+  await expect(page.locator('.nav-links a[href="/account"]')).toHaveText('Account');
   const bagPolicy = page.locator('.buybar a[href="/returns"]');
   await expect(page.locator('.buybar')).toContainText('Custom-made to order. See our Returns policy.');
   await expect(bagPolicy).toHaveText('Returns policy');

@@ -6,14 +6,15 @@
     "node": ">=20"
   },
   "scripts": {
-    "test": "node --test test/sanity.test.js test/stories.test.js && playwright test",
-    "test:unit": "node --test test/sanity.test.js test/stories.test.js",
+    "test": "node --test test/sanity.test.js test/stories.test.js test/accounts.test.js && playwright test",
+    "test:unit": "node --test test/sanity.test.js test/stories.test.js test/accounts.test.js",
     "test:browser": "playwright test"
   },
   "dependencies": {
     "@resvg/resvg-js": "^2.6.2",
     "@vercel/blob": "^2.3.1",
     "@vercel/functions": "^3.10.3",
+    "nodemailer": "^7.0.13",
     "stripe": "^18.5.0"
   },
   "devDependencies": {

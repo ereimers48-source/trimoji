@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Account — Trimoji</title>
+<meta name="robots" content="noindex, nofollow" data-account-robots>
+<link rel="canonical" href="https://trimojiapparel.com/account">
+<meta property="og:url" content="https://trimojiapparel.com/account">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7' fill='%230071e3'/%3E%3C/svg%3E">
+<style>
+:root{--ink:#1d1d1f;--muted:#6e6e73;--line:#d2d2d7;--accent:#0071e3;--sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Inter,system-ui,sans-serif}
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+html{overflow-anchor:none}
+body{min-height:100dvh;display:flex;flex-direction:column;margin:0;overflow-anchor:none;font-family:var(--sans);color:var(--ink);background:#fff;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);touch-action:manipulation}
+button,input{font:inherit;color:inherit;touch-action:manipulation}
+.topbar{position:sticky;top:0;z-index:30;background:#fff;padding-top:env(safe-area-inset-top)}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:8px 16px;min-height:48px;padding:0 22px;border-bottom:1px solid #e8e8ed;flex-wrap:wrap}
+.logo{font-weight:600;font-size:1.05rem;letter-spacing:-.03em;text-decoration:none;color:var(--ink);line-height:1}
+.nav-links{display:flex;align-items:center;flex-wrap:wrap}
+.nav-links a{color:var(--ink);text-decoration:none;font-size:.95rem;min-height:44px;padding:0 10px;display:inline-flex;align-items:center}
+main{flex:1;width:min(40rem,100%);margin:0 auto;padding:48px 22px 32px}
+h1{margin:0;font-size:min(2.5rem,9vw);font-weight:600;letter-spacing:-.035em;line-height:1.12}
+.lede{margin:14px 0 0;color:var(--muted);font-size:1.0625rem}
+form{display:flex;flex-direction:column;gap:12px;margin-top:22px}
+label{font-size:.95rem;font-weight:500}
+input{width:100%;min-height:48px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:#f5f5f7;font-size:16px}
+input:focus{outline:2px solid var(--accent);outline-offset:2px;background:#fff}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:12px 22px;border:0;border-radius:980px;background:var(--accent);color:#fff;font-size:1.05rem;font-weight:500;cursor:pointer;text-decoration:none}
+.btn.secondary{background:#fff;color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.btn:disabled{opacity:.6}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0 0}
+.tabs button{border:1px solid var(--line);background:#fff;border-radius:980px;min-height:44px;padding:8px 14px;font-size:.95rem;font-weight:500}
+.tabs button[aria-selected="true"]{border-color:var(--accent);color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.panel{display:flex;flex-direction:column;gap:12px;margin-top:16px}
+.card{border:1px solid var(--line);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:8px}
+.preview{width:100%;height:160px;object-fit:contain;background:#f5f5f7;border-radius:12px}
+.meta{margin:0;color:var(--muted);font-size:.95rem}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.text{background:none;border:0;color:var(--muted);min-height:44px;padding:0 4px;text-decoration:underline;cursor:pointer}
+.actions{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin-top:22px}
+#request-status,#account-status{min-height:1.45em;margin:0;color:var(--muted);font-size:.95rem}
+.privacy{margin:28px 0 0;color:var(--muted);font-size:.9rem}
+.empty{margin:0;padding:16px;border-radius:18px;background:#f5f5f7}
+footer{color:var(--muted);font-size:.9rem;line-height:1.5;padding:28px 22px calc(36px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
+footer nav{display:flex;flex-wrap:wrap;gap:2px 18px;margin:0 0 8px}
+footer nav a,footer p a{color:var(--muted);text-decoration:none}
+footer nav a{min-height:44px;display:inline-flex;align-items:center}
+footer p{margin:0 0 8px}
+@media (hover:hover) and (pointer:fine){
+ .btn:hover{background:#0077ed}
+ .btn.secondary:hover{background:#f5f5f7}
+}
+</style>
+</head>
+<body data-shop="/shop-preview">
+<header class="topbar">
+<nav class="nav" aria-label="Account"><a class="logo" href="/">Trimoji</a><div class="nav-links"><a id="shoplink" href="/shop-preview">Shop</a><a href="/account" aria-current="page">Account</a></div></nav>
+</header>
+<main>
+<h1>Account</h1>
+<section id="signed-out">
+<p class="lede">Sign in with a link. No password.</p>
+<form id="request">
+<label for="email">Email</label>
+<input id="email" name="email" type="email" autocomplete="email" inputmode="email" maxlength="254" required>
+<button class="btn" id="send-link" type="submit">Email me a sign-in link</button>
+<p id="request-status" role="status"></p>
+</form>
+</section>
+<section id="signed-in" hidden>
+<p class="lede" id="hello"></p>
+<p class="lede" id="return-row" hidden><a id="return-link" href="/shop-preview">Return to the builder</a></p>
+<div class="tabs" role="tablist" aria-label="Account sections">
+<button type="button" id="tab-orders" role="tab" aria-selected="true" aria-controls="panel-orders">Orders</button>
+<button type="button" id="tab-designs" role="tab" aria-selected="false" aria-controls="panel-designs">Saved designs</button>
+<button type="button" id="tab-details" role="tab" aria-selected="false" aria-controls="panel-details">Address &amp; details</button>
+</div>
+<div id="panel-orders" class="panel" role="tabpanel">
+<div id="orders"></div>
+</div>
+<div id="panel-designs" class="panel" role="tabpanel" hidden>
+<div id="designs"></div>
+</div>
+<div id="panel-details" class="panel" role="tabpanel" hidden>
+<form id="details">
+<label for="name">Name</label>
+<input id="name" name="name" maxlength="80" autocomplete="name">
+<label for="line1">Address</label>
+<input id="line1" name="line1" maxlength="80" autocomplete="address-line1">
+<label for="line2">Apartment, suite <span class="meta">(optional)</span></label>
+<input id="line2" name="line2" maxlength="80" autocomplete="address-line2">
+<label for="city">City</label>
+<input id="city" name="city" maxlength="60" autocomplete="address-level2">
+<label for="state">State</label>
+<input id="state" name="state" maxlength="2" autocomplete="address-level1" autocapitalize="characters">
+<label for="postal">ZIP</label>
+<input id="postal" name="postal" maxlength="10" inputmode="numeric" autocomplete="postal-code">
+<button class="btn" id="save-details" type="submit">Save details</button>
+</form>
+</div>
+<div class="actions">
+<button class="btn secondary" id="signout" type="button">Sign out</button>
+<button class="text" id="delete" type="button">Delete my account and data</button>
+</div>
+<p id="account-status" role="status"></p>
+</section>
+<p class="privacy">Trimoji stores the email you sign in with, an optional name, a shipping address if you save one, your saved designs, and order references with the items, total, and shipping city and state. Sign-in links expire after 15 minutes and work once. We do not store a password.</p>
+</main>
+<footer>
+<nav aria-label="Policies"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/shipping">Shipping</a><a href="/returns">Returns</a><a href="/contact">Contact</a><a href="/stories">Stories</a></nav>
+<p>Shipping is $5.99 flat, free over $60.</p>
+<p>© Trimoji. Emoji graphics by <a href="https://github.com/jdecked/twemoji">Twemoji</a>, © Twitter, Inc. and other contributors, licensed under <a href="https://creativecommons.org/licenses/by/4.0/">CC-BY 4.0</a>.</p>
+</footer>
+<script>
+const shop = document.body.dataset.shop || '/shop-preview';
+const shopLink = document.getElementById('shoplink');
+if (shopLink) shopLink.href = shop;
+const params = new URLSearchParams(location.search);
+const next = safeNext(params.get('next') || '');
+const out = document.getElementById('signed-out');
+const inn = document.getElementById('signed-in');
+const requestStatus = document.getElementById('request-status');
+const accountStatus = document.getElementById('account-status');
+if (params.get('signin') === 'invalid') requestStatus.textContent = 'That sign-in link is invalid or expired.';
+
+function safeNext(value) {
+  if (!value || value[0] !== '/' || value.startsWith('//') || value.includes('\\') || value.includes('@')) return '';
+  try {
+    const url = new URL(value, location.origin);
+    if (url.origin !== location.origin) return '';
+    if (url.pathname !== '/' && url.pathname !== '/shop-preview') return '';
+    const keys = [...url.searchParams.keys()];
+    if (keys.length > 1) return '';
+    if (keys.length === 1 && !(keys[0] === 'resume' && url.searchParams.get('resume') === '1')) return '';
+    return url.pathname + url.search;
+  } catch (e) {
+    return '';
+  }
+}
+function headers() {
+  return { 'content-type': 'application/json', 'x-trimoji-request': '1' };
+}
+function money(cents) {
+  return '$' + (Number(cents) / 100).toFixed(2);
+}
+function b64url(text) {
+  const bytes = new TextEncoder().encode(text);
+  let bin = '';
+  for (const byte of bytes) bin += String.fromCharCode(byte);
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+}
+function showPanel(name) {
+  for (const id of ['orders', 'designs', 'details']) {
+    const on = id === name;
+    document.getElementById('panel-' + id).hidden = !on;
+    const tab = document.getElementById('tab-' + id);
+    tab.setAttribute('aria-selected', on ? 'true' : 'false');
+  }
+}
+function card(parent) {
+  const el = document.createElement('article');
+  el.className = 'card';
+  parent.appendChild(el);
+  return el;
+}
+function line(parent, className, text) {
+  const el = document.createElement('p');
+  el.className = className || 'meta';
+  el.textContent = text;
+  parent.appendChild(el);
+  return el;
+}
+function paintOrders(orders) {
+  const root = document.getElementById('orders');
+  root.replaceChildren();
+  if (!orders.length) {
+    const empty = document.createElement('p');
+    empty.className = 'empty';
+    empty.textContent = 'No orders yet. Orders appear here after you check out with this email.';
+    root.appendChild(empty);
+    return;
+  }
+  for (const order of orders) {
+    const box = card(root);
+    line(box, '', order.reference);
+    const when = order.createdAt ? new Date(order.createdAt) : null;
+    line(box, 'meta', when && !Number.isNaN(when.getTime()) ? when.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '');
+    for (const item of order.items || []) {
+      const marks = (item.emojis || []).map((emoji) => emoji || 'empty').join(' ');
+      line(box, 'meta', [item.name, marks, item.color, item.size, '×' + item.quantity].filter(Boolean).join(' · '));
+    }
+    const place = [order.shipping && order.shipping.city, order.shipping && order.shipping.state].filter(Boolean).join(', ');
+    line(box, 'meta', [money(order.total), order.status, place].filter(Boolean).join(' · '));
+    for (const track of order.tracking || []) {
+      if (track.url && String(track.url).startsWith('https://')) {
+        const a = document.createElement('a');
+        a.href = track.url;
+        a.rel = 'noopener';
+        a.target = '_blank';
+        a.textContent = track.number ? 'Track package ' + track.number : 'Track package';
+        box.appendChild(a);
+      } else if (track.number) {
+        line(box, 'meta', 'Tracking ' + track.number);
+      }
+    }
+  }
+}
+function paintDesigns(designs) {
+  const root = document.getElementById('designs');
+  root.replaceChildren();
+  if (!designs.length) {
+    const empty = document.createElement('p');
+    empty.className = 'empty';
+    empty.textContent = 'No saved designs yet.';
+    root.appendChild(empty);
+    return;
+  }
+  for (const design of designs) {
+    const box = card(root);
+    const img = document.createElement('img');
+    img.className = 'preview';
+    img.alt = 'Saved design preview';
+    img.src = '/api/account/preview?id=' + encodeURIComponent(design.id);
+    box.appendChild(img);
+    const marks = (design.slots || []).map((emoji) => emoji || 'empty').join(' ');
+    line(box, 'meta', [marks, design.product, design.color, design.size].filter(Boolean).join(' · '));
+    const row = document.createElement('div');
+    row.className = 'row';
+    const open = document.createElement('a');
+    open.className = 'btn secondary';
+    const packed = b64url(JSON.stringify({
+      slots: design.slots,
+      product: design.product,
+      color: design.color,
+      size: design.size,
+      layout: design.layout,
+      logoSize: design.logoSize,
+    }));
+    open.href = shop + (shop.includes('?') ? '&' : '?') + 'saved=' + packed;
+    open.textContent = 'Open in builder';
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'text';
+    remove.textContent = 'Delete';
+    remove.addEventListener('click', () => removeDesign(design.id));
+    row.append(open, remove);
+    box.appendChild(row);
+  }
+}
+function fillDetails(profile) {
+  document.getElementById('name').value = profile.name || '';
+  const address = profile.address || {};
+  document.getElementById('line1').value = address.line1 || '';
+  document.getElementById('line2').value = address.line2 || '';
+  document.getElementById('city').value = address.city || '';
+  document.getElementById('state').value = address.state || '';
+  document.getElementById('postal').value = address.postalCode || '';
+}
+function showSignedIn(data) {
+  out.hidden = true;
+  inn.hidden = false;
+  document.getElementById('hello').textContent = 'Signed in as ' + (data.profile.email || '');
+  const back = document.getElementById('return-row');
+  const link = document.getElementById('return-link');
+  if (next) {
+    back.hidden = false;
+    link.href = next;
+  }
+  paintOrders(data.orders || []);
+  paintDesigns(data.designs || []);
+  fillDetails(data.profile || {});
+}
+async function load() {
+  let data = null;
+  try {
+    const res = await fetch('/api/account', { headers: { accept: 'application/json' } });
+    if (res.ok) data = await res.json();
+  } catch (e) {
+    data = null;
+  }
+  if (data && data.signedIn) showSignedIn(data);
+}
+async function removeDesign(id) {
+  accountStatus.textContent = '';
+  const res = await fetch('/api/account/designs/remove', { method: 'POST', headers: headers(), body: JSON.stringify({ id }) });
+  const data = await res.json().catch(() => null);
+  if (!res.ok) {
+    accountStatus.textContent = (data && data.error) || 'Could not delete that design.';
+    return;
+  }
+  await load();
+  showPanel('designs');
+}
+document.getElementById('request').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const button = document.getElementById('send-link');
+  button.disabled = true;
+  requestStatus.textContent = '';
+  try {
+    const res = await fetch('/api/auth/request', {
+      method: 'POST',
+      headers: headers(),
+      body: JSON.stringify({ email: document.getElementById('email').value, next }),
+    });
+    const data = await res.json().catch(() => null);
+    requestStatus.textContent = (data && (data.message || data.error)) || 'We could not send a sign-in link. Please try again later.';
+  } catch (e) {
+    requestStatus.textContent = 'We could not send a sign-in link. Please try again later.';
+  } finally {
+    button.disabled = false;
+  }
+});
+document.getElementById('tab-orders').addEventListener('click', () => showPanel('orders'));
+document.getElementById('tab-designs').addEventListener('click', () => showPanel('designs'));
+document.getElementById('tab-details').addEventListener('click', () => showPanel('details'));
+document.getElementById('details').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  accountStatus.textContent = '';
+  const address = {
+    name: document.getElementById('name').value,
+    line1: document.getElementById('line1').value,
+    line2: document.getElementById('line2').value,
+    city: document.getElementById('city').value,
+    state: document.getElementById('state').value,
+    postalCode: document.getElementById('postal').value,
+  };
+  const res = await fetch('/api/account', {
+    method: 'POST',
+    headers: headers(),
+    body: JSON.stringify({ name: address.name, address }),
+  });
+  const data = await res.json().catch(() => null);
+  accountStatus.textContent = res.ok ? 'Details saved.' : ((data && data.error) || 'Could not save those details.');
+});
+document.getElementById('signout').addEventListener('click', async () => {
+  await fetch('/api/auth/signout', { method: 'POST', headers: headers(), body: '{}' });
+  location.href = '/account';
+});
+document.getElementById('delete').addEventListener('click', async () => {
+  if (!window.confirm('Delete your account and the data stored with it? This cannot be undone.')) return;
+  const res = await fetch('/api/account/delete', { method: 'POST', headers: headers(), body: '{}' });
+  if (res.ok) location.href = '/account';
+  else accountStatus.textContent = 'Could not delete the account.';
+});
+load();
+</script>
+</body>
+</html>
