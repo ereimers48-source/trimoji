@@ -242,14 +242,33 @@ function centerOf(rect) {
 }
 
 function svgImageCenter(image, svg) {
-  const box = svg.getBoundingClientRect();
-  const view = svg.viewBox && svg.viewBox.baseVal;
-  if (!view || !view.width || !view.height || box.width < 2 || box.height < 2) return null;
   const x = Number(image.getAttribute('x'));
   const y = Number(image.getAttribute('y'));
   const w = Number(image.getAttribute('width'));
   const h = Number(image.getAttribute('height')) || w;
   if (!Number.isFinite(x) || !Number.isFinite(y) || !(w > 0)) return null;
+  // Kiss-cut tiles sit in translated <g> groups. Screen CTM includes that
+  // translation; viewBox math alone would drop every copy on the first tile's local box.
+  try {
+    const ctm = typeof image.getScreenCTM === 'function' ? image.getScreenCTM() : null;
+    if (ctm && typeof svg.createSVGPoint === 'function') {
+      const mid = svg.createSVGPoint();
+      mid.x = x + w / 2;
+      mid.y = y + h / 2;
+      const center = mid.matrixTransform(ctm);
+      const edge = svg.createSVGPoint();
+      edge.x = x + w;
+      edge.y = y + h / 2;
+      const end = edge.matrixTransform(ctm);
+      const size = Math.hypot(end.x - center.x, end.y - center.y) * 2;
+      if (Number.isFinite(center.x) && Number.isFinite(center.y) && size > 1) {
+        return { x: center.x, y: center.y, size };
+      }
+    }
+  } catch { /* fall through to viewBox mapping */ }
+  const box = svg.getBoundingClientRect();
+  const view = svg.viewBox && svg.viewBox.baseVal;
+  if (!view || !view.width || !view.height || box.width < 2 || box.height < 2) return null;
   const scale = Math.min(box.width / view.width, box.height / view.height);
   const padX = (box.width - view.width * scale) / 2;
   const padY = (box.height - view.height * scale) / 2;
@@ -272,6 +291,11 @@ function measure(doc, win) {
   const print = doc.querySelector('#mock .print');
   let images = print ? [...print.querySelectorAll('image')] : [];
   if (!images.length && print) images = [...print.querySelectorAll('img')];
+  const flags = slots.map((slot) => !!(slot && slot.size > 1));
+  // A sticker sheet repeats the trio on every tile. The first filled images
+  // are the top-left sticker, so the copies settle there instead of scattering.
+  const needed = flags.filter(Boolean).length;
+  if (needed > 0 && images.length > needed) images = images.slice(0, needed);
   const points = [];
   for (const image of images) {
     const rect = image.getBoundingClientRect();
@@ -283,7 +307,6 @@ function measure(doc, win) {
     const mapped = svg ? svgImageCenter(image, svg) : null;
     if (mapped) points.push(mapped);
   }
-  const flags = slots.map((slot) => !!(slot && slot.size > 1));
   const targets = assignTargets(flags, points);
   if (print) {
     const printBox = print.getBoundingClientRect();

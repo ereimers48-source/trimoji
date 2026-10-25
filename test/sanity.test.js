@@ -575,7 +575,7 @@ test('webhook rejects a bad signature and ignores other events', async () => {
 
 test('config reports test mode without the key', async () => {
   const secret = 'sk_test_supersecretvalue';
-  assert.deepEqual(publicConfig({ STRIPE_SECRET_KEY: secret }), { stripeTestMode: true });
+  assert.deepEqual(publicConfig({ STRIPE_SECRET_KEY: secret }), { stripeTestMode: true, stickerSheet: true });
   assert.equal(publicConfig({ STRIPE_SECRET_KEY: 'sk_live_supersecretvalue' }).stripeTestMode, false);
   assert.equal(publicConfig({}).stripeTestMode, false);
   assert.equal(JSON.stringify(publicConfig({ STRIPE_SECRET_KEY: secret })).includes('supersecret'), false);
@@ -588,7 +588,7 @@ test('config reports test mode without the key', async () => {
     const text = await response.text();
     assert.equal(response.headers.get('cache-control'), 'no-store');
     assert.equal(text.includes('supersecret'), false);
-    assert.deepEqual(JSON.parse(text), { stripeTestMode: true });
+    assert.deepEqual(JSON.parse(text), { stripeTestMode: true, stickerSheet: true });
   } finally {
     if (previous === undefined) delete process.env.STRIPE_SECRET_KEY;
     else process.env.STRIPE_SECRET_KEY = previous;
@@ -1035,7 +1035,7 @@ test('policy pages share a footer and old hosts keep /api', () => {
       /Last updated Oct 25, 2026/,
       /sole proprietor/,
       /Pleasant Hill, California/,
-      /tees, hoodies, mugs, trucker hats, and Tough phone cases/,
+      /tees, hoodies, mugs, trucker hats, Tough phone cases, and kiss-cut sticker sheets/,
       /Accounts are optional/,
       /We do not store a password/,
       /one-time link/,
@@ -1083,7 +1083,11 @@ test('policy pages share a footer and old hosts keep /api', () => {
   const index = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   assert.match(index, /href="\/shipping">Shipping<\/a> · <a href="\/returns">Returns<\/a>/);
   const made = 'Custom-made to order. See our <a href="/returns">Returns policy</a>.';
-  assert.equal(index.split(made).length - 1, 2);
+  assert.equal(index.split(made).length - 1, 1);
+  const shop = index.slice(index.indexOf('<main'), index.indexOf('</main>'));
+  assert.doesNotMatch(shop, /Custom-made to order/);
+  assert.doesNotMatch(shop, /Made just for you/);
+  assert.doesNotMatch(shop, /to arrive in the US/);
   assert.doesNotMatch(index, /Returns policy<\/a>[^<]*target=/);
   assert.match(index, /aria-modal="true"/);
   assert.match(index, /id="sizechart"/);
@@ -1174,7 +1178,7 @@ test('waitlist emails go to hello when there is no store', async () => {
 test('coming soon page is public and the shop preview is not linked', () => {
   const html = readFileSync(new URL('../coming-soon.html', import.meta.url), 'utf8');
   assert.match(html, /Three emojis\.<br>One you\./);
-  assert.match(html, /Custom 3-emoji logos on tees, hoodies, mugs, hats, and phone cases\./);
+  assert.match(html, /Custom 3-emoji logos on tees, hoodies, mugs, hats, phone cases, and sticker sheets\./);
   assert.match(html, /og:image" content="https:\/\/trimojiapparel\.com\/assets\/og\.png"/);
   assert.match(html, /https:\/\/www\.instagram\.com\/trimojiapparel\//);
   assert.doesNotMatch(html, /tiktok/i);

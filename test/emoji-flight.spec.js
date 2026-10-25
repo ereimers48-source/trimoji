@@ -151,9 +151,10 @@ test('emoji picks play a flight from the slots into the preview', async ({ page 
   expect(burst.afterLayers).toBe(0);
   expect(burst.afterGlyphs).toBe(0);
 
-  for (const product of ['tee', 'mug', 'hat']) {
+  for (const product of ['tee', 'mug', 'hat', 'sticker']) {
     await press(page.locator(`#prods button[data-value="${product}"]`), testInfo);
     await page.locator('#mock').scrollIntoViewIfNeeded();
+    await settle(page);
     await expect.poll(async () => {
       const box = await page.locator('#mock .print').boundingBox();
       return box ? box.width : 0;
@@ -161,18 +162,31 @@ test('emoji picks play a flight from the slots into the preview', async ({ page 
     const landing = await page.evaluate(() => {
       const plan = window.TrimojiEmojiFlight.play(1);
       const print = document.querySelector('#mock .print').getBoundingClientRect();
+      const glyphs = [...document.querySelectorAll('#mock .print image')].slice(0, plan.flights.length);
       return {
         mode: plan.mode,
-        flights: plan.flights.map((flight) => ({
-          clipped: flight.clipped,
-          inPrint: flight.to.x >= print.left - 12 && flight.to.x <= print.right + 12
-            && flight.to.y >= print.top - 12 && flight.to.y <= print.bottom + 12,
-        })),
+        imageCount: document.querySelectorAll('#mock .print image').length,
+        flights: plan.flights.map((flight, index) => {
+          const glyph = glyphs[index] ? glyphs[index].getBoundingClientRect() : null;
+          const gx = glyph ? glyph.left + glyph.width / 2 : null;
+          const gy = glyph ? glyph.top + glyph.height / 2 : null;
+          const nearGlyph = gx != null && Math.hypot(flight.to.x - gx, flight.to.y - gy) <= Math.max(24, glyph.width);
+          return {
+            clipped: flight.clipped,
+            nearGlyph,
+            inPrint: flight.to.x >= print.left - 12 && flight.to.x <= print.right + 12
+              && flight.to.y >= print.top - 12 && flight.to.y <= print.bottom + 12,
+          };
+        }),
       };
     });
     expect(landing.mode, product).toBe('full');
     expect(landing.flights.length, product).toBeGreaterThan(0);
     expect(landing.flights.every((flight) => flight.inPrint), product).toBeTruthy();
+    if (product === 'sticker') {
+      expect(landing.imageCount, product).toBeGreaterThan(3);
+      expect(landing.flights.every((flight) => flight.nearGlyph), product).toBeTruthy();
+    }
     await page.evaluate(() => window.TrimojiEmojiFlight.cancel());
     await expect(page.locator('#emoji-flight')).toHaveCount(0);
   }
