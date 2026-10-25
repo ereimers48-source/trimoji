@@ -130,6 +130,10 @@ const types = {
   '.svg': 'image/svg+xml',
   '.webp': 'image/webp',
   '.woff2': 'font/woff2',
+  '.ico': 'image/x-icon',
+  '.xml': 'application/xml; charset=utf-8',
+  '.txt': 'text/plain; charset=utf-8',
+  '.webmanifest': 'application/manifest+json; charset=utf-8',
 };
 
 async function send(res, response) {
@@ -341,7 +345,11 @@ const server = createServer(async (req, res) => {
       return;
     }
     let data = await readFile(file);
-    const headers = { 'content-type': types[extname(file)] || 'application/octet-stream', 'cache-control': 'no-store' };
+    const asset = file.startsWith(`${root}/assets/`);
+    const headers = {
+      'content-type': types[extname(file)] || 'application/octet-stream',
+      'cache-control': asset ? 'public, max-age=86400' : 'no-store',
+    };
     if (extname(file) === '.html') {
       let html = data.toString('utf8');
       if (file.endsWith('/stories.html')) html = storiesDocument(html);

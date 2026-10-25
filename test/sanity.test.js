@@ -675,6 +675,23 @@ test('print file is a transparent PNG from Twemoji SVG', async () => {
     logoSize,
     background: { shape: 'none' },
   }, [SVG, SVG, SVG]);
+  const teeRow = glyphBounds(composeSvg({
+    product: 'tee',
+    emojis: ['🔥', '😎', '🍕'],
+    layout: 'row',
+    logoSize: 100,
+    background: { shape: 'none' },
+  }, [SVG, SVG, SVG]));
+  assert.ok(Math.abs(teeRow.height - 560) < 1, `tee row glyph ${teeRow.height}`);
+  assert.ok(teeRow.width > PRINT_PX * 0.94, `tee row width ${teeRow.width}`);
+  const teeSmall = glyphBounds(composeSvg({
+    product: 'tee',
+    emojis: ['🔥', '😎', '🍕'],
+    layout: 'row',
+    logoSize: 60,
+    background: { shape: 'none' },
+  }, [SVG, SVG, SVG]));
+  assert.ok(teeSmall.height < teeRow.height * 0.7, `tee 60% glyph ${teeSmall.height}`);
   const row = glyphBounds(hatArt('row', 100));
   assert.ok(row.width > HAT_PRINT_W * 0.85, `row width ${row.width}`);
   assert.ok(row.left > HAT_PRINT_W * 0.02 && row.right < HAT_PRINT_W * 0.98);
@@ -1005,7 +1022,38 @@ test('policy pages share a footer and old hosts keep /api', () => {
     assert.doesNotMatch(html, /\bLLC\b|\bL\.L\.C\b|Incorporated/);
   }
   const mains = {
-    'privacy.html': [/Privacy Policy/, /hello@trimojiapparel\.com/, /does not sell personal information/],
+    'privacy.html': [
+      /Privacy Policy/,
+      /Last updated Oct 25, 2026/,
+      /sole proprietor/,
+      /Pleasant Hill, California/,
+      /tees, hoodies, mugs, trucker hats, and Tough phone cases/,
+      /Accounts are optional/,
+      /We do not store a password/,
+      /one-time link/,
+      /saved designs/,
+      /order history with status and tracking/,
+      /Stripe Tax/,
+      /card number/,
+      /Your email and phone are not sent to Printful/,
+      /Resend/,
+      /Vercel Blob/,
+      /trimoji_session/,
+      /HttpOnly/,
+      /SameSite=Lax/,
+      /30 days/,
+      /does not sell personal information/,
+      /does not share personal information/,
+      /CCPA/,
+      /CPRA/,
+      /right to know/,
+      /right to delete/,
+      /right to correct/,
+      /Delete my account and data/,
+      /not directed to children under 13/,
+      /jsDelivr/,
+      /hello@trimojiapparel\.com/,
+    ],
     'terms.html': [/Terms of Service/, /made to order/i, /United States/],
     'shipping.html': [/Shipping Policy/, /Printful/, /2–5 business days/, /3–4 business days/, /made to order/i, /estimate/i, /\$5\.99/, /\$60 or more/, /tracking number is emailed/i],
     'about.html': [/About/, /Three emojis\. One you\./, /small business in California/, /Printful prints it and ships it/, /mailto:hello@trimojiapparel\.com/],
@@ -1017,6 +1065,12 @@ test('policy pages share a footer and old hosts keep /api', () => {
     const main = html.slice(html.indexOf('<main>'), html.indexOf('</main>'));
     for (const pattern of patterns) assert.match(main, pattern, `${page} ${pattern}`);
     assert.doesNotMatch(main.replaceAll('18500', ''), /\b\d{5}\b|Street|Avenue|\bSuite\b|P\.O\. Box/i, page);
+    if (page === 'privacy.html') {
+      assert.doesNotMatch(main, /There are no customer accounts/);
+      assert.doesNotMatch(main, /shirts, hoodies, hats, and mugs/);
+      assert.doesNotMatch(main, /gtag|googletagmanager|posthog|plausible|facebook\.net/i);
+      assert.match(main, /no analytics or advertising tools/);
+    }
   }
   const index = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   assert.match(index, /href="\/shipping">Shipping<\/a> · <a href="\/returns">Returns<\/a>/);
@@ -1138,6 +1192,95 @@ test('coming soon page is public and the shop preview is not linked', () => {
     assert.equal(rule.headers[0].key, 'X-Robots-Tag');
     assert.match(rule.headers[0].value, /noindex/);
   }
+});
+
+test('public pages have share tags, icons, and a one-day asset cache', () => {
+  const headTags = [
+    /<meta name="description" content="[^"]{40,}"/,
+    /rel="canonical" href="https:\/\/trimojiapparel\.com\//,
+    /property="og:title" content="/,
+    /property="og:description" content="/,
+    /property="og:image" content="https:\/\/trimojiapparel\.com\/assets\/og\.png"/,
+    /property="og:url" content="https:\/\/trimojiapparel\.com\//,
+    /name="twitter:card" content="summary_large_image"/,
+    /name="twitter:title"/,
+    /name="twitter:description"/,
+    /name="twitter:image" content="https:\/\/trimojiapparel\.com\/assets\/og\.png"/,
+    /rel="icon" href="\/favicon\.ico"/,
+    /rel="apple-touch-icon" href="\/apple-touch-icon\.png"/,
+    /rel="manifest" href="\/site\.webmanifest"/,
+  ];
+  const shop = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  assert.match(shop, /<title>Trimoji — Three emojis\. One you\.<\/title>/);
+  assert.match(shop, /<h1>Three emojis\.<br>One you\.<\/h1>/);
+  assert.doesNotMatch(shop, /Your logo/);
+  for (const pattern of headTags) assert.match(shop, pattern);
+  assert.doesNotMatch(shop, /noindex/i);
+  const home = readFileSync(new URL('../coming-soon.html', import.meta.url), 'utf8');
+  for (const pattern of headTags) assert.match(home, pattern);
+  for (const page of ['privacy.html', 'terms.html', 'shipping.html', 'returns.html', 'contact.html', 'about.html', 'success.html', 'cancel.html']) {
+    const html = readFileSync(new URL(`../${page}`, import.meta.url), 'utf8');
+    for (const pattern of headTags) assert.match(html, pattern, `${page} ${pattern}`);
+    assert.doesNotMatch(html, /noindex/i, page);
+  }
+  for (const page of ['stories.html', 'account.html', 'stories-admin.html']) {
+    const html = readFileSync(new URL(`../${page}`, import.meta.url), 'utf8');
+    assert.match(html, /noindex/);
+    assert.match(html, /rel="icon" href="\/favicon\.ico"/);
+    assert.doesNotMatch(html, /name="description"/);
+    assert.doesNotMatch(html, /property="og:title"/);
+    assert.doesNotMatch(html, /property="og:description"/);
+    assert.doesNotMatch(html, /property="og:image"/);
+    assert.doesNotMatch(html, /twitter:card/);
+  }
+  const sitemap = readFileSync(new URL('../sitemap.xml', import.meta.url), 'utf8');
+  for (const loc of [
+    'https://trimojiapparel.com/',
+    'https://trimojiapparel.com/privacy',
+    'https://trimojiapparel.com/terms',
+    'https://trimojiapparel.com/shipping',
+    'https://trimojiapparel.com/returns',
+    'https://trimojiapparel.com/contact',
+    'https://trimojiapparel.com/about',
+  ]) {
+    assert.match(sitemap, new RegExp(`<loc>${loc.replaceAll('.', '\\.')}</loc>`));
+  }
+  assert.doesNotMatch(sitemap, /stories|account|shop-preview|success|cancel|coming-soon/i);
+  const robots = readFileSync(new URL('../robots.txt', import.meta.url), 'utf8');
+  assert.match(robots, /Sitemap: https:\/\/trimojiapparel\.com\/sitemap\.xml/);
+  assert.match(robots, /Disallow: \/shop-preview/);
+  assert.match(robots, /Disallow: \/stories-admin/);
+  const manifest = JSON.parse(readFileSync(new URL('../site.webmanifest', import.meta.url), 'utf8'));
+  assert.equal(manifest.name, 'Trimoji');
+  assert.equal(manifest.icons.some((icon) => icon.sizes === '192x192'), true);
+  assert.equal(manifest.icons.some((icon) => icon.sizes === '512x512'), true);
+  const og = decodeRgba(readFileSync(new URL('../assets/og.png', import.meta.url)));
+  assert.equal(og.width, 1200);
+  assert.equal(og.height, 630);
+  assert.deepEqual([og.pixels[0], og.pixels[1], og.pixels[2]], [255, 255, 255]);
+  const mark = decodeRgba(readFileSync(new URL('../assets/icons/icon-512.png', import.meta.url)));
+  assert.equal(mark.width, 512);
+  assert.equal(mark.height, 512);
+  const stem = (256 * mark.width + 256) * 4;
+  assert.ok(mark.pixels[stem] < 40);
+  assert.equal(decodeRgba(readFileSync(new URL('../assets/icons/icon-32.png', import.meta.url))).width, 32);
+  assert.equal(decodeRgba(readFileSync(new URL('../assets/icons/icon-192.png', import.meta.url))).width, 192);
+  const apple = decodeRgba(readFileSync(new URL('../apple-touch-icon.png', import.meta.url)));
+  assert.equal(apple.width, 180);
+  assert.equal(apple.height, 180);
+  assert.deepEqual([apple.pixels[0], apple.pixels[1], apple.pixels[2]], [255, 255, 255]);
+  const ico = readFileSync(new URL('../favicon.ico', import.meta.url));
+  assert.equal(ico.readUInt16LE(0), 0);
+  assert.equal(ico.readUInt16LE(2), 1);
+  assert.equal(ico.readUInt16LE(4), 3);
+  assert.equal(ico[6], 16);
+  assert.equal(ico[22], 32);
+  const config = JSON.parse(readFileSync(new URL('../vercel.json', import.meta.url), 'utf8'));
+  const assets = config.headers.find((item) => item.source === '/assets/(.*)');
+  assert.equal(assets.headers[0].key, 'Cache-Control');
+  assert.equal(assets.headers[0].value, 'public, max-age=86400');
+  assert.doesNotMatch(assets.headers[0].value, /immutable/);
+  assert.match(shop, /assets\/products\/tee\/white-520\.webp/);
 });
 
 test('order receipt uses the session id and hides the customer', async () => {

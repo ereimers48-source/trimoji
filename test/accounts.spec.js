@@ -27,6 +27,10 @@ test('passwordless account sign-in, saved designs, and orders', async ({ page },
   const signedOut = await page.goto('/account');
   expect(signedOut.headers()['x-robots-tag'] || '').toMatch(/noindex/i);
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/);
+  await expect(page.locator('meta[name="description"]')).toHaveCount(0);
+  await expect(page.locator('meta[property="og:title"]')).toHaveCount(0);
+  await expect(page.locator('meta[property="og:image"]')).toHaveCount(0);
+  await expect(page.locator('meta[name="twitter:card"]')).toHaveCount(0);
   await expect(page.locator('h1')).toHaveText('Account');
   await expect(page.locator('#email')).toBeVisible();
   await expect(page.locator('#send-link')).toHaveText('Email me a sign-in link');

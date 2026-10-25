@@ -57,6 +57,11 @@ test('configurator, bag, and Stripe checkout', async ({ page }, testInfo) => {
 
   await page.goto('/shop-preview');
   await expect(page.locator('.hero h1')).toContainText('Three emojis.');
+  await expect(page.locator('.hero h1')).toContainText('One you.');
+  await expect(page).toHaveTitle('Trimoji — Three emojis. One you.');
+  await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /three emojis/i);
+  await expect(page.locator('meta[property="og:image"]')).toHaveAttribute('content', 'https://trimojiapparel.com/assets/og.png');
+  await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary_large_image');
   await expect(page.locator('a.btn[href="#shop"]')).toHaveCount(1);
   await expect(page.locator('#mock image')).toHaveCount(3);
   await expect(page.locator('#mock img.blank')).toHaveAttribute('src', /\/tee\/white-/);
@@ -407,6 +412,8 @@ test('trucker logo fills the front panel', async ({ page }) => {
         top: (top - mockBox.top) / mockBox.height,
         bottom: (bottom - mockBox.top) / mockBox.height,
         printAspect: printBox.width / printBox.height,
+        printWidth: printBox.width ? (right - left) / printBox.width : 0,
+        printHeight: printBox.height ? (bottom - top) / printBox.height : 0,
       };
     });
   }
@@ -427,7 +434,30 @@ test('trucker logo fills the front panel', async ({ page }) => {
     expect(placed.cy, product).toBeLessThan(0.62);
     expect(placed.top, product).toBeGreaterThan(0.12);
     expect(placed.bottom, product).toBeLessThan(0.78);
+    expect(placed.printWidth, product).toBeGreaterThan(0.9);
+    expect(placed.printWidth, product).toBeLessThan(0.99);
   }
+  await page.locator('#prods button[data-value="tee"]').click();
+  await page.locator('#lay button[data-value="row"]').click();
+  expect(await page.locator('#sz').inputValue()).toBe('100');
+  await setSize(60);
+  const teeSmall = await logoBox();
+  await setSize(100);
+  const teeFull = await logoBox();
+  expect(teeSmall.printWidth).toBeLessThan(teeFull.printWidth * 0.75);
+  expect(teeSmall.printWidth).toBeGreaterThan(teeFull.printWidth * 0.5);
+  await setSize(140);
+  const teeMax = await logoBox();
+  expect(teeMax.printWidth).toBeGreaterThan(teeFull.printWidth * 0.97);
+  expect(teeMax.printWidth).toBeLessThan(1);
+  await page.locator('#lay button[data-value="triangle"]').click();
+  await setSize(100);
+  const teeTri = await logoBox();
+  await setSize(140);
+  const teeTriMax = await logoBox();
+  expect(teeTriMax.height).toBeGreaterThan(teeTri.height * 1.15);
+  await setSize(100);
+  await page.locator('#lay button[data-value="row"]').click();
   await page.locator('#prods button[data-value="hat"]').click();
   await page.locator('#cols button[title="Navy"]').click();
   await page.locator('#lay button[data-value="row"]').click();
@@ -576,11 +606,12 @@ test('preview sits with the choices and the bag button stays in the page', async
     expect(frame.choicePos).toBe('static');
     expect(frame.stageTop).toBeGreaterThanOrEqual(frame.bar - 2);
     expect(frame.stageTop).toBeLessThan(frame.bar + 4);
-    expect(frame.stageH / frame.vh).toBeGreaterThan(0.12);
-    expect(frame.stageH / frame.vh).toBeLessThan(0.22);
-    expect(frame.stageH / frame.vh).toBeLessThan(openPreview - 0.15);
+    expect(frame.stageH).toBeGreaterThanOrEqual(168);
+    expect(frame.stageH / frame.vh).toBeGreaterThan(0.18);
+    expect(frame.stageH / frame.vh).toBeLessThan(0.32);
+    expect(frame.stageH / frame.vh).toBeLessThan(openPreview - 0.08);
     expect(frame.pinH / frame.vh).toBeGreaterThan(0.18);
-    expect(frame.pinH / frame.vh).toBeLessThan(0.4);
+    expect(frame.pinH / frame.vh).toBeLessThan(0.46);
     expect(frame.pinH / frame.vh).toBeLessThan(0.55);
     expect(frame.mock.top).toBeGreaterThanOrEqual(frame.stageTop - 1);
     expect(frame.mock.top - frame.stageTop).toBeLessThan(2);
@@ -688,7 +719,7 @@ test('preview sits with the choices and the bag button stays in the page', async
       expect(pinned.searchStatic, target).toBeTruthy();
       expect(pinned.gridStatic, target).toBeTruthy();
       expect(pinned.pinRatio, target).toBeLessThan(0.55);
-      expect(pinned.pinRatio, target).toBeLessThan(0.4);
+      expect(pinned.pinRatio, target).toBeLessThan(0.46);
       expect(pinned.slotsUnder, target).toBeTruthy();
       expect(pinned.searchCovers, target).toBeFalsy();
       expect(pinned.gridCovers, target).toBeFalsy();
@@ -804,8 +835,10 @@ test('compact preview fills the phone band for every mockup', async ({ page }, t
       expect(frame.sticky, label).toBe('sticky');
       expect(frame.product, label).toBe(product);
       expect(frame.fit, label).toBe('contain');
-      expect(frame.stageH / frame.vh, label).toBeGreaterThan(0.12);
-      expect(frame.stageH / frame.vh, label).toBeLessThan(0.22);
+      expect(frame.stageH, label).toBeGreaterThanOrEqual(168);
+      expect(frame.img.height, label).toBeGreaterThanOrEqual(168);
+      expect(frame.stageH / frame.vh, label).toBeGreaterThan(0.18);
+      expect(frame.stageH / frame.vh, label).toBeLessThan(0.32);
       expect(frame.img.top - frame.stageTop, label).toBeLessThan(2);
       expect(frame.stageBottom - frame.img.bottom, label).toBeLessThan(2);
       expect(frame.img.height, label).toBeGreaterThan(frame.stageH * 0.97);
@@ -974,6 +1007,23 @@ test('policy pages are linked from the shop and the bag', async ({ page }) => {
   await expect(page.locator('h1')).toContainText('Three emojis');
   await expect(page.locator('footer nav a')).toHaveText(['Privacy', 'Terms', 'Shipping', 'Returns', 'Contact', 'About']);
   await expect(page.locator('footer a[href="/stories"]')).toHaveCount(0);
+  const og = await page.request.get('/assets/og.png');
+  expect(og.status()).toBe(200);
+  expect(og.headers()['content-type'] || '').toContain('image/png');
+  expect(og.headers()['cache-control']).toBe('public, max-age=86400');
+  expect((await page.request.get('/assets/products/tee/white-520.webp')).headers()['cache-control']).toBe('public, max-age=86400');
+  expect((await page.request.get('/favicon.ico')).status()).toBe(200);
+  expect((await page.request.get('/apple-touch-icon.png')).status()).toBe(200);
+  expect((await page.request.get('/site.webmanifest')).status()).toBe(200);
+  const sitemap = await (await page.request.get('/sitemap.xml')).text();
+  expect(sitemap).toContain('<loc>https://trimojiapparel.com/</loc>');
+  expect(sitemap).toContain('<loc>https://trimojiapparel.com/returns</loc>');
+  expect(sitemap).toContain('<loc>https://trimojiapparel.com/contact</loc>');
+  expect(sitemap).toContain('<loc>https://trimojiapparel.com/about</loc>');
+  expect(sitemap).not.toMatch(/stories|account|shop-preview/);
+  const robots = await (await page.request.get('/robots.txt')).text();
+  expect(robots).toContain('Sitemap: https://trimojiapparel.com/sitemap.xml');
+  expect(robots).toContain('Disallow: /shop-preview');
   await page.goto('/shop-preview');
   await expect(page.locator('footer nav a')).toHaveText(['Privacy', 'Terms', 'Shipping', 'Returns', 'Contact', 'About', 'Account']);
   await expect(page.locator('footer a[href="/stories"]')).toHaveCount(0);
@@ -1009,6 +1059,14 @@ test('policy pages are linked from the shop and the bag', async ({ page }) => {
     await expect(page.locator('h1')).toHaveText(title);
     await expect(page.locator('main')).toContainText(line);
     await expect(page.locator('main')).toContainText('hello@trimojiapparel.com');
+    if (path === '/privacy') {
+      await expect(page.locator('main')).toContainText('Last updated Oct 25, 2026.');
+      await expect(page.locator('main')).toContainText('Accounts are optional');
+      await expect(page.locator('main')).toContainText('We do not store a password');
+      await expect(page.locator('main')).toContainText('Tough phone cases');
+      await expect(page.locator('main')).not.toContainText('There are no customer accounts');
+      await expect(page.locator('main')).not.toContainText('shirts, hoodies, hats, and mugs');
+    }
     await expect(page.locator('footer nav a')).toHaveText(['Privacy', 'Terms', 'Shipping', 'Returns', 'Contact', 'About']);
     await expect(page.locator('footer a[href="/stories"]')).toHaveCount(0);
     await expect(page.locator('footer')).toContainText('© Trimoji');
@@ -1019,6 +1077,13 @@ test('policy pages are linked from the shop and the bag', async ({ page }) => {
       const aboutText = await page.locator('main').innerText();
       expect(aboutText).not.toMatch(/founded|award|review|press|customers|years/i);
     }
+    await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /.+/);
+    await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', /.+/);
+    await expect(page.locator('meta[property="og:description"]')).toHaveAttribute('content', /.+/);
+    await expect(page.locator('meta[property="og:image"]')).toHaveAttribute('content', 'https://trimojiapparel.com/assets/og.png');
+    await expect(page.locator('meta[property="og:url"]')).toHaveAttribute('content', `https://trimojiapparel.com${path}`);
+    await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary_large_image');
+    await expect(page.locator('link[rel="icon"][href="/favicon.ico"]')).toHaveCount(1);
     if (path === '/returns') {
       expect(response.headers()['x-robots-tag'] || '').not.toMatch(/noindex/i);
       await expect(page.locator('meta[name="robots"]')).toHaveCount(0);
