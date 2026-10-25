@@ -603,7 +603,7 @@ test('preview sits with the choices and the bag button stays in the page', async
       };
     });
     expect(frame.sticky).toBe('sticky');
-    expect(frame.slotsSticky).toBe('static');
+    expect(frame.slotsSticky).toBe('sticky');
     expect(frame.searchPos).toBe('static');
     expect(frame.gridPos).toBe('static');
     expect(frame.choicePos).toBe('static');
@@ -643,7 +643,9 @@ test('preview sits with the choices and the bag button stays in the page', async
       expect(chip.emoji).toBeGreaterThan(48);
       expect(chip.emoji).toBeGreaterThan(chip.w * 0.55);
     }
-    expect(frame.search.top).toBeGreaterThanOrEqual(frame.slots.bottom - 4);
+    const slotsInHeader = frame.slots.top < frame.bar && frame.slots.bottom > 0;
+    if (slotsInHeader) expect(frame.search.bottom).toBeLessThanOrEqual(frame.slots.top + 8);
+    else expect(frame.search.top).toBeGreaterThanOrEqual(frame.slots.bottom - 4);
     expect(frame.search.bottom).toBeLessThanOrEqual(frame.vh + 1);
     expect(frame.search.height).toBeGreaterThanOrEqual(44);
     expect(frame.grid.top).toBeGreaterThanOrEqual(frame.search.bottom - 4);
@@ -722,7 +724,7 @@ test('preview sits with the choices and the bag button stays in the page', async
       }, target);
       expect(pinned.stuck, target).toBeTruthy();
       expect(pinned.compact, target).toBeTruthy();
-      expect(pinned.slotsSticky, target).toBeFalsy();
+      expect(pinned.slotsSticky, target).toBeTruthy();
       expect(pinned.searchStatic, target).toBeTruthy();
       expect(pinned.gridStatic, target).toBeTruthy();
       expect(pinned.slotsAbove, target).toBeTruthy();
