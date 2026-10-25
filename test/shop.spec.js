@@ -120,7 +120,7 @@ test('configurator, bag, and Stripe checkout', async ({ page }, testInfo) => {
   await press(page.locator('#tabs button[data-cat="sp"]'), testInfo);
   await press(page.locator('#grid button[title="smiling face with sunglasses"]').first(), testInfo);
   await expect(page.locator('#slots button.f')).toHaveCount(3);
-  const slotHit = await page.locator('#slots small').first().evaluate((el) => el.getBoundingClientRect());
+  const slotHit = await page.locator('#slots button.slot-clear').first().evaluate((el) => el.getBoundingClientRect());
   expect(slotHit.width).toBeGreaterThanOrEqual(40);
   expect(slotHit.height).toBeGreaterThanOrEqual(40);
 
@@ -945,7 +945,7 @@ test('the same emoji can repeat in every slot or leave a gap', async ({ page }, 
   });
   await press(page.locator('#addbtn'), testInfo);
   await press(page.locator('#closecart'), testInfo);
-  await press(page.locator('#slots button[data-slot="1"] [data-clear]'), testInfo);
+  await press(page.locator('#slots .slot[data-slot="1"] button.slot-clear'), testInfo);
   await expect(fire.locator('.count')).toHaveText('×2');
   await expect(page.locator('#grid button.sel')).toHaveCount(0);
   const gapped = await logoImages(page);
@@ -972,12 +972,18 @@ test('policy pages are linked from the shop and the bag', async ({ page }) => {
   const errors = track(page);
   await page.goto('/');
   await expect(page.locator('h1')).toContainText('Three emojis');
-  await expect(page.locator('footer nav a')).toHaveText(['Privacy', 'Terms', 'Shipping', 'Returns', 'Contact']);
+  await expect(page.locator('footer nav a')).toHaveText(['Privacy', 'Terms', 'Shipping', 'Returns', 'Contact', 'About']);
+  await expect(page.locator('footer a[href="/stories"]')).toHaveCount(0);
   await page.goto('/shop-preview');
-  await expect(page.locator('footer nav a')).toHaveText(['Privacy', 'Terms', 'Shipping', 'Returns', 'Contact', 'Stories', 'Account']);
+  await expect(page.locator('footer nav a')).toHaveText(['Privacy', 'Terms', 'Shipping', 'Returns', 'Contact', 'About', 'Account']);
+  await expect(page.locator('footer a[href="/stories"]')).toHaveCount(0);
   await expect(page.locator('.nav-links a[href="/account"]')).toHaveText('Account');
   const bagPolicy = page.locator('.buybar a[href="/returns"]');
   await expect(page.locator('.buybar')).toContainText('Custom-made to order. See our Returns policy.');
+  await expect(page.locator('.buybar')).toContainText('replace it free or refund you');
+  await expect(page.locator('.buybar')).toContainText('2–5 business days');
+  await expect(page.locator('.buybar')).toContainText('3–4 business days');
+  await expect(page.locator('#sizechartbtn')).toBeVisible();
   await expect(bagPolicy).toHaveText('Returns policy');
   expect(await bagPolicy.getAttribute('target')).toBeNull();
   await page.locator('#cartbtn').click();
@@ -985,14 +991,17 @@ test('policy pages are linked from the shop and the bag', async ({ page }) => {
   await expect(page.locator('#drawer a[href="/returns"]')).toHaveCount(2);
   const checkoutPolicy = page.locator('#drawer a[href="/returns"]', { hasText: 'Returns policy' });
   await expect(page.locator('#drawer')).toContainText('Custom-made to order. See our Returns policy.');
+  await expect(page.locator('#drawer')).toContainText('2–5 business days');
+  await expect(page.locator('#drawer')).toHaveAttribute('aria-modal', 'true');
   await expect(checkoutPolicy).toBeVisible();
   expect(await checkoutPolicy.getAttribute('target')).toBeNull();
   const pages = [
     ['/privacy', 'Privacy Policy', 'does not sell personal information'],
     ['/terms', 'Terms of Service', 'made to order'],
-    ['/shipping', 'Shipping Policy', '2–7 business days'],
+    ['/shipping', 'Shipping Policy', '2–5 business days'],
     ['/returns', 'Returns & Refund Policy', '30 days'],
     ['/contact', 'Contact', 'hello@trimojiapparel.com'],
+    ['/about', 'About', 'Three emojis. One you.'],
   ];
   for (const [path, title, line] of pages) {
     const response = await page.goto(path);
@@ -1000,13 +1009,23 @@ test('policy pages are linked from the shop and the bag', async ({ page }) => {
     await expect(page.locator('h1')).toHaveText(title);
     await expect(page.locator('main')).toContainText(line);
     await expect(page.locator('main')).toContainText('hello@trimojiapparel.com');
-    await expect(page.locator('footer nav a')).toHaveText(['Privacy', 'Terms', 'Shipping', 'Returns', 'Contact', 'Stories']);
+    await expect(page.locator('footer nav a')).toHaveText(['Privacy', 'Terms', 'Shipping', 'Returns', 'Contact', 'About']);
+    await expect(page.locator('footer a[href="/stories"]')).toHaveCount(0);
     await expect(page.locator('footer')).toContainText('© Trimoji');
     const text = await page.locator('main').innerText();
     expect(text).not.toMatch(/\bLLC\b|Street|Avenue|\bSuite\b/);
+    if (path === '/shipping') await expect(page.locator('main')).toContainText('3–4 business days');
+    if (path === '/about') {
+      const aboutText = await page.locator('main').innerText();
+      expect(aboutText).not.toMatch(/founded|award|review|press|customers|years/i);
+    }
     if (path === '/returns') {
       expect(response.headers()['x-robots-tag'] || '').not.toMatch(/noindex/i);
       await expect(page.locator('meta[name="robots"]')).toHaveCount(0);
+      await expect(page.locator('#size-chart')).toContainText('Bella + Canvas 3001');
+      await expect(page.locator('#size-chart')).toContainText('Gildan 18500');
+      await expect(page.locator('#size-chart')).toContainText('34–37');
+      await expect(page.locator('#size-chart')).toContainText('33.5');
       await expect(page.locator('main h2')).toHaveText([
         'Damaged, defective, or incorrect items',
         'Sizing',
@@ -1035,6 +1054,42 @@ test('policy pages are linked from the shop and the bag', async ({ page }) => {
   await expect(page.locator('main')).not.toContainText('1 Secret St');
   await expect(page.locator('footer nav a[href="/shipping"]')).toBeVisible();
   await expect(page.locator('footer nav a[href="/returns"]')).toHaveText('Returns');
+  expect(errors, errors.join('\n')).toEqual([]);
+});
+
+test('size chart, delivery estimate, and bag dialog are usable from the keyboard', async ({ page }, testInfo) => {
+  const errors = track(page);
+  await page.goto('/shop-preview');
+  await expect(page.locator('#slots button button')).toHaveCount(0);
+  const clear = page.locator('#slots button.slot-clear').first();
+  await expect(clear).toBeVisible();
+  expect(await clear.evaluate((el) => el.parentElement.tagName)).toBe('DIV');
+  await expect(clear).toHaveAttribute('aria-label', /Clear slot/);
+
+  await press(page.locator('#sizechartbtn'), testInfo);
+  await expect(page.locator('#sizechart')).toBeVisible();
+  await expect(page.locator('#sizechart')).toHaveAttribute('aria-modal', 'true');
+  await expect(page.locator('#sizechart-close')).toBeFocused();
+  await expect(page.locator('#sizechart')).toContainText('34–37');
+  await expect(page.locator('#sizechart')).toContainText('33.5');
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#sizechart')).toBeHidden();
+  await expect(page.locator('#sizechartbtn')).toBeFocused();
+
+  await press(page.locator('#prods button[data-value="mug"]'), testInfo);
+  await expect(page.locator('#sizechartbtn')).toBeHidden();
+  await press(page.locator('#prods button[data-value="hoodie"]'), testInfo);
+  await expect(page.locator('#sizechartbtn')).toBeVisible();
+
+  await page.locator('#cartbtn').focus();
+  await page.locator('#cartbtn').click();
+  await expect(page.locator('#drawer')).toHaveClass(/open/);
+  await expect(page.locator('#drawer')).toHaveAttribute('aria-hidden', 'false');
+  await expect(page.locator('#closecart')).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#drawer')).not.toHaveClass(/open/);
+  await expect(page.locator('#drawer')).toHaveAttribute('aria-hidden', 'true');
+  await expect(page.locator('#cartbtn')).toBeFocused();
   expect(errors, errors.join('\n')).toEqual([]);
 });
 

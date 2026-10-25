@@ -63,7 +63,7 @@ footer p{margin:0 0 8px;font-size:.9rem}
 <h1>Your 3 emojis, your story</h1>
 <p class="lede">Real stories from real people. Written by you, not by AI.</p>
 <div id="list" class="stories" aria-live="polite"></div>
-<p id="empty" class="empty">No stories yet. If you ordered a Trimoji, yours can be the first — tell us why those three emojis are yours.</p>
+<p id="empty" class="empty" hidden data-stories-gated>No stories yet. If you ordered a Trimoji, yours can be the first — tell us why those three emojis are yours.</p>
 <h2>Share your story</h2>
 <p class="hint">We read every note. It goes on the site only after we approve it.</p>
 <form id="share">
@@ -94,7 +94,7 @@ footer p{margin:0 0 8px;font-size:.9rem}
 </form>
 </main>
 <footer>
-<nav aria-label="Policies"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/shipping">Shipping</a><a href="/returns">Returns</a><a href="/contact">Contact</a><a href="/stories">Stories</a></nav>
+<nav aria-label="Policies"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/shipping">Shipping</a><a href="/returns">Returns</a><a href="/contact">Contact</a><a href="/about">About</a></nav>
 <p>Shipping is $5.99 flat, free over $60.</p>
 <p>© Trimoji. Emoji graphics by <a href="https://github.com/jdecked/twemoji">Twemoji</a>, © Twitter, Inc. and other contributors, licensed under <a href="https://creativecommons.org/licenses/by/4.0/">CC-BY 4.0</a>.</p>
 </footer>
@@ -109,7 +109,8 @@ const count = document.getElementById('count');
 function paint(stories) {
   list.replaceChildren();
   const rows = Array.isArray(stories) ? stories : [];
-  empty.hidden = rows.length > 0;
+  const gated = empty.hasAttribute('data-stories-gated');
+  empty.hidden = gated || rows.length > 0;
   for (const story of rows) {
     const card = document.createElement('article');
     const emojis = document.createElement('p');

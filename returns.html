@@ -20,7 +20,14 @@ a{color:var(--accent);touch-action:manipulation}
 main{flex:1;width:min(40rem,100%);margin:0 auto;padding:48px 22px 64px}
 h1{margin:0 0 20px;font-size:min(2.75rem,9vw);font-weight:600;letter-spacing:-.035em;line-height:1.15}
 h2{margin:28px 0 8px;font-size:1.28rem;font-weight:600;letter-spacing:-.022em;line-height:1.25}
+h3{margin:22px 0 8px;font-size:1.12rem;font-weight:600;letter-spacing:-.02em}
+h4{margin:16px 0 6px;font-size:1rem;font-weight:600}
 p{margin:0 0 16px;font-size:1.0625rem}
+.chart-wrap{overflow-x:auto;margin:0 0 8px}
+table.chart{width:100%;border-collapse:collapse;font-size:.98rem;font-variant-numeric:tabular-nums}
+table.chart caption{caption-side:top;text-align:left;font-weight:600;padding:0 0 8px}
+table.chart th,table.chart td{text-align:left;padding:8px 8px 8px 0;border-bottom:1px solid var(--line);white-space:nowrap}
+table.chart th{font-weight:600}
 footer{color:var(--muted);font-size:.9rem;line-height:1.5;padding:28px 22px calc(36px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
 footer nav{display:flex;flex-wrap:wrap;gap:2px 18px;margin:0 0 8px}
 footer nav a,footer p a{color:var(--muted);text-decoration:none}
@@ -38,7 +45,66 @@ footer p{margin:0 0 8px;font-size:.9rem}
 <h2>Damaged, defective, or incorrect items</h2>
 <p>If your order arrives damaged, misprinted, defective, or isn't what you ordered, email us at <a href="mailto:hello@trimojiapparel.com">hello@trimojiapparel.com</a> within 30 days of delivery with your order reference and a clear photo of the problem. We'll send a free replacement or give you a full refund, your choice. You don't need to send the item back.</p>
 <h2>Sizing</h2>
-<p>Please check the size chart before ordering. We can't refund or exchange for size, but email us and we'll do our best to help.</p>
+<p>Please check the <a href="#size-chart">size chart</a> before ordering. We can't refund or exchange for size, but email us and we'll do our best to help.</p>
+<div id="size-chart">
+<p>Inches, for the sizes we sell (S–2XL). These figures are from Printful’s size guide for the blanks we print: the Unisex Staple T-Shirt (Bella + Canvas 3001) and the Unisex Heavy Blend Hoodie (Gildan 18500). Printful says product measurements can vary by up to 2 inches.</p>
+<h3>T-shirt</h3>
+<p>Unisex Staple T-Shirt, Bella + Canvas 3001.</p>
+<h4>Your measurements</h4>
+<p>Length runs from the highest point of the shoulder to the hem. Chest is around the fullest part of your chest.</p>
+<div class="chart-wrap"><table class="chart">
+<caption>T-shirt, your measurements (inches)</caption>
+<thead><tr><th scope="col">Size</th><th scope="col">Length</th><th scope="col">Chest</th></tr></thead>
+<tbody>
+<tr><th scope="row">S</th><td>28</td><td>34–37</td></tr>
+<tr><th scope="row">M</th><td>29</td><td>38–41</td></tr>
+<tr><th scope="row">L</th><td>30</td><td>42–45</td></tr>
+<tr><th scope="row">XL</th><td>31</td><td>46–49</td></tr>
+<tr><th scope="row">2XL</th><td>32</td><td>50–53</td></tr>
+</tbody>
+</table></div>
+<h4>Garment, laid flat</h4>
+<p>Width is across the shirt, from the seam under one sleeve to the seam under the other. This tee’s Printful size guide does not list a sleeve length.</p>
+<div class="chart-wrap"><table class="chart">
+<caption>T-shirt, garment laid flat (inches)</caption>
+<thead><tr><th scope="col">Size</th><th scope="col">Length</th><th scope="col">Width</th></tr></thead>
+<tbody>
+<tr><th scope="row">S</th><td>28</td><td>18</td></tr>
+<tr><th scope="row">M</th><td>29</td><td>20</td></tr>
+<tr><th scope="row">L</th><td>30</td><td>22</td></tr>
+<tr><th scope="row">XL</th><td>31</td><td>24</td></tr>
+<tr><th scope="row">2XL</th><td>32</td><td>26</td></tr>
+</tbody>
+</table></div>
+<h3>Hoodie</h3>
+<p>Unisex Heavy Blend Hoodie, Gildan 18500.</p>
+<h4>Your measurements</h4>
+<p>Length runs from the high point of the shoulder to the hem. Chest is around the fullest part of your chest. Sleeve length starts at the center back of the collar, follows the shoulder seam, and ends at the sleeve hem.</p>
+<div class="chart-wrap"><table class="chart">
+<caption>Hoodie, your measurements (inches)</caption>
+<thead><tr><th scope="col">Size</th><th scope="col">Length</th><th scope="col">Chest</th><th scope="col">Sleeve</th></tr></thead>
+<tbody>
+<tr><th scope="row">S</th><td>27</td><td>38–41</td><td>33.5</td></tr>
+<tr><th scope="row">M</th><td>28</td><td>42–45</td><td>34.5</td></tr>
+<tr><th scope="row">L</th><td>29</td><td>46–49</td><td>35.5</td></tr>
+<tr><th scope="row">XL</th><td>30</td><td>50–53</td><td>36.5</td></tr>
+<tr><th scope="row">2XL</th><td>31</td><td>54–57</td><td>37.5</td></tr>
+</tbody>
+</table></div>
+<h4>Garment, laid flat</h4>
+<p>Width is across the chest. Sleeve length is measured the same way as above.</p>
+<div class="chart-wrap"><table class="chart">
+<caption>Hoodie, garment laid flat (inches)</caption>
+<thead><tr><th scope="col">Size</th><th scope="col">Length</th><th scope="col">Width</th><th scope="col">Sleeve</th></tr></thead>
+<tbody>
+<tr><th scope="row">S</th><td>27</td><td>20</td><td>33.5</td></tr>
+<tr><th scope="row">M</th><td>28</td><td>22</td><td>34.5</td></tr>
+<tr><th scope="row">L</th><td>29</td><td>24</td><td>35.5</td></tr>
+<tr><th scope="row">XL</th><td>30</td><td>26</td><td>36.5</td></tr>
+<tr><th scope="row">2XL</th><td>31</td><td>28</td><td>37.5</td></tr>
+</tbody>
+</table></div>
+</div>
 <h2>Order changes and cancellations</h2>
 <p>Orders go into production quickly. If you need to change your shipping address or cancel, email us as soon as possible. We can only do this if your order hasn't started production.</p>
 <h2>Lost or delayed packages</h2>
@@ -51,7 +117,7 @@ footer p{margin:0 0 8px;font-size:.9rem}
 <p><a href="mailto:hello@trimojiapparel.com">hello@trimojiapparel.com</a></p>
 </main>
 <footer>
-<nav aria-label="Policies"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/shipping">Shipping</a><a href="/returns">Returns</a><a href="/contact">Contact</a><a href="/stories">Stories</a></nav>
+<nav aria-label="Policies"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/shipping">Shipping</a><a href="/returns">Returns</a><a href="/contact">Contact</a><a href="/about">About</a></nav>
 <p>Shipping is $5.99 flat, free over $60.</p>
 <p>© Trimoji. Emoji graphics by <a href="https://github.com/jdecked/twemoji">Twemoji</a>, © Twitter, Inc. and other contributors, licensed under <a href="https://creativecommons.org/licenses/by/4.0/">CC-BY 4.0</a>.</p>
 </footer>
