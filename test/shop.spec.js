@@ -1,3 +1,4 @@
+import { mkdirSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
 import { printfulExternalId } from '../lib/printful.js';
 
@@ -162,7 +163,7 @@ test('configurator, bag, and Stripe checkout', async ({ page }, testInfo) => {
     }
     return [...rows.values()];
   });
-  expect(productRows.reduce((sum, count) => sum + count, 0)).toBe(5);
+  expect(productRows.reduce((sum, count) => sum + count, 0)).toBe(6);
   expect(productRows.slice(0, -1).every((count) => count > 1)).toBeTruthy();
 
   await press(page.locator('#prods button[data-value="hoodie"]'), testInfo);
@@ -1203,6 +1204,7 @@ test('product, price, and one Add to Bag stay in reach', async ({ page }, testIn
     'Mug $19',
     'Trucker hat $33',
     'Tough phone case $29',
+    'Kiss-Cut Sticker Sheet $9',
   ]);
   const css = await page.locator('style').first().textContent();
   expect(css).toMatch(/html\.dock-on \.dock\{[^}]*padding:[^;]*env\(safe-area-inset-bottom\)/);
@@ -1318,6 +1320,92 @@ test('product, price, and one Add to Bag stay in reach', async ({ page }, testIn
     const hit = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
     return box.left >= -1 && box.right <= window.innerWidth + 1 && el.contains(hit);
   })).toBeTruthy();
+  expect(errors, errors.join('\n')).toEqual([]);
+});
+
+test('sticker sheet joins the builder, the bag, and the cross-sell', async ({ page }, testInfo) => {
+  const errors = track(page);
+  if (!live) {
+    await page.route('https://checkout.stripe.com/**', (route) => route.fulfill({
+      status: 200,
+      contentType: 'text/html',
+      body: '<!doctype html><title>Stripe test checkout</title><h1>Stripe test checkout</h1>',
+    }));
+  }
+  let payload = null;
+  page.on('request', (req) => {
+    if (req.method() === 'POST' && req.url().includes('/api/checkout')) payload = req.postDataJSON();
+  });
+  await page.goto('/shop-preview');
+  const sheet = page.locator('#prods button[data-value="sticker"]');
+  await expect(sheet).toHaveText('Kiss-Cut Sticker Sheet $9');
+  await press(sheet, testInfo);
+  await expect(sheet).toHaveClass(/on/);
+  await expect(page.locator('#price')).toHaveText('$9.00');
+  await expect(page.locator('#dockname')).toHaveText('Kiss-Cut Sticker Sheet');
+  await expect(page.locator('#addbtn')).toHaveAttribute('aria-label', 'Add Kiss-Cut Sticker Sheet to bag, $9.00');
+  await expect(page.locator('#lay-choice')).toBeHidden();
+  await expect(page.locator('#color-choice')).toBeHidden();
+  await expect(page.locator('#size-choice')).toBeHidden();
+  await expect(page.locator('#logo-choice')).toBeHidden();
+  await expect(page.locator('#mock')).toHaveAttribute('data-product', 'sticker');
+  await expect(page.locator('#mock rect[fill="#FFF4E1"]')).toHaveCount(15);
+  await expect(page.locator('#mock rect[fill="#DEDEE4"]')).toHaveCount(15);
+  await expect(page.locator('#mock image')).toHaveCount(45);
+  const shot = testInfo.project.name === 'desktop' || testInfo.project.name === 'mobile';
+  if (shot) {
+    mkdirSync('docs/previews', { recursive: true });
+    const suffix = testInfo.project.name === 'mobile' ? '390' : 'desktop';
+    await page.locator('#stage').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: `docs/previews/builder-${suffix}.png` });
+  }
+
+  await press(page.locator('#addbtn'), testInfo);
+  await expect(page.locator('#drawer')).toHaveClass(/open/);
+  await expect(page.locator('#items')).toContainText('Kiss-Cut Sticker Sheet');
+  await expect(page.locator('#items')).toContainText('15 stickers');
+  await expect(page.locator('#sub')).toHaveText('$9.00');
+  await expect(page.locator('#ship')).toHaveText('$5.99');
+  await expect(page.locator('#tot')).toHaveText('$14.99');
+  await expect(page.locator('.cross-sell')).toHaveCount(0);
+  await press(page.locator('#items button[data-remove="0"]'), testInfo);
+  await expect(page.locator('#items')).toContainText('Your bag is empty.');
+  await press(page.locator('#closecart'), testInfo);
+
+  await press(page.locator('#prods button[data-value="tee"]'), testInfo);
+  await expect(page.locator('#lay-choice')).toBeVisible();
+  await press(page.locator('#addbtn'), testInfo);
+  await expect(page.locator('.cross-sell')).toHaveText('Add this design as a sticker sheet, $9');
+  if (shot) {
+    const suffix = testInfo.project.name === 'mobile' ? '390' : 'desktop';
+    await page.locator('#drawer').screenshot({ path: `docs/previews/bag-${suffix}.png` });
+  }
+  await press(page.locator('.cross-sell'), testInfo);
+  await expect(page.locator('.cross-sell')).toHaveCount(0);
+  await expect(page.locator('#items')).toContainText('Kiss-Cut Sticker Sheet');
+  await expect(page.locator('#items')).toContainText('15 stickers');
+  await expect(page.locator('#sub')).toHaveText('$38.00');
+  await expect(page.locator('#ship')).toHaveText('$5.99');
+  await expect(page.locator('#tot')).toHaveText('$43.99');
+
+  await press(page.locator('#closecart'), testInfo);
+  await press(page.locator('#slots [data-clear]').nth(2), testInfo);
+  await press(page.locator('#grid button[data-emoji="🌮"]'), testInfo);
+  await press(page.locator('#addbtn'), testInfo);
+  await expect(page.locator('.cross-sell')).toHaveCount(1);
+  await expect(page.locator('.cross-sell')).toHaveText('Add this design as a sticker sheet, $9');
+  await press(page.locator('#pay'), testInfo);
+  await page.waitForURL(/checkout\.stripe\.com/, { timeout: 45_000 });
+  const sticker = payload.items.find((item) => item.product === 'sticker');
+  expect(sticker).toMatchObject({
+    product: 'sticker',
+    color: 'White',
+    size: '5.83×8.27 in',
+    layout: 'triangle',
+    logoSize: 100,
+    quantity: 1,
+    emojis: ['🔥', '😎', '🍕'],
+  });
   expect(errors, errors.join('\n')).toEqual([]);
 });
 
