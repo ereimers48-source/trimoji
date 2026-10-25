@@ -1082,7 +1082,11 @@ test('policy pages share a footer and old hosts keep /api', () => {
   const index = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   assert.match(index, /href="\/shipping">Shipping<\/a> · <a href="\/returns">Returns<\/a>/);
   const made = 'Custom-made to order. See our <a href="/returns">Returns policy</a>.';
-  assert.equal(index.split(made).length - 1, 2);
+  assert.equal(index.split(made).length - 1, 1);
+  const shop = index.slice(index.indexOf('<main'), index.indexOf('</main>'));
+  assert.doesNotMatch(shop, /Custom-made to order/);
+  assert.doesNotMatch(shop, /Made just for you/);
+  assert.doesNotMatch(shop, /to arrive in the US/);
   assert.doesNotMatch(index, /Returns policy<\/a>[^<]*target=/);
   assert.match(index, /aria-modal="true"/);
   assert.match(index, /id="sizechart"/);
