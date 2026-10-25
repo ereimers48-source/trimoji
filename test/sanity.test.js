@@ -1009,17 +1009,14 @@ test('the static shop asks the server for checkout and test mode', () => {
 });
 
 test('policy pages share a footer and old hosts keep /api', () => {
-  const footer = '<nav aria-label="Policies"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/shipping">Shipping</a><a href="/returns">Returns</a><a href="/contact">Contact</a></nav>';
-  const storiesFooter = footer.replace('</nav>', '<a href="/stories">Stories</a></nav>');
-  const accountFooter = storiesFooter.replace('</nav>', '<a href="/account">Account</a></nav>');
-  for (const page of ['index.html', 'coming-soon.html', 'success.html', 'cancel.html', 'privacy.html', 'terms.html', 'shipping.html', 'returns.html', 'contact.html']) {
+  const footer = '<nav aria-label="Policies"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/shipping">Shipping</a><a href="/returns">Returns</a><a href="/contact">Contact</a><a href="/about">About</a></nav>';
+  const accountFooter = footer.replace('</nav>', '<a href="/account">Account</a></nav>');
+  for (const page of ['index.html', 'coming-soon.html', 'success.html', 'cancel.html', 'privacy.html', 'terms.html', 'shipping.html', 'returns.html', 'contact.html', 'about.html', 'stories.html']) {
     const html = readFileSync(new URL(`../${page}`, import.meta.url), 'utf8');
-    const expected = page === 'coming-soon.html' ? footer : page === 'index.html' ? accountFooter : storiesFooter;
+    const expected = page === 'index.html' ? accountFooter : footer;
     assert.ok(html.includes(expected), page);
-    if (page === 'coming-soon.html') {
-      assert.doesNotMatch(html, /href="\/stories"/);
-      assert.doesNotMatch(html, /href="\/account"/);
-    }
+    assert.doesNotMatch(html, /href="\/stories"/);
+    if (page === 'coming-soon.html') assert.doesNotMatch(html, /href="\/account"/);
     if (page !== 'index.html') assert.doesNotMatch(html, /href="\/account"/);
     assert.match(html, /© Trimoji/);
     assert.doesNotMatch(html, /\bLLC\b|\bL\.L\.C\b|Incorporated/);
@@ -1058,7 +1055,8 @@ test('policy pages share a footer and old hosts keep /api', () => {
       /hello@trimojiapparel\.com/,
     ],
     'terms.html': [/Terms of Service/, /made to order/i, /United States/],
-    'shipping.html': [/Shipping Policy/, /Printful/, /2–7 business days/, /\$5\.99/, /\$60 or more/, /tracking number is emailed/i],
+    'shipping.html': [/Shipping Policy/, /Printful/, /2–5 business days/, /3–4 business days/, /made to order/i, /estimate/i, /\$5\.99/, /\$60 or more/, /tracking number is emailed/i],
+    'about.html': [/About/, /Three emojis\. One you\./, /small business in California/, /Printful prints it and ships it/, /mailto:hello@trimojiapparel\.com/],
     'returns.html': [/Returns &amp; Refund Policy/, /change of mind/, /30 days/, /clear photo/, /free replacement/, /full refund/, /mailto:hello@trimojiapparel\.com/, /Damaged, defective, or incorrect items/, /Sizing/, /Order changes and cancellations/, /Lost or delayed packages/, /5 to 10 business days/, /Shipping address/],
     'contact.html': [/mailto:hello@trimojiapparel\.com/],
   };
@@ -1066,7 +1064,7 @@ test('policy pages share a footer and old hosts keep /api', () => {
     const html = readFileSync(new URL(`../${page}`, import.meta.url), 'utf8');
     const main = html.slice(html.indexOf('<main>'), html.indexOf('</main>'));
     for (const pattern of patterns) assert.match(main, pattern, `${page} ${pattern}`);
-    assert.doesNotMatch(main, /\b\d{5}\b|Street|Avenue|\bSuite\b|P\.O\. Box/i, page);
+    assert.doesNotMatch(main.replaceAll('18500', ''), /\b\d{5}\b|Street|Avenue|\bSuite\b|P\.O\. Box/i, page);
     if (page === 'privacy.html') {
       assert.doesNotMatch(main, /There are no customer accounts/);
       assert.doesNotMatch(main, /shirts, hoodies, hats, and mugs/);
@@ -1079,7 +1077,21 @@ test('policy pages share a footer and old hosts keep /api', () => {
   const made = 'Custom-made to order. See our <a href="/returns">Returns policy</a>.';
   assert.equal(index.split(made).length - 1, 2);
   assert.doesNotMatch(index, /Returns policy<\/a>[^<]*target=/);
+  assert.match(index, /aria-modal="true"/);
+  assert.match(index, /id="sizechart"/);
+  assert.match(index, /className='slot-clear'/);
+  assert.match(index, /<div class="slot"/);
+  assert.match(index, /34–37/);
+  assert.match(index, /33\.5/);
+  assert.match(index, /2–5 business days/);
+  assert.match(index, /3–4 business days/);
+  assert.match(index, /Bella \+ Canvas 3001/);
+  assert.match(index, /Gildan 18500/);
+  assert.doesNotMatch(index, /<small[^>]*data-clear/);
   const returns = readFileSync(new URL('../returns.html', import.meta.url), 'utf8');
+  assert.match(returns, /id="size-chart"/);
+  assert.match(returns, /34–37/);
+  assert.match(returns, /33\.5/);
   assert.doesNotMatch(returns, /noindex/i);
   assert.match(returns, /rel="canonical" href="https:\/\/trimojiapparel\.com\/returns"/);
   const success = readFileSync(new URL('../success.html', import.meta.url), 'utf8');
@@ -1093,7 +1105,7 @@ test('policy pages share a footer and old hosts keep /api', () => {
     assert.equal(wild.permanent, true);
   }
   assert.equal(config.redirects.some((rule) => rule.has?.some((item) => item.value === 'trimojiapparel.com')), false);
-  for (const path of ['/privacy', '/terms', '/shipping', '/returns', '/contact', '/stories', '/stories-admin', '/account']) {
+  for (const path of ['/privacy', '/terms', '/shipping', '/returns', '/contact', '/about', '/stories', '/stories-admin', '/account']) {
     assert.ok(config.rewrites.some((rule) => rule.source === path && rule.destination === `${path}.html`));
   }
   for (const host of ['www.trimojiapparel.com', 'trimoji.vercel.app']) {
@@ -1206,7 +1218,7 @@ test('public pages have share tags, icons, and a one-day asset cache', () => {
   assert.doesNotMatch(shop, /noindex/i);
   const home = readFileSync(new URL('../coming-soon.html', import.meta.url), 'utf8');
   for (const pattern of headTags) assert.match(home, pattern);
-  for (const page of ['privacy.html', 'terms.html', 'shipping.html', 'returns.html', 'contact.html', 'success.html', 'cancel.html']) {
+  for (const page of ['privacy.html', 'terms.html', 'shipping.html', 'returns.html', 'contact.html', 'about.html', 'success.html', 'cancel.html']) {
     const html = readFileSync(new URL(`../${page}`, import.meta.url), 'utf8');
     for (const pattern of headTags) assert.match(html, pattern, `${page} ${pattern}`);
     assert.doesNotMatch(html, /noindex/i, page);
@@ -1229,6 +1241,7 @@ test('public pages have share tags, icons, and a one-day asset cache', () => {
     'https://trimojiapparel.com/shipping',
     'https://trimojiapparel.com/returns',
     'https://trimojiapparel.com/contact',
+    'https://trimojiapparel.com/about',
   ]) {
     assert.match(sitemap, new RegExp(`<loc>${loc.replaceAll('.', '\\.')}</loc>`));
   }

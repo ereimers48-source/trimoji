@@ -81,7 +81,7 @@ test('passwordless account sign-in, saved designs, and orders', async ({ page },
   await page.goto('/shop-preview');
   await expect(page.locator('#savedesign')).toBeVisible();
   await expect(page.locator('#saveprompt')).toBeHidden();
-  await press(page.locator('#slots button[data-slot="1"] [data-clear]'), testInfo);
+  await press(page.locator('#slots .slot[data-slot="1"] button.slot-clear'), testInfo);
   await press(page.locator('#savedesign'), testInfo);
   await expect(page.locator('#toast')).toContainText('Design saved.');
 

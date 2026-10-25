@@ -34,7 +34,7 @@
 html{scroll-behavior:smooth;scroll-padding-top:5rem;overflow-anchor:none}
 body{margin:0;overflow-anchor:none;font-family:var(--sans);font-weight:400;color:var(--ink);background:var(--bg);line-height:1.47;padding-bottom:env(safe-area-inset-bottom);-webkit-font-smoothing:antialiased}
 img.em{width:1em;height:1em;vertical-align:-.15em}
-button,input,a.btn,.slot{touch-action:manipulation}
+button,input,a.btn,.slot,.slot-pick,.slot-clear{touch-action:manipulation}
 button{font:inherit;cursor:pointer;color:inherit}
 a{color:var(--ink)}
 .topbar{position:sticky;top:0;z-index:30;background:#fff;padding-top:env(safe-area-inset-top)}
@@ -77,14 +77,28 @@ a{color:var(--ink)}
 .choice h3{margin:0 0 4px;font-size:1.35rem;font-weight:600;letter-spacing:-.02em;line-height:1.2}
 .note{margin:0;color:var(--muted);font-size:.95rem;line-height:1.45}
 .slots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:16px auto;width:82%}
-.slot{aspect-ratio:1;width:100%;height:auto;border:1px solid var(--line);border-radius:16px;display:grid;place-items:center;font-size:40px;position:relative;cursor:pointer;background:#fff;padding:0;min-width:0}
+.slot{aspect-ratio:1;width:100%;height:auto;border:1px solid var(--line);border-radius:16px;display:grid;place-items:center;font-size:40px;position:relative;background:#fff;padding:0;min-width:0}
+.slot-pick{border:0;background:transparent;width:100%;height:100%;min-width:0;display:grid;place-items:center;padding:0;border-radius:16px;font-size:40px;cursor:pointer;color:inherit}
 .slot img.em{width:68%;height:68%;vertical-align:middle}
 .slot .note{font-size:1.5rem;line-height:1}
 .slot.f{border-color:#86868b}
 .slot.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
 .item .e{display:inline-flex;align-items:center;gap:6px}
 .gap{width:1.15em;height:1.15em;border:1px dashed #86868b;border-radius:6px;display:inline-block}
-.slot small{position:absolute;top:0;right:0;width:44px;height:44px;display:grid;place-items:center;font-size:18px;line-height:1;color:var(--muted)}
+.slot-clear{position:absolute;top:0;right:0;z-index:1;width:44px;height:44px;display:grid;place-items:center;font-size:18px;line-height:1;color:var(--muted);border:0;background:transparent;padding:0;cursor:pointer}
+.size-line{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.size-line h3{margin:0}
+.textlink{border:0;background:none;color:var(--accent);font:inherit;font-weight:500;min-height:44px;padding:8px 2px;cursor:pointer}
+.modal{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.36);display:flex;align-items:flex-end;justify-content:center;padding:12px}
+.modal[hidden]{display:none}
+.modal-card{background:#fff;width:min(40rem,100%);max-height:min(86dvh,760px);overflow:auto;border-radius:18px;padding:18px 18px 22px}
+.modal-card h3{margin:18px 0 6px;font-size:1.15rem;font-weight:600;letter-spacing:-.02em}
+.modal-card h4{margin:14px 0 4px;font-size:1rem;font-weight:600}
+.chart-wrap{overflow-x:auto}
+table.chart{width:100%;border-collapse:collapse;margin:0 0 12px;font-size:.95rem;font-variant-numeric:tabular-nums}
+table.chart caption{caption-side:top;text-align:left;font-weight:600;padding:0 0 6px}
+table.chart th,table.chart td{text-align:left;padding:8px 8px 8px 0;border-bottom:1px solid var(--line);white-space:nowrap}
+@media (min-width:700px){.modal{align-items:center}}
 .kb{margin-top:8px}
 .kb input{width:100%;min-height:44px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);font-size:16px;background:#f5f5f7}
 .grid{height:312px;margin-top:10px;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain}
@@ -128,7 +142,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
 #items{flex:1 1 auto;min-height:0;overflow:auto}
 .totals{display:flex;justify-content:space-between;gap:8px;line-height:1.45}
 .totals.total{font-weight:600;margin:8px 0 14px;font-size:1.15rem}
-.sum{margin-top:auto;padding-top:12px}
+.sum{margin-top:auto;padding-top:12px;min-height:0;flex:0 1 auto;overflow:auto}
 #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:14px 18px;border-radius:14px;display:none;z-index:80;max-width:min(92vw, 420px);line-height:1.4;text-align:center}
 .sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 footer{color:var(--muted);font-size:.9rem;line-height:1.5;padding:28px 22px calc(36px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
@@ -217,7 +231,7 @@ footer a{color:var(--muted)}
 <div class="opts" id="cols"></div>
 </section>
 <section class="choice">
-<h3 id="sizehead">Size</h3>
+<div class="size-line"><h3 id="sizehead">Size</h3><button class="textlink" type="button" id="sizechartbtn">Size chart</button></div>
 <div class="opts" id="sizes"></div>
 </section>
 <section class="choice">
@@ -234,12 +248,14 @@ footer a{color:var(--muted)}
 <button class="btn ghost" id="savedesign" type="button" hidden>Save design</button>
 <p class="note" id="saveprompt"><a id="savelink" href="/account">Sign in</a> to save this design.</p>
 <p class="note">Custom-made to order. See our <a href="/returns">Returns policy</a>.</p>
+<p class="note">Made just for you. If it’s damaged, misprinted, defective, or not what you ordered, we’ll replace it free or refund you.</p>
+<p class="note">Made to order. Printing usually takes 2–5 business days, then about 3–4 business days to arrive in the US. This is an estimate.</p>
 </div>
 </section>
 </div>
 </div>
 </main>
-<div id="drawer" role="dialog" aria-label="Bag"><div class="drawer-head"><h2>Bag</h2><button class="opt" type="button" id="closecart" aria-label="Close bag">Close</button></div>
+<div id="drawer" role="dialog" aria-modal="true" aria-labelledby="bagtitle" aria-hidden="true" inert><div class="drawer-head"><h2 id="bagtitle">Bag</h2><button class="opt" type="button" id="closecart" aria-label="Close bag">Close</button></div>
 <div id="items"></div>
 <div class="sum">
 <div class="totals"><span>Subtotal</span><span id="sub">$0.00</span></div>
@@ -247,12 +263,67 @@ footer a{color:var(--muted)}
 <div class="totals total"><span>Total</span><span id="tot">$0.00</span></div>
 <button class="btn" id="pay" type="button">Checkout</button>
 <p class="note">Custom-made to order. See our <a href="/returns">Returns policy</a>.</p>
-<p class="note">Stripe collects a US shipping address. The price is calculated on the server. <a href="/shipping">Shipping</a> · <a href="/returns">Returns</a></p>
+<p class="note">Made just for you. If it’s damaged, misprinted, defective, or not what you ordered, we’ll replace it free or refund you.</p>
+<p class="note">Made to order. Printing usually takes 2–5 business days, then about 3–4 business days in the US. This is an estimate. Stripe collects a US shipping address. The price is calculated on the server. <a href="/shipping">Shipping</a> · <a href="/returns">Returns</a></p>
 </div></div>
+<div id="sizechart" class="modal" role="dialog" aria-modal="true" aria-labelledby="sizechart-title" aria-hidden="true" hidden inert>
+<div class="modal-card">
+<div class="drawer-head"><h2 id="sizechart-title">Size chart</h2><button class="opt" type="button" id="sizechart-close" aria-label="Close size chart">Close</button></div>
+<p class="note">Inches, for the sizes we sell (S–2XL). These figures are from Printful’s size guide for the blanks we print: the Unisex Staple T-Shirt (Bella + Canvas 3001) and the Unisex Heavy Blend Hoodie (Gildan 18500). Printful says product measurements can vary by up to 2 inches.</p>
+<h3>T-shirt</h3>
+<p class="note">Unisex Staple T-Shirt, Bella + Canvas 3001. Length runs from the highest point of the shoulder to the hem. Chest is around the fullest part of your chest. Laid-flat width is from the seam under one sleeve to the seam under the other. This tee’s size guide does not list a sleeve length.</p>
+<div class="chart-wrap"><table class="chart">
+<caption>T-shirt, your measurements (inches)</caption>
+<thead><tr><th scope="col">Size</th><th scope="col">Length</th><th scope="col">Chest</th></tr></thead>
+<tbody>
+<tr><th scope="row">S</th><td>28</td><td>34–37</td></tr>
+<tr><th scope="row">M</th><td>29</td><td>38–41</td></tr>
+<tr><th scope="row">L</th><td>30</td><td>42–45</td></tr>
+<tr><th scope="row">XL</th><td>31</td><td>46–49</td></tr>
+<tr><th scope="row">2XL</th><td>32</td><td>50–53</td></tr>
+</tbody>
+</table></div>
+<div class="chart-wrap"><table class="chart">
+<caption>T-shirt, garment laid flat (inches)</caption>
+<thead><tr><th scope="col">Size</th><th scope="col">Length</th><th scope="col">Width</th></tr></thead>
+<tbody>
+<tr><th scope="row">S</th><td>28</td><td>18</td></tr>
+<tr><th scope="row">M</th><td>29</td><td>20</td></tr>
+<tr><th scope="row">L</th><td>30</td><td>22</td></tr>
+<tr><th scope="row">XL</th><td>31</td><td>24</td></tr>
+<tr><th scope="row">2XL</th><td>32</td><td>26</td></tr>
+</tbody>
+</table></div>
+<h3>Hoodie</h3>
+<p class="note">Unisex Heavy Blend Hoodie, Gildan 18500. Length runs from the high point of the shoulder to the hem. Chest is around the fullest part of your chest. Laid-flat width is across the chest. Sleeve length starts at the center back of the collar, follows the shoulder seam, and ends at the sleeve hem.</p>
+<div class="chart-wrap"><table class="chart">
+<caption>Hoodie, your measurements (inches)</caption>
+<thead><tr><th scope="col">Size</th><th scope="col">Length</th><th scope="col">Chest</th><th scope="col">Sleeve</th></tr></thead>
+<tbody>
+<tr><th scope="row">S</th><td>27</td><td>38–41</td><td>33.5</td></tr>
+<tr><th scope="row">M</th><td>28</td><td>42–45</td><td>34.5</td></tr>
+<tr><th scope="row">L</th><td>29</td><td>46–49</td><td>35.5</td></tr>
+<tr><th scope="row">XL</th><td>30</td><td>50–53</td><td>36.5</td></tr>
+<tr><th scope="row">2XL</th><td>31</td><td>54–57</td><td>37.5</td></tr>
+</tbody>
+</table></div>
+<div class="chart-wrap"><table class="chart">
+<caption>Hoodie, garment laid flat (inches)</caption>
+<thead><tr><th scope="col">Size</th><th scope="col">Length</th><th scope="col">Width</th><th scope="col">Sleeve</th></tr></thead>
+<tbody>
+<tr><th scope="row">S</th><td>27</td><td>20</td><td>33.5</td></tr>
+<tr><th scope="row">M</th><td>28</td><td>22</td><td>34.5</td></tr>
+<tr><th scope="row">L</th><td>29</td><td>24</td><td>35.5</td></tr>
+<tr><th scope="row">XL</th><td>30</td><td>26</td><td>36.5</td></tr>
+<tr><th scope="row">2XL</th><td>31</td><td>28</td><td>37.5</td></tr>
+</tbody>
+</table></div>
+</div>
+</div>
 <div id="toast"></div>
 <div id="safe-b" aria-hidden="true"></div>
 <footer>
-<nav aria-label="Policies"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/shipping">Shipping</a><a href="/returns">Returns</a><a href="/contact">Contact</a><a href="/stories">Stories</a><a href="/account">Account</a></nav>
+<nav aria-label="Policies"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/shipping">Shipping</a><a href="/returns">Returns</a><a href="/contact">Contact</a><a href="/about">About</a><a href="/account">Account</a></nav>
 <p>Shipping is $5.99 flat, free over $60.</p>
 <p>© Trimoji. Emoji graphics by <a href="https://github.com/jdecked/twemoji">Twemoji</a>, © Twitter, Inc. and other contributors, licensed under <a href="https://creativecommons.org/licenses/by/4.0/">CC-BY 4.0</a>.</p>
 </footer>
@@ -296,13 +367,14 @@ function nextEmpty(from){for(let step=1;step<=3;step++){const i=(from+step)%3;if
 function pick(e){if(!e)return;const i=S.slot;S.pick[i]=e;S.slot=nextEmpty(i);all();markSelected()}
 function takeEmoji(pool,emoji){const i=pool.findIndex(node=>node.alt===emoji);if(i>=0)return pool.splice(i,1)[0];const holder=document.createElement('div');holder.innerHTML=img(emoji,false);return holder.firstElementChild}
 function slots(){const root=document.getElementById('slots');
- if(root.childElementCount!==3)root.innerHTML=[0,1,2].map(i=>`<button type="button" class="slot" data-slot="${i}"></button>`).join('');
+ if(root.childElementCount!==3||!root.querySelector('.slot-pick'))root.innerHTML=[0,1,2].map(i=>`<div class="slot" data-slot="${i}"><button type="button" class="slot-pick" data-slot="${i}"></button></div>`).join('');
  const pool=[...root.querySelectorAll('img.em')];
- [...root.children].forEach((el,i)=>{const e=S.pick[i]||'';el.classList.toggle('f',!!e);el.classList.toggle('on',i===S.slot);el.setAttribute('aria-pressed',i===S.slot?'true':'false');const have=el.querySelector('img.em');
+ [...root.children].forEach((el,i)=>{const e=S.pick[i]||'';const pick=el.querySelector('.slot-pick');el.classList.toggle('f',!!e);el.classList.toggle('on',i===S.slot);pick.classList.toggle('f',!!e);pick.setAttribute('aria-pressed',i===S.slot?'true':'false');const have=pick.querySelector('img.em');
   if(el.dataset.shown===e&&(e?have&&have.alt===e:!have)){if(have){const k=pool.indexOf(have);if(k>=0)pool.splice(k,1)}return}
-  const fresh=el.dataset.shown!=null&&!!e;el.dataset.shown=e;
-  if(!e){const n=document.createElement('span');n.className='note';n.textContent=String(i+1);el.replaceChildren(n);return}
-  const mark=takeEmoji(pool,e);const x=document.createElement('small');x.dataset.clear='1';x.setAttribute('aria-label','Clear slot');x.textContent='✕';el.replaceChildren(mark,x);
+  const fresh=el.dataset.shown!=null&&!!e;el.dataset.shown=e;const clear=el.querySelector('.slot-clear');
+  if(!e){const n=document.createElement('span');n.className='note';n.textContent=String(i+1);pick.replaceChildren(n);if(clear)clear.remove();return}
+  const mark=takeEmoji(pool,e);pick.replaceChildren(mark);
+  const x=clear||document.createElement('button');x.type='button';x.className='slot-clear';x.dataset.clear=String(i);x.setAttribute('aria-label','Clear slot '+(i+1));x.textContent='✕';if(!clear)el.appendChild(x);
   if(fresh){el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop')}});
  const say=document.getElementById('triosay');if(say)say.textContent=S.pick.some(Boolean)?S.pick.map(e=>e||'empty').join(', ')+' selected':'Trio is empty'}
 function ensureOpts(id,arr,cur){const el=document.getElementById(id);const key=arr.map(a=>a[0]).join('\0');
@@ -402,7 +474,7 @@ function setProd(v){S.prod=v;const p=PRODS[v];
  if(!p.sizes.includes(S.size))S.size=p.defaultSize&&p.sizes.includes(p.defaultSize)?p.defaultSize:p.sizes[Math.min(1,p.sizes.length-1)];
  all()}
 function setSize(v){S.size=v;all()}
-function controls(){ensureOpts('lay',[['row','Row'],['triangle','Triangle'],['stacked','Stacked']],S.lay);
+function controls(){const chartBtn=document.getElementById('sizechartbtn');if(chartBtn)chartBtn.hidden=!(S.prod==='tee'||S.prod==='hoodie');ensureOpts('lay',[['row','Row'],['triangle','Triangle'],['stacked','Stacked']],S.lay);
  ensureOpts('prods',Object.entries(PRODS).map(([k,v])=>[k,v.available?v.n:v.n+' · soon']),S.prod);
  const sizesEl=document.getElementById('sizes');
  const colorHead=document.getElementById('colorhead');const sizeHead=document.getElementById('sizehead');
@@ -479,7 +551,15 @@ function cart(){cc.textContent=String(S.cart.reduce((a,x)=>a+x.quantity,0));item
  document.getElementById('sub').textContent=money(subtotal);
  document.getElementById('ship').textContent=ship===0&&subtotal>=60?'Free':money(ship);
  document.getElementById('tot').textContent=money(subtotal+ship);placeToast()}
-function toggleCart(o){if(o===true)drawer.classList.add('open');else if(o===false)drawer.classList.remove('open');else drawer.classList.toggle('open');requestAnimationFrame(placeToast)}
+let cartReturn=null,chartReturn=null;
+function setBackgroundInert(except){for(const el of document.body.children){if(el===except||el.id==='toast')el.removeAttribute('inert');else el.setAttribute('inert','')}}
+function clearBackgroundInert(){for(const el of document.body.children)el.removeAttribute('inert');if(!drawer.classList.contains('open'))drawer.setAttribute('inert','');const box=document.getElementById('sizechart');if(box&&box.hidden)box.setAttribute('inert','')}
+function toggleCart(o){const open=o===true?true:o===false?false:!drawer.classList.contains('open');
+ if(open){const current=document.activeElement;cartReturn=current&&current!==document.body?current:document.getElementById('cartbtn');drawer.classList.add('open');drawer.removeAttribute('inert');drawer.setAttribute('aria-hidden','false');setBackgroundInert(drawer);const close=document.getElementById('closecart');if(close)close.focus()}
+ else{const back=cartReturn;cartReturn=null;drawer.classList.remove('open');drawer.setAttribute('aria-hidden','true');clearBackgroundInert();if(back&&document.contains(back)&&typeof back.focus==='function')back.focus()}
+ requestAnimationFrame(placeToast)}
+function openSizeChart(){const box=document.getElementById('sizechart');if(!box||drawer.classList.contains('open'))return;const current=document.activeElement;chartReturn=current&&current!==document.body?current:document.getElementById('sizechartbtn');box.hidden=false;box.removeAttribute('inert');box.setAttribute('aria-hidden','false');setBackgroundInert(box);const close=document.getElementById('sizechart-close');if(close)close.focus()}
+function closeSizeChart(){const box=document.getElementById('sizechart');if(!box||box.hidden)return;const back=chartReturn;chartReturn=null;box.hidden=true;box.setAttribute('aria-hidden','true');clearBackgroundInert();if(back&&document.contains(back)&&typeof back.focus==='function')back.focus()}
 function schedulePreview(){}
 async function checkout(){if(!S.cart.length)return toast('Your bag is empty');
  const pay=document.getElementById('pay');pay.disabled=true;const label=pay.textContent;pay.textContent='Redirecting…';
@@ -505,7 +585,7 @@ bindTap('prods',b=>setProd(b.dataset.value));
 bindTap('sizes',b=>setSize(b.dataset.value));
 bindTap('cols',b=>{S.col=Number(b.dataset.col);all()});
 bindTap('grid',b=>{if(b.dataset.emoji)pick(b.dataset.emoji)});
-bindTap('slots',(b,e)=>{const i=Number(b.dataset.slot);if(e&&e.target.closest('[data-clear]')){S.pick[i]=null;S.slot=i;all();markSelected();return}S.slot=i;all()});
+bindTap('slots',b=>{if(b.classList.contains('slot-clear')){const i=Number(b.dataset.clear);S.pick[i]=null;S.slot=i;all();markSelected();return}S.slot=Number(b.dataset.slot);all()});
 bindTap('tabs',b=>jump(b.dataset.cat));
 bindTap('items',b=>{if(b.dataset.remove!=null){S.cart.splice(Number(b.dataset.remove),1);cart();return}if(b.dataset.qty!=null)setQty(Number(b.dataset.line),Number(b.dataset.qty))});
 document.getElementById('sz').addEventListener('input',draw);
@@ -515,6 +595,10 @@ document.getElementById('addbtn').addEventListener('click',addCart);
 document.getElementById('savedesign').addEventListener('click',saveDesign);
 document.getElementById('savelink').addEventListener('click',()=>{try{localStorage.setItem('trimoji-pending-design',JSON.stringify(currentDesign()))}catch(e){}});
 document.getElementById('closecart').addEventListener('click',()=>toggleCart(false));
+document.getElementById('sizechartbtn').addEventListener('click',openSizeChart);
+document.getElementById('sizechart-close').addEventListener('click',closeSizeChart);
+document.getElementById('sizechart').addEventListener('click',e=>{if(e.target.id==='sizechart')closeSizeChart()});
+document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;const box=document.getElementById('sizechart');if(box&&!box.hidden){e.preventDefault();closeSizeChart();return}if(drawer.classList.contains('open')){e.preventDefault();toggleCart(false)}});
 document.getElementById('pay').addEventListener('click',checkout);
 mock.querySelector('img.blank').addEventListener('error',()=>mock.classList.add('flat'));
 mock.querySelector('img.blank').addEventListener('load',()=>mock.classList.remove('flat'));

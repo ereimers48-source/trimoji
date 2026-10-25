@@ -15,14 +15,16 @@ test('a story stays private until an admin approves it', async ({ page }, testIn
   await expect(page.locator('meta[property="og:image"]')).toHaveCount(0);
   await expect(page.locator('meta[name="twitter:card"]')).toHaveCount(0);
   await expect(page.locator('#empty')).toContainText('yours can be the first');
-  if (await page.locator('#list article').count() === 0) await expect(page.locator('#empty')).toBeVisible();
-  await expect(page.locator('footer nav a')).toHaveText(['Privacy', 'Terms', 'Shipping', 'Returns', 'Contact', 'Stories']);
+  await expect(page.locator('#empty')).toBeHidden();
+  await expect(page.locator('footer nav a')).toHaveText(['Privacy', 'Terms', 'Shipping', 'Returns', 'Contact', 'About']);
+  await expect(page.locator('footer a[href="/stories"]')).toHaveCount(0);
 
   await page.goto('/');
   await expect(page.locator('.eyebrow')).toHaveText('Coming soon');
   await expect(page.locator('footer a[href="/stories"]')).toHaveCount(0);
+  await expect(page.locator('footer a[href="/about"]')).toHaveText('About');
   await page.goto('/shop-preview');
-  await expect(page.locator('footer a[href="/stories"]')).toHaveText('Stories');
+  await expect(page.locator('footer a[href="/stories"]')).toHaveCount(0);
 
   await page.goto('/stories');
   await page.locator('#emoji1').fill('🌈');

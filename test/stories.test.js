@@ -13,7 +13,7 @@ import {
   sanitizePlain,
   validateSubmission,
 } from '../lib/stories.js';
-import { comingSoonDocument, storiesDocument, storiesPublic } from '../lib/stories-page.js';
+import { comingSoonDocument, storiesDocument, storiesNavDocument, storiesPublic } from '../lib/stories-page.js';
 import {
   createBlobStore,
   createMemoryStore,
@@ -59,9 +59,21 @@ test('story text is sanitized and only approved notes are public', async () => {
   assert.doesNotMatch(comingSoonDocument(soon, {}), /href="\/stories"/);
   const page = readFileSync(new URL('../stories.html', import.meta.url), 'utf8');
   assert.match(page, /data-stories-robots/);
+  assert.match(page, /data-stories-gated/);
+  assert.doesNotMatch(page, /href="\/stories"/);
   assert.match(page, /I agree Trimoji can share my story and photo on trimojiapparel.com and our social channels\./);
-  assert.doesNotMatch(storiesDocument(page, { STORIES_PUBLIC: 'true' }), /data-stories-robots/);
+  const published = storiesDocument(page, { STORIES_PUBLIC: 'true' });
+  assert.doesNotMatch(published, /data-stories-robots/);
+  assert.doesNotMatch(published, /id="empty"[^>]*data-stories-gated/);
+  assert.match(published, /hasAttribute\('data-stories-gated'\)/);
+  assert.match(published, /href="\/stories">Stories</);
   assert.match(storiesDocument(page, {}), /noindex/);
+  assert.match(storiesDocument(page, {}), /id="empty"[^>]*data-stories-gated/);
+  assert.doesNotMatch(storiesDocument(page, {}), /href="\/stories"/);
+  const nav = '<nav aria-label="Policies"><a href="/contact">Contact</a><a href="/about">About</a><a href="/account">Account</a></nav>';
+  assert.match(storiesNavDocument(nav, { STORIES_PUBLIC: 'on' }), /About<\/a><a href="\/stories">Stories<\/a><a href="\/account">Account<\/a>/);
+  assert.doesNotMatch(storiesNavDocument(nav, {}), /href="\/stories"/);
+  assert.match(storiesNavDocument(nav, {}), /href="\/account"/);
   assert.match(readFileSync(new URL('../stories-admin.html', import.meta.url), 'utf8'), /noindex/);
   const readme = readFileSync(new URL('../README.md', import.meta.url), 'utf8');
   assert.match(readme, /BLOB_READ_WRITE_TOKEN/);

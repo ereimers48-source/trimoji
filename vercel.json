@@ -29,6 +29,7 @@
     { "source": "/shipping", "destination": "/shipping.html" },
     { "source": "/returns", "destination": "/returns.html" },
     { "source": "/contact", "destination": "/contact.html" },
+    { "source": "/about", "destination": "/about.html" },
     { "source": "/stories", "destination": "/stories.html" },
     { "source": "/stories-admin", "destination": "/stories-admin.html" },
     { "source": "/account", "destination": "/account.html" }

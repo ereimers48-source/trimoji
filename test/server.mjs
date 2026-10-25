@@ -7,7 +7,7 @@ import { accountDocument, accountsPublic, comingSoonAccountDocument } from '../l
 import { routeRequest } from '../lib/coming-soon.js';
 import { metadataForItems, normalizeCart } from '../lib/design.js';
 import { pageRedirect } from '../lib/redirect.js';
-import { comingSoonDocument, storiesDocument, storiesPublic } from '../lib/stories-page.js';
+import { comingSoonDocument, storiesDocument, storiesNavDocument, storiesPublic } from '../lib/stories-page.js';
 
 process.env.STRIPE_SECRET_KEY = 'sk_test_playwright';
 process.env.SITE_URL = 'http://127.0.0.1:4173';
@@ -151,6 +151,7 @@ const cleanPages = {
   '/shipping': 'shipping.html',
   '/returns': 'returns.html',
   '/contact': 'contact.html',
+  '/about': 'about.html',
   '/stories': 'stories.html',
   '/stories-admin': 'stories-admin.html',
   '/account': 'account.html',
@@ -352,6 +353,7 @@ const server = createServer(async (req, res) => {
     if (extname(file) === '.html') {
       let html = data.toString('utf8');
       if (file.endsWith('/stories.html')) html = storiesDocument(html);
+      else html = storiesNavDocument(html);
       if (file.endsWith('/account.html')) html = accountDocument(html);
       if (file.endsWith('/coming-soon.html')) html = comingSoonAccountDocument(comingSoonDocument(html));
       if (route.robots) {

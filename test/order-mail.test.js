@@ -129,7 +129,9 @@ test('order and shipping templates escape customer text and keep the receipt fac
   assert.match(message.text, /Tax \$2\.17/);
   assert.match(message.html, /We'll email tracking when it ships/);
   assert.match(message.text, /We'll email tracking when it ships/);
-  assert.match(message.html, /2–7 business days/);
+  assert.match(message.html, /2–5 business days/);
+  assert.match(message.html, /3–4 business days/);
+  assert.match(message.text, /made to order/i);
   assert.match(message.html, /https:\/\/trimojiapparel\.com\/returns/);
   assert.match(message.html, /hello@trimojiapparel\.com/);
   assert.match(message.html, /Austin/);
