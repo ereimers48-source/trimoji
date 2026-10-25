@@ -82,8 +82,9 @@ runtime.createStripe = () => ({
           object: 'checkout.session',
           payment_status: 'paid',
           status: 'complete',
-          amount_total: 3499,
+          amount_total: 3716,
           currency: 'usd',
+          total_details: { amount_tax: 217, amount_shipping: 599 },
           metadata: previewOrder,
           customer_details: { email: 'secret@example.com', name: 'Ada Lovelace' },
           shipping_details: {

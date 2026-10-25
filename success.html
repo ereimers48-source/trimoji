@@ -75,6 +75,7 @@ function showOrder(data){
   });
   var bits=[];
   if(Number(data.shipping)>0)bits.push('Shipping '+money(data.shipping));
+  if(data.tax!=null)bits.push('Tax '+money(data.tax));
   bits.push('Total '+money(data.total));
   sum.textContent=bits.join(' · ');
   box.hidden=false;

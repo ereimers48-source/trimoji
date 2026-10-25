@@ -222,7 +222,12 @@ test('design token round-trips and checkout metadata survives a client price', a
   assert.equal(params.cancel_url, `${SITE}/cancel.html`);
   assert.equal(params.line_items[0].price_data.unit_amount, 2900);
   assert.equal(params.line_items[0].quantity, 2);
-  assert.equal(params.line_items[1].price_data.unit_amount, 599);
+  assert.equal(params.line_items[0].price_data.tax_behavior, 'exclusive');
+  assert.equal(params.line_items.length, 1);
+  assert.deepEqual(params.automatic_tax, { enabled: true });
+  assert.equal(params.shipping_options[0].shipping_rate_data.fixed_amount.amount, 599);
+  assert.equal(params.shipping_options[0].shipping_rate_data.tax_behavior, 'exclusive');
+  assert.equal(params.shipping_options[0].shipping_rate_data.tax_code, 'txcd_92010001');
   assert.equal(JSON.stringify(params).includes('"unit_amount":100'), false);
   const restored = itemsFromMetadata(params.metadata);
   assert.deepEqual(restored[0].emojis, ['🔥', '😎', '🍕']);
@@ -382,12 +387,21 @@ test('printful order is a draft unless PRINTFUL_AUTO_CONFIRM=true', async () => 
   const stripe = fakeStripe();
   await createCheckoutSession({ items: [sampleItem({ product: 'mug', color: 'White', size: '11 oz' })], stripe, siteUrl: SITE });
   const session = completedSession(stripe.calls[0].metadata);
+  session.customer_details.phone = '555-0100';
+  session.shipping_details.phone = '555-0199';
   const order = buildPrintfulOrder({ session, siteUrl: SITE });
   assert.equal(order.external_id, printfulExternalId('cs_test_123'));
   assert.equal(order.packing_slip.message, 'Stripe session cs_test_123');
   assert.equal(order.recipient.country_code, 'US');
   assert.equal(order.recipient.state_code, 'TX');
-  assert.equal(order.recipient.email, 'ada@example.com');
+  assert.equal(order.recipient.email, undefined);
+  assert.equal(order.recipient.phone, undefined);
+  const packedOrder = JSON.stringify(order);
+  assert.equal(Object.hasOwn(order.recipient, 'email'), false);
+  assert.equal(Object.hasOwn(order.recipient, 'phone'), false);
+  assert.equal(packedOrder.includes('ada@example.com'), false);
+  assert.equal(packedOrder.includes('555-0100'), false);
+  assert.equal(packedOrder.includes('555-0199'), false);
   assert.equal(order.items[0].variant_id, 1320);
   assert.equal(order.items[0].files[0].type, 'default');
   assert.equal(order.items[0].options, undefined);
@@ -433,6 +447,12 @@ test('printful order is a draft unless PRINTFUL_AUTO_CONFIRM=true', async () => 
   assert.ok(body.external_id.length <= 32);
   assert.equal(body.packing_slip.message, `Stripe session ${session.id}`);
   assert.equal(body.items[0].variant_id, 1320);
+  assert.equal(body.recipient.email, undefined);
+  assert.equal(body.recipient.phone, undefined);
+  assert.equal(Object.hasOwn(body.recipient, 'email'), false);
+  assert.equal(Object.hasOwn(body.recipient, 'phone'), false);
+  assert.equal(JSON.stringify(body).includes('ada@example.com'), false);
+  assert.equal(JSON.stringify(body).includes('555-0100'), false);
 
   seen.length = 0;
   const live = await handleStripeWebhook({
@@ -703,7 +723,9 @@ test('phone case print file stays below the camera and checks out at $29', async
   await createCheckoutSession({ items: [item], stripe, siteUrl: SITE });
   assert.equal(stripe.calls[0].line_items[0].price_data.unit_amount, 2900);
   assert.match(stripe.calls[0].line_items[0].price_data.product_data.name, /Tough phone case/);
-  assert.equal(stripe.calls[0].line_items[1].price_data.unit_amount, 599);
+  assert.equal(stripe.calls[0].line_items.length, 1);
+  assert.equal(stripe.calls[0].shipping_options[0].shipping_rate_data.fixed_amount.amount, 599);
+  assert.equal(stripe.calls[0].shipping_options[0].shipping_rate_data.tax_code, 'txcd_92010001');
   const order = buildPrintfulOrder({ session: completedSession(stripe.calls[0].metadata), siteUrl: SITE });
   assert.equal(order.items[0].name, 'Trimoji Tough phone case');
   assert.equal(order.items[0].variant_id, 33988);
@@ -1132,8 +1154,18 @@ test('order receipt uses the session id and hides the customer', async () => {
   assert.deepEqual(order.items[0].emojis, ['🔥', '😎', '🍕']);
   assert.equal(order.items[0].amount, 2900);
   assert.equal(order.shipping, 599);
+  assert.equal(order.tax, null);
   assert.equal(order.total, 3499);
-  assert.deepEqual(Object.keys(order).sort(), ['currency', 'items', 'reference', 'shipping', 'subtotal', 'total']);
+  assert.deepEqual(Object.keys(order).sort(), ['currency', 'items', 'reference', 'shipping', 'subtotal', 'tax', 'total']);
+  const taxed = publicOrder({
+    ...session,
+    amount_total: 3716,
+    total_details: { amount_tax: 217, amount_shipping: 599 },
+  });
+  assert.equal(taxed.shipping, 599);
+  assert.equal(taxed.tax, 217);
+  assert.equal(taxed.total, 3716);
+  assert.equal(taxed.subtotal, 2900);
   const packed = JSON.stringify(order);
   assert.equal(packed.includes('secret@'), false);
   assert.equal(packed.includes('Secret'), false);
