@@ -1,19 +1,19 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Trimoji — Three emojis. One you.</title>
-<meta name="description" content="Build a logo from three emojis and print it on a tee, hoodie, mug, hat, or phone case.">
+<meta name="description" content="Build a logo from three emojis and print it on a tee, hoodie, mug, hat, phone case, or sticker sheet.">
 <link rel="canonical" href="https://trimojiapparel.com/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Trimoji">
 <meta property="og:url" content="https://trimojiapparel.com/">
 <meta property="og:title" content="Trimoji — Three emojis. One you.">
-<meta property="og:description" content="Build a logo from three emojis and print it on a tee, hoodie, mug, hat, or phone case.">
+<meta property="og:description" content="Build a logo from three emojis and print it on a tee, hoodie, mug, hat, phone case, or sticker sheet.">
 <meta property="og:image" content="https://trimojiapparel.com/assets/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Trimoji wordmark with fire, sunglasses, and pizza emojis. Three emojis. One you.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Trimoji — Three emojis. One you.">
-<meta name="twitter:description" content="Build a logo from three emojis and print it on a tee, hoodie, mug, hat, or phone case.">
+<meta name="twitter:description" content="Build a logo from three emojis and print it on a tee, hoodie, mug, hat, phone case, or sticker sheet.">
 <meta name="twitter:image" content="https://trimojiapparel.com/assets/og.png">
 <meta name="twitter:image:alt" content="Trimoji wordmark with fire, sunglasses, and pizza emojis. Three emojis. One you.">
 <link rel="icon" href="/favicon.ico" sizes="any">
@@ -60,6 +60,9 @@ a{color:var(--ink)}
 .mock[data-product="mug"]{aspect-ratio:640/520;--aw:640;--ah:520}
 .mock[data-product="hat"]{aspect-ratio:560/520;--aw:560;--ah:520}
 .mock[data-product="case"]{aspect-ratio:1392/2220;--aw:1392;--ah:2220}
+.mock[data-product="sticker"]{aspect-ratio:1750/2482;--aw:1750;--ah:2482;overflow:visible;background:transparent}
+.mock[data-product="sticker"] .blank{opacity:0}
+.mock[data-product="sticker"] .print{transform:none;mix-blend-mode:normal;opacity:1;background:#fff;border-radius:2px;filter:drop-shadow(0 14px 28px rgba(29,29,31,.14))}
 #cols.finish{display:flex;flex-wrap:wrap;gap:8px;grid-template-columns:none;width:auto}
 #sizes.models{display:block}
 #sizes.models select{width:100%;min-height:48px;padding:0 12px;border-radius:12px;border:1px solid var(--line);background:#fff;font:inherit;font-size:16px;color:inherit}
@@ -147,6 +150,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
 .item .e{font-size:1.4rem;line-height:1}
 .item .meta{flex:1 1 8rem;min-width:0}
 .item .cost{margin-left:auto}
+.cross-sell{flex:1 1 100%;margin:0;padding:6px 0 2px;border:0;background:none;color:var(--accent);font:inherit;font-weight:500;font-size:.92rem;line-height:1.35;text-align:left;min-height:44px}
 .qty{display:inline-flex;align-items:center;gap:2px}
 .qty .opt{min-width:44px;padding:8px 0;text-align:center}
 .qty b{min-width:1.4rem;text-align:center}
@@ -245,19 +249,19 @@ footer a{color:var(--muted)}
 <div class="opts" id="prods"></div>
 </section>
 </div>
-<section class="choice">
+<section class="choice" id="lay-choice">
 <h3>Layout</h3>
 <div class="opts" id="lay"></div>
 </section>
-<section class="choice">
+<section class="choice" id="color-choice">
 <h3 id="colorhead">Color</h3>
 <div class="opts" id="cols"></div>
 </section>
-<section class="choice">
+<section class="choice" id="size-choice">
 <div class="size-line"><h3 id="sizehead">Size</h3><button class="textlink" type="button" id="sizechartbtn">Size chart</button></div>
 <div class="opts" id="sizes"></div>
 </section>
-<section class="choice">
+<section class="choice" id="logo-choice">
 <h3>Logo size</h3>
 <p class="note" id="sizecap">Scales the trio on the product and on the print.</p>
 <label>Logo size <span id="szv"></span></label>
@@ -370,7 +374,8 @@ const PRODS={
  hoodie:{n:'Hoodie',p:54,sizes:['S','M','L','XL','2XL'],colors:['White','Black','Heather','Navy','Pink'],available:true},
  mug:{n:'Mug',p:19,sizes:['11 oz'],colors:['White'],available:true},
  hat:{n:'Trucker hat',p:33,sizes:['One size'],colors:['White','Black','Charcoal','Navy'],available:true},
- case:{n:'Tough phone case',p:29,sizes:['iPhone 15','iPhone 15 Plus','iPhone 15 Pro','iPhone 15 Pro Max','iPhone 16','iPhone 16 Plus','iPhone 16 Pro','iPhone 16 Pro Max','iPhone 17','iPhone 17 Air','iPhone 17 Pro','iPhone 17 Pro Max','iPhone 18 Pro','iPhone 18 Pro Max'],colors:['Glossy','Matte'],available:true,defaultSize:'iPhone 16'}
+ case:{n:'Tough phone case',p:29,sizes:['iPhone 15','iPhone 15 Plus','iPhone 15 Pro','iPhone 15 Pro Max','iPhone 16','iPhone 16 Plus','iPhone 16 Pro','iPhone 16 Pro Max','iPhone 17','iPhone 17 Air','iPhone 17 Pro','iPhone 17 Pro Max','iPhone 18 Pro','iPhone 18 Pro Max'],colors:['Glossy','Matte'],available:true,defaultSize:'iPhone 16'},
+ sticker:{n:'Kiss-Cut Sticker Sheet',p:9,sizes:['5.83×8.27 in'],colors:['White'],available:true,sheet:true}
 };
 const COLS=[['White','#ffffff'],['Black','#1f1f24'],['Heather','#b9b9c0'],['Navy','#1f2a4d'],['Lilac','#cbb8f5'],['Pink','#f7c6d9'],['Sage','#b6cdb1'],['Charcoal','#554b56'],['Glossy','#ffffff'],['Matte','#ececee']];
 const reduceMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -431,9 +436,25 @@ const PHOTO={
 };
 const photoCache=new Set();
 function preloadPhotos(){for(const [prod,spec] of Object.entries(PHOTO)){for(const color of spec.colors){for(const w of spec.w){const url=`assets/products/${prod}/${color.toLowerCase()}-${w}.webp`;const im=new Image();im.onload=()=>photoCache.add(url);im.src=url}}}}
-function applyPhoto(){const spec=PHOTO[S.prod];const color=COLS[S.col][0];const print=mock.querySelector('.print');
+function stickerSheetSVG(){const W=1750,H=2482,margin=150,gap=50,cols=3,rows=5;
+ const bw=Math.floor((W-2*margin-(cols-1)*gap)/cols),bh=Math.floor((H-2*margin-(rows-1)*gap)/rows);
+ const gw=cols*bw+(cols-1)*gap,gh=rows*bh+(rows-1)*gap,x0=Math.floor((W-gw)/2),y0=Math.floor((H-gh)/2);
+ const es=Math.round(Math.min(bw,bh)*0.385),cx=bw/2,cy=bh/2,dx=bw*0.215;
+ const spots=[[cx,cy-bh*0.215],[cx-dx,cy+bh*0.175],[cx+dx,cy+bh*0.175]];
+ let tiles='';
+ for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const x=x0+c*(bw+gap),y=y0+r*(bh+gap);
+  const marks=S.pick.map((e,i)=>{if(!e)return '';const href=esc(tw(e));return `<image href="${href}" xlink:href="${href}" x="${spots[i][0]-es/2}" y="${spots[i][1]-es/2}" width="${es}" height="${es}"/>`}).join('');
+  tiles+=`<g transform="translate(${x} ${y})"><rect width="${bw}" height="${bh}" rx="110" fill="#DEDEE4"/><rect x="8" y="8" width="${bw-16}" height="${bh-16}" rx="102" fill="#FFF4E1"/>${marks}</g>`}
+ return {vb:`0 0 ${W} ${H}`,markup:`<rect width="${W}" height="${H}" fill="#ffffff"/>${tiles}`}}
+function applyPhoto(){const color=COLS[S.col][0];const print=mock.querySelector('.print');
  mock.dataset.product=S.prod;mock.dataset.ink=(color==='Black'||color==='Navy'||color==='Charcoal')?'dark':'light';
  mock.style.setProperty('--swatch',COLS[S.col][1]);
+ if(S.prod==='sticker'){mock.dataset.ink='light';mock.style.setProperty('--swatch','#ffffff');
+  mock.style.setProperty('--px','7%');mock.style.setProperty('--py','4%');mock.style.setProperty('--pw','86%');mock.style.setProperty('--ph','92%');
+  mock.style.setProperty('--rx','0deg');mock.style.setProperty('--ry','0deg');
+  print.removeAttribute('data-hat');delete mock.dataset.finish;mock.classList.add('flat');mock.classList.remove('waiting');
+  mock.querySelector('img.blank').alt='Kiss-Cut Sticker Sheet';return}
+ const spec=PHOTO[S.prod];
  mock.style.setProperty('--px',spec.box[0]);mock.style.setProperty('--py',spec.box[1]);mock.style.setProperty('--pw',spec.box[2]);mock.style.setProperty('--ph',spec.box[3]);
  mock.style.setProperty('--rx',spec.turn[0]+'deg');mock.style.setProperty('--ry',spec.turn[1]+'deg');
  if(S.prod==='hat')print.setAttribute('data-hat','trucker');else print.removeAttribute('data-hat');
@@ -490,7 +511,8 @@ function mountMock(markup,cx,cy,base,viewBox){const r=base*1.4*2.05;const vb=vie
   svg.appendChild(document.importNode(child,true))}
  slot.replaceChildren(svg)}
 function draw(){szv.textContent=sz.value+'%';applyPhoto();
- if(S.prod=='hat'){const hat=hatLogoSVG();mountMock(hat.markup,0,0,0,hat.vb)}
+ if(S.prod=='sticker'){const sheet=stickerSheetSVG();mountMock(sheet.markup,0,0,0,sheet.vb)}
+ else if(S.prod=='hat'){const hat=hatLogoSVG();mountMock(hat.markup,0,0,0,hat.vb)}
  else if(S.prod=='case'){const phone=caseLogoSVG();mountMock(phone.markup,0,0,0,phone.vb)}
  else{const art=apparelLogoSVG();mountMock(art.markup,0,0,0,art.vb)}
  draws+=1;if(draws>1&&!reduceMotion&&document.activeElement?.id!=='sz')nudge();
@@ -511,7 +533,9 @@ function productOpts(){const el=document.getElementById('prods');
  const key=rows.map(r=>r.join('\0')).join('\n');
  if(el.dataset.key!==key){el.dataset.key=key;el.innerHTML=rows.map(([k,name,amt])=>`<button type="button" class="opt" data-value="${esc(k)}"><span class="nm">${esc(name)}</span>${amt?` <span class="amt">${esc(amt)}</span>`:''}</button>`).join('')}
  el.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.value===S.prod))}
-function controls(){const chartBtn=document.getElementById('sizechartbtn');if(chartBtn)chartBtn.hidden=!(S.prod==='tee'||S.prod==='hoodie');ensureOpts('lay',[['row','Row'],['triangle','Triangle'],['stacked','Stacked']],S.lay);
+function controls(){const sheet=!!(PRODS[S.prod]&&PRODS[S.prod].sheet);
+ for(const id of ['lay-choice','color-choice','size-choice','logo-choice']){const el=document.getElementById(id);if(el)el.hidden=sheet}
+ const chartBtn=document.getElementById('sizechartbtn');if(chartBtn)chartBtn.hidden=!(S.prod==='tee'||S.prod==='hoodie');ensureOpts('lay',[['row','Row'],['triangle','Triangle'],['stacked','Stacked']],S.lay);
  productOpts();
  const sizesEl=document.getElementById('sizes');
  const colorHead=document.getElementById('colorhead');const sizeHead=document.getElementById('sizehead');
@@ -550,7 +574,9 @@ function applyIncomingDesign(){const params=new URLSearchParams(location.search)
  if(['row','triangle','stacked'].includes(data.layout))S.lay=data.layout;
  const z=Math.round(Number(data.logoSize));if(z>=60&&z<=140)sz.value=String(z);
  if(params.get('resume')==='1'){try{localStorage.removeItem('trimoji-pending-design')}catch(e){}}}
-function currentDesign(){return{slots:slotList(),product:S.prod,color:COLS[S.col][0],size:S.size,layout:S.lay,logoSize:Number(sz.value)}}
+function chosenSpec(){const p=PRODS[S.prod];const sheet=!!(p&&p.sheet);
+ return{product:S.prod,color:sheet?p.colors[0]:COLS[S.col][0],size:sheet?p.sizes[0]:S.size,layout:sheet?'triangle':S.lay,logoSize:sheet?100:Number(sz.value),emojis:slotList(),n:p.n,displayPrice:p.p,sheet}}
+function currentDesign(){const d=chosenSpec();return{slots:d.emojis,product:d.product,color:d.color,size:d.size,layout:d.layout,logoSize:d.logoSize}}
 function shopReturnPath(){const path=(location.pathname||'/').replace(/\/$/,'')||'/';return path+'?resume=1'}
 function armSave(){const link=document.getElementById('savelink');if(link)link.href='/account?next='+encodeURIComponent(shopReturnPath())}
 async function saveDesign(){const design=currentDesign();if(!design.slots.some(Boolean))return toast('Pick at least 1 emoji.');
@@ -573,20 +599,34 @@ function placeToast(){const el=document.getElementById('toast');const drawer=doc
  el.style.bottom=bottom+'px'}
 function money(n){return '$'+n.toFixed(2)}
 function slotList(){return S.pick.map(e=>e||null)}
-function sameDesign(x){return x.product===S.prod&&x.color===COLS[S.col][0]&&x.size===S.size&&x.layout===S.lay&&x.logoSize===Number(sz.value)&&x.emojis.map(e=>e||'').join('\0')===slotList().map(e=>e||'').join('\0')}
-function addCart(){const slots=slotList();if(!slots.some(Boolean))return toast('Pick at least 1 emoji.');const p=PRODS[S.prod];
+function sameDesign(x){const d=chosenSpec();return x.product===d.product&&x.color===d.color&&x.size===d.size&&x.layout===d.layout&&x.logoSize===d.logoSize&&x.emojis.map(e=>e||'').join('\0')===d.emojis.map(e=>e||'').join('\0')}
+function addCart(){const d=chosenSpec();const slots=d.emojis;if(!slots.some(Boolean))return toast('Pick at least 1 emoji.');const p=PRODS[S.prod];
  if(!p.available)return toast(p.reason);
- if(p.colors&&!p.colors.includes(COLS[S.col][0]))return toast('That color is not available on this product');
+ if(!d.sheet&&p.colors&&!p.colors.includes(d.color))return toast('That color is not available on this product');
  const found=S.cart.find(x=>sameDesign(x));
  if(found){if(found.quantity>=10)return toast('10 is the most of one design.');found.quantity+=1}
- else{if(S.cart.length>=8)return toast('The bag holds 8 designs.');S.cart.push({product:S.prod,emojis:slots.slice(),slots:slots.slice(),layout:S.lay,logoSize:Number(sz.value),color:COLS[S.col][0],size:S.size,quantity:1,n:p.n,displayPrice:p.p})}
+ else{if(S.cart.length>=8)return toast('The bag holds 8 designs.');S.cart.push({product:d.product,emojis:slots.slice(),slots:slots.slice(),layout:d.layout,logoSize:d.logoSize,color:d.color,size:d.size,quantity:1,n:d.n,displayPrice:d.displayPrice})}
  cart();toast('Added to your bag.');toggleCart(true)}
 function setQty(i,delta){const line=S.cart[i];if(!line)return;const next=line.quantity+delta;
  if(next<=0){S.cart.splice(i,1);cart();return}
  if(next>10){toast('10 is the most of one design.');return}
  line.quantity=next;cart()}
 function marks(list){return list.map(e=>e?img(e):'<span class="gap" aria-label="Empty"></span>').join('')}
-function cart(){cc.textContent=String(S.cart.reduce((a,x)=>a+x.quantity,0));items.innerHTML=S.cart.map((x,i)=>`<div class="item"><span class="e">${marks(x.emojis)}</span><div class="meta"><b>${esc(x.n)}</b><div class="note">${esc(x.color)} · ${esc(x.size)} · ${esc(x.layout)}</div></div><div class="qty" role="group" aria-label="Quantity"><button type="button" class="opt" data-qty="-1" data-line="${i}" aria-label="Decrease quantity">−</button><b>${x.quantity}</b><button type="button" class="opt" data-qty="1" data-line="${i}" aria-label="Increase quantity">+</button></div><b class="cost">${money(x.displayPrice*x.quantity)}</b><button type="button" class="opt" data-remove="${i}" aria-label="Remove">✕</button></div>`).join('')||'<p class="note">Your bag is empty.</p>';
+function trioKey(list){return (list||[]).map(e=>e||'').join('\0')}
+function crossSell(x,i){const p=PRODS.sticker;if(!p||!p.available)return '';
+ if(!['tee','hoodie','mug','hat','case'].includes(x.product))return '';
+ const key=trioKey(x.emojis);
+ if(S.cart.some(line=>line.product==='sticker'&&trioKey(line.emojis)===key))return '';
+ return `<button type="button" class="cross-sell" data-sticker="${i}">Add this design as a sticker sheet, $9</button>`}
+function addStickerSheet(i){const line=S.cart[i];const p=PRODS.sticker;if(!line||!p||!p.available)return;
+ if(!['tee','hoodie','mug','hat','case'].includes(line.product))return;
+ const slots=(line.emojis||[]).map(e=>e||null);if(!slots.some(Boolean))return;
+ const key=trioKey(slots);
+ if(S.cart.some(x=>x.product==='sticker'&&trioKey(x.emojis)===key)){cart();return}
+ if(S.cart.length>=8)return toast('The bag holds 8 designs.');
+ S.cart.push({product:'sticker',emojis:slots.slice(),slots:slots.slice(),layout:'triangle',logoSize:100,color:p.colors[0],size:p.sizes[0],quantity:1,n:p.n,displayPrice:p.p});
+ cart()}
+function cart(){cc.textContent=String(S.cart.reduce((a,x)=>a+x.quantity,0));items.innerHTML=S.cart.map((x,i)=>{const detail=x.product==='sticker'?'15 stickers':`${esc(x.color)} · ${esc(x.size)} · ${esc(x.layout)}`;return `<div class="item"><span class="e">${marks(x.emojis)}</span><div class="meta"><b>${esc(x.n)}</b><div class="note">${detail}</div></div><div class="qty" role="group" aria-label="Quantity"><button type="button" class="opt" data-qty="-1" data-line="${i}" aria-label="Decrease quantity">−</button><b>${x.quantity}</b><button type="button" class="opt" data-qty="1" data-line="${i}" aria-label="Increase quantity">+</button></div><b class="cost">${money(x.displayPrice*x.quantity)}</b><button type="button" class="opt" data-remove="${i}" aria-label="Remove">✕</button>${crossSell(x,i)}</div>`}).join('')||'<p class="note">Your bag is empty.</p>';
  const subtotal=S.cart.reduce((a,x)=>a+x.displayPrice*x.quantity,0);const ship=subtotal<=0?0:(subtotal>=60?0:5.99);
  document.getElementById('sub').textContent=money(subtotal);
  document.getElementById('ship').textContent=ship===0&&subtotal>=60?'Free':money(ship);
@@ -629,7 +669,9 @@ function syncDock(){const root=document.documentElement;const phone=matchMedia('
 function fitBar(){const bar=document.querySelector('.topbar');if(!bar)return;document.documentElement.style.setProperty('--bar',bar.offsetHeight+'px');const phone=window.matchMedia('(max-width: 899px)').matches;document.documentElement.style.scrollPaddingTop=phone?'':(bar.offsetHeight+12)+'px';syncPin();syncDock()}
 function syncPin(){const root=document.documentElement;const phone=window.matchMedia('(max-width: 899px)').matches;if(!phone){root.classList.remove('compact');return}const bar=document.querySelector('.topbar');const heading=document.querySelector('#shop h2');if(!bar||!heading)return;const passed=heading.getBoundingClientRect().bottom<bar.getBoundingClientRect().bottom+1;root.classList.toggle('compact',passed)}
 function loadShopConfig(){fetch('/api/config',{headers:{accept:'application/json'}}).then(r=>r.ok?r.json():null).then(d=>{
- if(d&&d.stripeTestMode===true){const el=document.getElementById('testmode');if(el)el.hidden=false}fitBar()}).catch(()=>{})}
+ if(d&&d.stripeTestMode===true){const el=document.getElementById('testmode');if(el)el.hidden=false}
+ if(d&&d.stickerSheet===false&&PRODS.sticker){delete PRODS.sticker;S.cart=S.cart.filter(x=>x.product!=='sticker');if(S.prod==='sticker')S.prod='tee';all();cart()}
+ fitBar()}).catch(()=>{})}
 function bindTap(id,fn){const root=document.getElementById(id);if(!root)return;let swallow=0,track=null;
  root.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'){swallow=0;return}const btn=e.target.closest('button');if(!btn||!root.contains(btn)){track=null;return}track={id:e.pointerId,x:e.clientX,y:e.clientY,moved:false}});
  root.addEventListener('pointermove',e=>{if(!track||track.id!==e.pointerId)return;const dx=e.clientX-track.x,dy=e.clientY-track.y;if(dx*dx+dy*dy>100)track.moved=true});
@@ -643,7 +685,7 @@ bindTap('cols',b=>{S.col=Number(b.dataset.col);all()});
 bindTap('grid',b=>{if(b.dataset.emoji)pick(b.dataset.emoji)});
 bindTap('slots',b=>{if(b.classList.contains('slot-clear')){const i=Number(b.dataset.clear);S.pick[i]=null;S.slot=i;all();markSelected();return}S.slot=Number(b.dataset.slot);all()});
 bindTap('tabs',b=>jump(b.dataset.cat));
-bindTap('items',b=>{if(b.dataset.remove!=null){S.cart.splice(Number(b.dataset.remove),1);cart();return}if(b.dataset.qty!=null)setQty(Number(b.dataset.line),Number(b.dataset.qty))});
+bindTap('items',b=>{if(b.dataset.sticker!=null){addStickerSheet(Number(b.dataset.sticker));return}if(b.dataset.remove!=null){S.cart.splice(Number(b.dataset.remove),1);cart();return}if(b.dataset.qty!=null)setQty(Number(b.dataset.line),Number(b.dataset.qty))});
 document.getElementById('sz').addEventListener('input',draw);
 document.getElementById('q').addEventListener('input',renderGrid);
 document.getElementById('cartbtn').addEventListener('click',()=>toggleCart());

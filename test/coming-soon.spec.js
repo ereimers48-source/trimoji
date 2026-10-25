@@ -16,7 +16,7 @@ test('coming soon collects an email and the shop stays on a private path', async
   await expect(page.locator('meta[property="og:image"]')).toHaveAttribute('content', 'https://trimojiapparel.com/assets/og.png');
   await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary_large_image');
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://trimojiapparel.com/');
-  await expect(page.locator('.lede')).toHaveText('Custom 3-emoji logos on tees, hoodies, mugs, hats, and phone cases.');
+  await expect(page.locator('.lede')).toHaveText('Custom 3-emoji logos on tees, hoodies, mugs, hats, phone cases, and sticker sheets.');
   await expect(page.locator('#mock')).toHaveCount(0);
   await expect(page.locator('a[href*="shop-preview"]')).toHaveCount(0);
   await expect(page.locator('a[href="https://www.instagram.com/trimojiapparel/"]')).toBeVisible();
