@@ -119,6 +119,7 @@ function completedSession(metadata) {
   return {
     id: 'cs_test_123',
     object: 'checkout.session',
+    payment_status: 'paid',
     metadata,
     customer_details: { email: 'ada@example.com', name: 'Ada Lovelace' },
     shipping_details: {
@@ -1317,8 +1318,9 @@ test('order receipt uses the session id and hides the customer', async () => {
   assert.equal(order.items[0].amount, 2900);
   assert.equal(order.shipping, 599);
   assert.equal(order.tax, null);
+  assert.equal(order.discount, null);
   assert.equal(order.total, 3499);
-  assert.deepEqual(Object.keys(order).sort(), ['currency', 'items', 'reference', 'shipping', 'subtotal', 'tax', 'total']);
+  assert.deepEqual(Object.keys(order).sort(), ['currency', 'discount', 'items', 'reference', 'shipping', 'subtotal', 'tax', 'total']);
   const taxed = publicOrder({
     ...session,
     amount_total: 3716,
@@ -1339,11 +1341,13 @@ test('order receipt uses the session id and hides the customer', async () => {
   const originalStripe = runtime.createStripe;
   process.env.STRIPE_SECRET_KEY = 'sk_test_placeholder';
   const calls = [];
+  const expands = [];
   runtime.createStripe = () => ({
     checkout: {
       sessions: {
-        async retrieve(id) {
+        async retrieve(id, params) {
           calls.push(id);
+          expands.push(params);
           if (id !== session.id) {
             const error = new Error('No such checkout.session');
             error.statusCode = 404;
@@ -1365,6 +1369,10 @@ test('order receipt uses the session id and hides the customer', async () => {
     const bad = await orderGet(new Request(`${SITE}/api/order?session_id=nope`));
     assert.equal(bad.status, 400);
     assert.deepEqual(calls, ['cs_test_playwright', 'cs_test_missing01']);
+    assert.deepEqual(expands, [
+      { expand: ['discounts.promotion_code', 'discounts.coupon'] },
+      { expand: ['discounts.promotion_code', 'discounts.coupon'] },
+    ]);
   } finally {
     runtime.createStripe = originalStripe;
     if (previous === undefined) delete process.env.STRIPE_SECRET_KEY;

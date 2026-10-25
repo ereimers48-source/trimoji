@@ -71,20 +71,22 @@ runtime.createStripe = () => ({
         };
       },
       async retrieve(id) {
-        if (id !== 'cs_test_playwright') {
+        const known = id === 'cs_test_playwright' || id === 'cs_test_playwright_promo' || id === 'cs_test_playwright_free';
+        if (!known) {
           const error = new Error('No such checkout.session');
           error.statusCode = 404;
           error.code = 'resource_missing';
           throw error;
         }
-        return {
+        const base = {
           id,
           object: 'checkout.session',
           payment_status: 'paid',
           status: 'complete',
           amount_total: 3716,
           currency: 'usd',
-          total_details: { amount_tax: 217, amount_shipping: 599 },
+          total_details: { amount_discount: 0, amount_tax: 217, amount_shipping: 599 },
+          discounts: [],
           metadata: previewOrder,
           customer_details: { email: 'secret@example.com', name: 'Ada Lovelace' },
           shipping_details: {
@@ -98,6 +100,30 @@ runtime.createStripe = () => ({
             },
           },
         };
+        if (id === 'cs_test_playwright_promo') {
+          return {
+            ...base,
+            amount_total: 3216,
+            total_details: { amount_discount: 500, amount_tax: 217, amount_shipping: 599 },
+            discounts: [{
+              coupon: { id: 'coupon_welcome', name: 'Welcome five', amount_off: 500 },
+              promotion_code: { id: 'promo_welcome', code: 'WELCOME' },
+            }],
+          };
+        }
+        if (id === 'cs_test_playwright_free') {
+          return {
+            ...base,
+            payment_status: 'no_payment_required',
+            amount_total: 0,
+            total_details: { amount_discount: 3499, amount_tax: 0, amount_shipping: 599 },
+            discounts: [{
+              coupon: { id: 'coupon_free', name: 'Free order', percent_off: 100 },
+              promotion_code: { id: 'promo_free', code: 'FREEBIE' },
+            }],
+          };
+        }
+        return base;
       },
     },
   },
