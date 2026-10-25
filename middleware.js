@@ -1,9 +1,10 @@
 import { next, rewrite } from '@vercel/functions';
+import { accountDocument, accountsPublic, comingSoonAccountDocument } from './lib/accounts-page.js';
 import { routeRequest } from './lib/coming-soon.js';
 import { comingSoonDocument, storiesDocument, storiesPublic } from './lib/stories-page.js';
 
 export const config = {
-  matcher: ['/', '/index.html', '/shop-preview', '/shop-preview/', '/stories', '/stories/', '/stories.html', '/stories-admin', '/stories-admin/', '/stories-admin.html'],
+  matcher: ['/', '/index.html', '/shop-preview', '/shop-preview/', '/stories', '/stories/', '/stories.html', '/stories-admin', '/stories-admin/', '/stories-admin.html', '/account', '/account/', '/account.html'],
 };
 
 function htmlHeaders() {
@@ -38,6 +39,11 @@ export default async function middleware(request) {
     headers['x-robots-tag'] = 'noindex, nofollow';
     return new Response(await readStatic(request, '/stories-admin.html'), { status: 200, headers });
   }
+  if (path === '/account' || path === '/account.html') {
+    const headers = htmlHeaders();
+    if (!accountsPublic()) headers['x-robots-tag'] = 'noindex, nofollow';
+    return new Response(accountDocument(await readStatic(request, '/account.html')), { status: 200, headers });
+  }
   const route = routeRequest(url.pathname);
   if (route.type === 'missing') {
     return new Response('Not found', {
@@ -46,8 +52,9 @@ export default async function middleware(request) {
     });
   }
   if (route.type !== 'file') return next();
-  if (route.file === 'coming-soon.html' && storiesPublic()) {
-    return new Response(comingSoonDocument(await readStatic(request, '/coming-soon.html')), { status: 200, headers: htmlHeaders() });
+  if (route.file === 'coming-soon.html' && (storiesPublic() || accountsPublic())) {
+    const html = comingSoonAccountDocument(comingSoonDocument(await readStatic(request, '/coming-soon.html')));
+    return new Response(html, { status: 200, headers: htmlHeaders() });
   }
   const headers = { 'cache-control': 'no-store' };
   if (route.robots) headers['x-robots-tag'] = route.robots;

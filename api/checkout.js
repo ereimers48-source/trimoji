@@ -1,3 +1,4 @@
+import { activeAccountStore, currentSession } from '../lib/accounts-store.js';
 import { createCheckoutSession } from '../lib/checkout.js';
 import { resolveSiteUrl } from '../lib/design.js';
 import { HttpError, jsonError, preflight, safeLog, withCors } from '../lib/http.js';
@@ -17,10 +18,18 @@ export async function POST(request) {
     } catch {
       throw new HttpError(400, 'Send a JSON cart');
     }
+    let accountStore = null;
+    try {
+      accountStore = activeAccountStore(runtime, process.env);
+    } catch {
+      accountStore = null;
+    }
+    const signedIn = await currentSession(request, accountStore);
     const session = await createCheckoutSession({
       items: body?.items,
       stripe: runtime.createStripe(key),
       siteUrl: resolveSiteUrl(process.env.SITE_URL),
+      customerEmail: signedIn?.email,
     });
     return withCors(request, Response.json({ url: session.url }));
   } catch (err) {

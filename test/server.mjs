@@ -2,6 +2,8 @@ import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { hashEmail, sessionCookieHeader, sessionFromRequest, signSession } from '../lib/accounts.js';
+import { accountDocument, accountsPublic, comingSoonAccountDocument } from '../lib/accounts-page.js';
 import { routeRequest } from '../lib/coming-soon.js';
 import { metadataForItems, normalizeCart } from '../lib/design.js';
 import { pageRedirect } from '../lib/redirect.js';
@@ -9,11 +11,47 @@ import { comingSoonDocument, storiesDocument, storiesPublic } from '../lib/stori
 
 process.env.STRIPE_SECRET_KEY = 'sk_test_playwright';
 process.env.SITE_URL = 'http://127.0.0.1:4173';
+process.env.SESSION_SECRET = '0123456789abcdef0123456789abcdef';
+process.env.PRINTFUL_API_TOKEN = 'pf_test_playwright';
+process.env.PRINTFUL_STORE_ID = '18937301';
 
 const { runtime } = await import('../lib/runtime.js');
 const { createMemoryStore } = await import('../lib/stories-store.js');
+const { createMemoryAccountStore } = await import('../lib/accounts-store.js');
 process.env.STORIES_ADMIN_TOKEN = 'test-admin-token';
 runtime.storiesStore = createMemoryStore({ limit: 1000 });
+runtime.accountStore = createMemoryAccountStore({ limit: 1000 });
+runtime.sentMail = [];
+runtime.mailer = {
+  async send(message) {
+    runtime.sentMail.push({
+      to: message.to,
+      from: message.from,
+      subject: message.subject,
+      text: message.text,
+      html: message.html,
+    });
+  },
+};
+const realFetch = runtime.fetch;
+runtime.fetch = async (url, init) => {
+  const href = String(url);
+  if (href.includes('cdn.jsdelivr.net') && href.endsWith('.svg')) {
+    const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36"><circle cx="18" cy="18" r="16" fill="#ffcc4d"/></svg>';
+    return new Response(svg, { status: 200, headers: { 'content-type': 'image/svg+xml' } });
+  }
+  return realFetch(url, init);
+};
+runtime.accountPrintfulFetch = async () => new Response(JSON.stringify({
+  result: {
+    status: 'fulfilled',
+    shipments: [{
+      carrier: 'USPS',
+      tracking_number: 'TRACK123',
+      tracking_url: 'https://example.com/track/TRACK123',
+    }],
+  },
+}), { status: 200, headers: { 'content-type': 'application/json' } });
 const previewOrder = metadataForItems(normalizeCart([{
   product: 'case',
   color: 'Glossy',
@@ -72,6 +110,14 @@ const { GET: storiesGet, POST: storiesPost } = await import('../api/stories.js')
 const { GET: storiesPhotoGet } = await import('../api/stories-photo.js');
 const { GET: storiesAdminGet, POST: storiesAdminPost } = await import('../api/stories-admin.js');
 const { GET: storiesAdminPhotoGet } = await import('../api/stories-admin-photo.js');
+const { POST: authRequestPost } = await import('../api/auth/request.js');
+const { GET: authVerifyGet } = await import('../api/auth/verify.js');
+const { POST: authSignoutPost } = await import('../api/auth/signout.js');
+const { GET: accountGet, POST: accountPost } = await import('../api/account.js');
+const { POST: accountDeletePost } = await import('../api/account/delete.js');
+const { POST: designsPost } = await import('../api/account/designs.js');
+const { POST: designsRemovePost } = await import('../api/account/designs/remove.js');
+const { GET: previewGet } = await import('../api/account/preview.js');
 
 const root = fileURLToPath(new URL('..', import.meta.url)).replace(/\/$/, '');
 const types = {
@@ -102,6 +148,7 @@ const cleanPages = {
   '/contact': 'contact.html',
   '/stories': 'stories.html',
   '/stories-admin': 'stories-admin.html',
+  '/account': 'account.html',
 };
 
 async function toRequest(req, url) {
@@ -162,15 +209,112 @@ const server = createServer(async (req, res) => {
       await send(res, await storiesAdminPhotoGet(await toRequest(req, url)));
       return;
     }
+    if (url.pathname === '/api/test/order' && req.method === 'POST') {
+      const request = await toRequest(req, url);
+      const session = sessionFromRequest(request);
+      if (!session) {
+        res.writeHead(401, { 'content-type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Sign in required' }));
+        return;
+      }
+      const hash = hashEmail(session.email);
+      const record = await runtime.accountStore.getUser(hash);
+      if (!record) {
+        res.writeHead(404, { 'content-type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Sign in required' }));
+        return;
+      }
+      record.orders = Array.isArray(record.orders) ? record.orders : [];
+      record.orders.push({
+        reference: 'abc123abc123abc123abc123abc123ab',
+        items: [{ name: 'T-shirt', emojis: ['🔥', null, '🍕'], color: 'Black', size: 'L', quantity: 1 }],
+        total: 3499,
+        currency: 'usd',
+        shipping: { city: 'Austin', state: 'TX' },
+        status: 'draft',
+        createdAt: '2026-10-24T15:04:00.000Z',
+        printfulOrderId: 4242,
+      });
+      await runtime.accountStore.putUser(hash, record);
+      res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' });
+      res.end(JSON.stringify({ ok: true }));
+      return;
+    }
+    if (url.pathname === '/api/test/inbox' && req.method === 'GET') {
+      res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' });
+      res.end(JSON.stringify({ messages: runtime.sentMail }));
+      return;
+    }
+    if (url.pathname === '/api/test/seed' && req.method === 'POST') {
+      const request = await toRequest(req, url);
+      const body = await request.json().catch(() => ({}));
+      const email = String(body.email || '').trim().toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        res.writeHead(400, { 'content-type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Enter a valid email.' }));
+        return;
+      }
+      const record = {
+        email,
+        name: 'Sample Sam',
+        address: {
+          name: 'Sample Sam',
+          line1: '1 Preview Way',
+          line2: '',
+          city: 'Austin',
+          state: 'TX',
+          postalCode: '78701',
+        },
+        designs: [{
+          id: '11111111-1111-4111-8111-111111111111',
+          slots: ['🔥', null, '🍕'],
+          product: 'tee',
+          color: 'Black',
+          size: 'L',
+          layout: 'row',
+          logoSize: 100,
+          createdAt: '2026-10-24T15:00:00.000Z',
+        }],
+        orders: [{
+          reference: 'abc123abc123abc123abc123abc123ab',
+          items: [{ name: 'T-shirt', emojis: ['🔥', null, '🍕'], color: 'Black', size: 'L', quantity: 1 }],
+          total: 3499,
+          currency: 'usd',
+          shipping: { city: 'Austin', state: 'TX' },
+          status: 'draft',
+          createdAt: '2026-10-24T15:04:00.000Z',
+          printfulOrderId: 4242,
+        }],
+      };
+      await runtime.accountStore.putUser(hashEmail(email), record);
+      const cookie = sessionCookieHeader(signSession(email, process.env.SESSION_SECRET, Date.now()), { secure: false });
+      res.writeHead(200, {
+        'content-type': 'application/json',
+        'cache-control': 'no-store',
+        'set-cookie': cookie,
+      });
+      res.end(JSON.stringify({ ok: true }));
+      return;
+    }
+    const accountRoutes = {
+      'POST /api/auth/request': authRequestPost,
+      'GET /api/auth/verify': authVerifyGet,
+      'POST /api/auth/signout': authSignoutPost,
+      'GET /api/account': accountGet,
+      'POST /api/account': accountPost,
+      'POST /api/account/delete': accountDeletePost,
+      'POST /api/account/designs': designsPost,
+      'POST /api/account/designs/remove': designsRemovePost,
+      'GET /api/account/preview': previewGet,
+    };
+    const accountHandler = accountRoutes[`${req.method} ${url.pathname}`];
+    if (accountHandler) {
+      await send(res, await accountHandler(await toRequest(req, url)));
+      return;
+    }
     if ((url.pathname === '/api/checkout' || url.pathname === '/api/waitlist') && req.method === 'POST') {
-      const chunks = [];
-      for await (const chunk of req) chunks.push(chunk);
       const handler = url.pathname === '/api/waitlist' ? waitlistPost : checkoutPost;
-      await send(res, await handler(new Request(url, {
-        method: 'POST',
-        headers: { 'content-type': req.headers['content-type'] || 'application/json' },
-        body: Buffer.concat(chunks),
-      })));
+      await send(res, await handler(await toRequest(req, url)));
       return;
     }
     if (url.pathname.startsWith('/api/')) {
@@ -199,12 +343,14 @@ const server = createServer(async (req, res) => {
     if (extname(file) === '.html') {
       let html = data.toString('utf8');
       if (file.endsWith('/stories.html')) html = storiesDocument(html);
-      if (file.endsWith('/coming-soon.html')) html = comingSoonDocument(html);
+      if (file.endsWith('/account.html')) html = accountDocument(html);
+      if (file.endsWith('/coming-soon.html')) html = comingSoonAccountDocument(comingSoonDocument(html));
       if (route.robots) {
         headers['x-robots-tag'] = route.robots;
         html = html.replace('</head>', `<meta name="robots" content="${route.robots}">\n</head>`);
       }
       if (file.endsWith('/stories.html') && !storiesPublic()) headers['x-robots-tag'] = 'noindex, nofollow';
+      if (file.endsWith('/account.html') && !accountsPublic()) headers['x-robots-tag'] = 'noindex, nofollow';
       if (file.endsWith('/stories-admin.html')) headers['x-robots-tag'] = 'noindex, nofollow';
       data = Buffer.from(html);
       headers['content-type'] = 'text/html; charset=utf-8';

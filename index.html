@@ -11,6 +11,7 @@
  --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Inter,system-ui,sans-serif;
 }
 *{box-sizing:border-box}
+[hidden]{display:none !important}
 html{scroll-behavior:smooth;scroll-padding-top:5rem;overflow-anchor:none}
 body{margin:0;overflow-anchor:none;font-family:var(--sans);font-weight:400;color:var(--ink);background:var(--bg);line-height:1.47;padding-bottom:env(safe-area-inset-bottom);-webkit-font-smoothing:antialiased}
 img.em{width:1em;height:1em;vertical-align:-.15em}
@@ -19,10 +20,10 @@ button{font:inherit;cursor:pointer;color:inherit}
 a{color:var(--ink)}
 .topbar{position:sticky;top:0;z-index:30;background:#fff;padding-top:env(safe-area-inset-top)}
 #testmode{background:#f5f5f7;color:var(--ink);text-align:center;font-size:.8rem;font-weight:500;line-height:1.4;padding:8px 16px}
-.nav{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:48px;padding:0 22px;border-bottom:1px solid #e8e8ed}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:4px 12px;min-height:48px;padding:0 22px;border-bottom:1px solid #e8e8ed;flex-wrap:wrap}
 .logo{font-weight:600;font-size:1.05rem;letter-spacing:-.03em;text-decoration:none;line-height:1}
-.nav-links{display:flex;align-items:center;gap:8px}
-.nav-links a,.bag{font-size:.95rem;text-decoration:none;background:none;border:0;min-height:44px;padding:0 10px;display:inline-flex;align-items:center}
+.nav-links{display:flex;align-items:center;gap:0;flex-wrap:wrap}
+.nav-links a,.bag{font-size:.95rem;text-decoration:none;background:none;border:0;min-height:44px;padding:0 8px;display:inline-flex;align-items:center}
 .bag b{font-weight:600}
 .skip{position:absolute;left:-999px;top:8px;background:#fff;color:var(--ink);padding:8px 12px;z-index:80;border-radius:8px}
 .skip:focus{left:8px}
@@ -90,7 +91,8 @@ label{display:block;margin-top:4px;font-size:.95rem;font-weight:500;line-height:
 input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
 .buybar{display:flex;flex-direction:column;align-items:stretch;gap:12px;margin-top:8px;position:static}
 .price{margin:0;font-size:2rem;font-weight:600;letter-spacing:-.03em;line-height:1.1;font-variant-numeric:tabular-nums}
-#addbtn{width:100%;min-height:52px}
+#addbtn,#savedesign{width:100%;min-height:52px}
+.btn.ghost{background:#fff;color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
 #pay{width:100%}
 #unavail{margin:0}
 #drawer{position:fixed;top:0;right:0;bottom:0;height:100dvh;width:min(420px, 100%);background:#fff;z-index:60;transform:translateX(100%);transition:transform .28s ease;padding:max(22px, env(safe-area-inset-top)) 22px calc(22px + env(safe-area-inset-bottom));display:flex;flex-direction:column;overflow:hidden}
@@ -120,6 +122,7 @@ footer a{color:var(--muted)}
 @media (hover:hover) and (pointer:fine){
  .cells button:hover{background:#f5f5f7}
  .btn:hover{background:#0077ed}
+ .btn.ghost:hover{background:#f5f5f7}
  .opt:hover:not(.on){border-color:#86868b}
 }
 @media(max-width:899px){
@@ -161,7 +164,7 @@ footer a{color:var(--muted)}
 <a class="skip" href="#shop">Skip to the shop</a>
 <div class="topbar">
 <div id="testmode" hidden>Test mode</div>
-<nav class="nav" aria-label="Shop"><a class="logo" href="/">Trimoji</a><div class="nav-links"><a href="#shop">Shop</a><button class="bag" type="button" id="cartbtn">Bag (<b id="cc">0</b>)</button></div></nav>
+<nav class="nav" aria-label="Shop"><a class="logo" href="/">Trimoji</a><div class="nav-links"><a href="#shop">Shop</a><a href="/account">Account</a><button class="bag" type="button" id="cartbtn">Bag (<b id="cc">0</b>)</button></div></nav>
 </div>
 <section class="hero">
 <h1>Three emojis.<br>Your logo.</h1>
@@ -212,6 +215,8 @@ footer a{color:var(--muted)}
 <p class="price" id="price"></p>
 <p class="note" id="unavail" hidden></p>
 <button class="btn" id="addbtn" type="button">Add to Bag</button>
+<button class="btn ghost" id="savedesign" type="button" hidden>Save design</button>
+<p class="note" id="saveprompt"><a id="savelink" href="/account">Sign in</a> to save this design.</p>
 <p class="note">Custom-made to order. See our <a href="/returns">Returns policy</a>.</p>
 </div>
 </section>
@@ -231,7 +236,7 @@ footer a{color:var(--muted)}
 <div id="toast"></div>
 <div id="safe-b" aria-hidden="true"></div>
 <footer>
-<nav aria-label="Policies"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/shipping">Shipping</a><a href="/returns">Returns</a><a href="/contact">Contact</a><a href="/stories">Stories</a></nav>
+<nav aria-label="Policies"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/shipping">Shipping</a><a href="/returns">Returns</a><a href="/contact">Contact</a><a href="/stories">Stories</a><a href="/account">Account</a></nav>
 <p>Shipping is $5.99 flat, free over $60.</p>
 <p>© Trimoji. Emoji graphics by <a href="https://github.com/jdecked/twemoji">Twemoji</a>, © Twitter, Inc. and other contributors, licensed under <a href="https://creativecommons.org/licenses/by/4.0/">CC-BY 4.0</a>.</p>
 </footer>
@@ -395,6 +400,34 @@ function syncProduct(){const p=PRODS[S.prod];const add=document.getElementById('
  if(add){add.disabled=!p.available;add.textContent=p.available?'Add to Bag':'Unavailable'}
  const note=document.getElementById('unavail');if(note){note.hidden=!!p.available;note.textContent=p.available?'':p.reason}}
 function all(){slots();controls();draw();syncProduct()}
+function b64urlDecode(s){const pad=s.length%4?'='.repeat(4-(s.length%4)):'';const bin=atob(String(s).replace(/-/g,'+').replace(/_/g,'/')+pad);const bytes=Uint8Array.from(bin,c=>c.charCodeAt(0));return new TextDecoder().decode(bytes)}
+function applyIncomingDesign(){const params=new URLSearchParams(location.search);let data=null;
+ if(params.get('saved')){try{data=JSON.parse(b64urlDecode(params.get('saved')))}catch(e){data=null}}
+ if(!data&&params.get('resume')==='1'){try{data=JSON.parse(localStorage.getItem('trimoji-pending-design')||'')}catch(e){data=null}}
+ if(!data||!Array.isArray(data.slots)||data.slots.length!==3)return;
+ const slots=data.slots.map(e=>e==null||e===''?null:String(e));if(!slots.some(Boolean))return;
+ S.pick=slots;S.slot=Math.max(0,slots.findIndex(e=>!e));
+ if(PRODS[data.product])S.prod=data.product;
+ const p=PRODS[S.prod];const idx=COLS.findIndex(c=>c[0]===data.color);
+ if(idx>=0&&(!p.colors||p.colors.includes(COLS[idx][0])))S.col=idx;
+ else if(p.colors){const fallback=COLS.findIndex(c=>c[0]===p.colors[0]);if(fallback>=0)S.col=fallback}
+ if(p.sizes.includes(data.size))S.size=data.size;
+ else if(!p.sizes.includes(S.size))S.size=p.defaultSize&&p.sizes.includes(p.defaultSize)?p.defaultSize:p.sizes[0];
+ if(['row','triangle','stacked'].includes(data.layout))S.lay=data.layout;
+ const z=Math.round(Number(data.logoSize));if(z>=60&&z<=140)sz.value=String(z);
+ if(params.get('resume')==='1'){try{localStorage.removeItem('trimoji-pending-design')}catch(e){}}}
+function currentDesign(){return{slots:slotList(),product:S.prod,color:COLS[S.col][0],size:S.size,layout:S.lay,logoSize:Number(sz.value)}}
+function shopReturnPath(){const path=(location.pathname||'/').replace(/\/$/,'')||'/';return path+'?resume=1'}
+function armSave(){const link=document.getElementById('savelink');if(link)link.href='/account?next='+encodeURIComponent(shopReturnPath())}
+async function saveDesign(){const design=currentDesign();if(!design.slots.some(Boolean))return toast('Pick at least 1 emoji.');
+ if(!window.__trimojiSignedIn){try{localStorage.setItem('trimoji-pending-design',JSON.stringify(design))}catch(e){}location.href='/account?next='+encodeURIComponent(shopReturnPath());return}
+ const btn=document.getElementById('savedesign');btn.disabled=true;
+ try{const res=await fetch('/api/account/designs',{method:'POST',headers:{'content-type':'application/json','x-trimoji-request':'1'},body:JSON.stringify(design)});
+  const data=await res.json().catch(()=>null);toast(res.ok?'Design saved.':((data&&data.error)||'Could not save the design.'))}
+ catch(e){toast('Could not save the design.')}finally{btn.disabled=false}}
+function loadAccountState(){armSave();fetch('/api/account',{headers:{accept:'application/json'}}).then(r=>r.ok?r.json():null).then(d=>{
+ const on=!!(d&&d.signedIn);window.__trimojiSignedIn=on;const btn=document.getElementById('savedesign');const prompt=document.getElementById('saveprompt');
+ if(btn)btn.hidden=!on;if(prompt)prompt.hidden=on}).catch(()=>{})}
 function toast(t){const el=document.getElementById('toast');el.innerHTML=twx(t);el.style.display='block';placeToast();clearTimeout(el._t);el._t=setTimeout(()=>{el.style.display='none';el.style.bottom='20px'},3200)}
 function dockOffset(){const probe=document.getElementById('safe-b');return probe?probe.offsetHeight:0}
 function placeToast(){const el=document.getElementById('toast');const drawer=document.getElementById('drawer');if(!el||!drawer)return;
@@ -455,11 +488,13 @@ document.getElementById('sz').addEventListener('input',draw);
 document.getElementById('q').addEventListener('input',renderGrid);
 document.getElementById('cartbtn').addEventListener('click',()=>toggleCart());
 document.getElementById('addbtn').addEventListener('click',addCart);
+document.getElementById('savedesign').addEventListener('click',saveDesign);
+document.getElementById('savelink').addEventListener('click',()=>{try{localStorage.setItem('trimoji-pending-design',JSON.stringify(currentDesign()))}catch(e){}});
 document.getElementById('closecart').addEventListener('click',()=>toggleCart(false));
 document.getElementById('pay').addEventListener('click',checkout);
 mock.querySelector('img.blank').addEventListener('error',()=>mock.classList.add('flat'));
 mock.querySelector('img.blank').addEventListener('load',()=>mock.classList.remove('flat'));
-preloadPhotos();tabs();renderGrid();all();markSelected();cart();loadShopConfig();fitBar();
+applyIncomingDesign();preloadPhotos();tabs();renderGrid();all();markSelected();cart();loadShopConfig();loadAccountState();fitBar();
 new ResizeObserver(()=>fitBar()).observe(document.querySelector('.topbar'));
 let pinFrame=0;
 addEventListener('scroll',()=>{if(pinFrame)return;pinFrame=requestAnimationFrame(()=>{pinFrame=0;syncPin()})},{passive:true});
