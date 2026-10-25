@@ -322,6 +322,7 @@ test('a paid order is appended once and delete removes the account', async () =>
   const session = {
     id: 'cs_test_123',
     object: 'checkout.session',
+    payment_status: 'paid',
     amount_total: 3499,
     metadata,
     customer_details: { email: 'Ada@Example.com', name: 'Ada Lovelace' },

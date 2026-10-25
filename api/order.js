@@ -1,5 +1,5 @@
 import { HttpError, jsonError, safeLog, withCors } from '../lib/http.js';
-import { orderReference, publicOrder } from '../lib/order.js';
+import { CHECKOUT_DISCOUNT_EXPAND, orderReference, publicOrder } from '../lib/order.js';
 import { runtime } from '../lib/runtime.js';
 
 export async function GET(request) {
@@ -10,7 +10,9 @@ export async function GET(request) {
     orderReference(sessionId);
     let session;
     try {
-      session = await runtime.createStripe(key).checkout.sessions.retrieve(sessionId);
+      session = await runtime.createStripe(key).checkout.sessions.retrieve(sessionId, {
+        expand: CHECKOUT_DISCOUNT_EXPAND,
+      });
     } catch (err) {
       if (err instanceof HttpError) throw err;
       const missing = err?.statusCode === 404 || err?.code === 'resource_missing';

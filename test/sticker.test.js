@@ -310,16 +310,20 @@ test('sticker variant, checkout, and Printful order use 12917', async () => {
   assert.equal(paid.subtotal, 900);
   assert.equal(paid.shipping, 599);
   assert.equal(paid.total, 1499);
-  assert.deepEqual(Object.keys(paid).sort(), ['currency', 'items', 'reference', 'shipping', 'subtotal', 'tax', 'total']);
+  assert.equal(paid.discount, null);
+  assert.deepEqual(Object.keys(paid).sort(), ['currency', 'discount', 'items', 'reference', 'shipping', 'subtotal', 'tax', 'total']);
   const discounted = publicOrder({
     ...session,
     payment_status: 'paid',
     amount_total: 1299,
     total_details: { amount_discount: 200, amount_shipping: 599, amount_tax: 0 },
+    discounts: [{ promotion_code: { code: 'SHEET' } }],
   });
   assert.equal(discounted.total, 1299);
   assert.equal(discounted.shipping, 599);
-  assert.deepEqual(Object.keys(discounted).sort(), ['currency', 'items', 'reference', 'shipping', 'subtotal', 'tax', 'total']);
+  assert.equal(discounted.discount.amount, 200);
+  assert.equal(discounted.discount.line, 'Discount SHEET -$2.00');
+  assert.deepEqual(Object.keys(discounted).sort(), ['currency', 'discount', 'items', 'reference', 'shipping', 'subtotal', 'tax', 'total']);
 
   const confirmation = orderConfirmationMessage({
     to: 'ada@example.com',
