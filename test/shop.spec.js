@@ -1,3 +1,4 @@
+import { mkdirSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
 import { printfulExternalId } from '../lib/printful.js';
 
@@ -1021,7 +1022,7 @@ test('the same emoji can repeat in every slot or leave a gap', async ({ page }, 
   expect(errors, errors.join('\n')).toEqual([]);
 });
 
-test('policy pages are linked from the shop and the bag', async ({ page }) => {
+test('policy pages are linked from the shop and the bag', async ({ page }, testInfo) => {
   const errors = track(page);
   await page.goto('/');
   await expect(page.locator('h1')).toContainText('Three emojis');
@@ -1132,11 +1133,45 @@ test('policy pages are linked from the shop and the bag', async ({ page }) => {
   await expect(page.locator('#lines')).toContainText('Tough phone case');
   await expect(page.locator('#lines')).toContainText('Glossy');
   await expect(page.locator('#lines')).toContainText('iPhone 16');
+  await expect(page.locator('#lines')).toContainText('$29.00');
+  await expect(page.locator('#discount')).toBeHidden();
   await expect(page.locator('#sum')).toContainText('Shipping $5.99');
   await expect(page.locator('#sum')).toContainText('Tax $2.17');
   await expect(page.locator('#sum')).toContainText('Total $37.16');
+  await expect(page.locator('#sum')).not.toContainText('Discount');
   await expect(page.locator('main')).not.toContainText('secret@example.com');
   await expect(page.locator('main')).not.toContainText('1 Secret St');
+  if (testInfo.project.name === 'desktop') {
+    mkdirSync('/opt/cursor/artifacts/screenshots', { recursive: true });
+    await page.screenshot({ path: '/opt/cursor/artifacts/screenshots/success-without-discount.png', fullPage: true });
+  }
+  await page.goto('/success.html?session_id=cs_test_playwright_promo');
+  await expect(page.locator('#order')).toBeVisible();
+  await expect(page.locator('#ref')).toHaveText(printfulExternalId('cs_test_playwright_promo'));
+  await expect(page.locator('#lines')).toContainText('Tough phone case');
+  await expect(page.locator('#lines')).toContainText('$29.00');
+  await expect(page.locator('#discount')).toBeVisible();
+  await expect(page.locator('#discount')).toHaveText('Discount WELCOME -$5.00');
+  await expect(page.locator('#sum')).toContainText('Shipping $5.99');
+  await expect(page.locator('#sum')).toContainText('Tax $2.17');
+  await expect(page.locator('#sum')).toContainText('Total $32.16');
+  await expect(page.locator('#sum')).not.toContainText('WELCOME');
+  await expect(page.locator('main')).not.toContainText('secret@example.com');
+  await expect(page.locator('main')).not.toContainText('1 Secret St');
+  if (testInfo.project.name === 'desktop') {
+    await page.screenshot({ path: '/opt/cursor/artifacts/screenshots/success-with-discount.png', fullPage: true });
+  }
+  await page.goto('/success.html?session_id=cs_test_playwright_free');
+  await expect(page.locator('#order')).toBeVisible();
+  await expect(page.locator('#discount')).toHaveText('Discount FREEBIE -$34.99');
+  await expect(page.locator('#sum')).toContainText('Shipping $5.99');
+  await expect(page.locator('#sum')).toContainText('Tax $0.00');
+  await expect(page.locator('#sum')).toContainText('Total $0.00');
+  await expect(page.locator('h1')).toContainText('in.');
+  await expect(page.locator('main')).not.toContainText('secret@example.com');
+  if (testInfo.project.name === 'desktop') {
+    await page.screenshot({ path: '/opt/cursor/artifacts/screenshots/success-full-discount.png', fullPage: true });
+  }
   await expect(page.locator('footer nav a[href="/shipping"]')).toBeVisible();
   await expect(page.locator('footer nav a[href="/returns"]')).toHaveText('Returns');
   expect(errors, errors.join('\n')).toEqual([]);

@@ -202,6 +202,8 @@ test('stripe tax stays exclusive and can be switched off', async () => {
   });
   const taxed = stripe.calls[0];
   assert.deepEqual(taxed.automatic_tax, { enabled: true });
+  assert.equal(taxed.allow_promotion_codes, true);
+  assert.equal(taxed.payment_method_collection, undefined);
   assert.deepEqual(taxed.shipping_address_collection, { allowed_countries: ['US'] });
   assert.equal(taxed.line_items.length, 2);
   assert.equal(taxed.line_items[0].price_data.unit_amount, 2900);

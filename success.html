@@ -46,7 +46,7 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;margin-top:2
 #ref{margin:4px 0 16px;color:var(--ink);font-size:1rem;font-weight:600;letter-spacing:.04em;word-break:break-all}
 #lines{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
 #lines li{padding:12px 0;border-bottom:1px solid var(--line);color:var(--ink);font-size:1rem;line-height:1.4}
-#sum{margin:12px 0 0;color:var(--ink);font-size:1.05rem;font-weight:600}
+#discount,#sum{margin:12px 0 0;color:var(--ink);font-size:1.05rem;font-weight:600}
 footer{color:var(--muted);font-size:.9rem;line-height:1.5;padding:28px 22px calc(36px + env(safe-area-inset-bottom));border-top:1px solid var(--line);text-align:left}
 footer nav{display:flex;flex-wrap:wrap;gap:2px 18px;margin:0 0 8px}
 footer nav a,footer p a{color:var(--muted);text-decoration:none}
@@ -66,6 +66,7 @@ footer p{margin:0 0 8px;font-size:.9rem;color:var(--muted)}
 <p class="label">Order reference</p>
 <p id="ref"></p>
 <ul id="lines"></ul>
+<p id="discount" hidden></p>
 <p id="sum"></p>
 </div>
 <a class="btn" href="/">Design another</a>
@@ -97,6 +98,9 @@ function showOrder(data){
   if(data.tax!=null)bits.push('Tax '+money(data.tax));
   bits.push('Total '+money(data.total));
   sum.textContent=bits.join(' · ');
+  var discountEl=document.getElementById('discount');
+  var line=data.discount&&typeof data.discount.line==='string'?data.discount.line:'';
+  if(discountEl){discountEl.textContent=line;discountEl.hidden=!line}
   box.hidden=false;
 }
 var sessionId=new URLSearchParams(location.search).get('session_id');
