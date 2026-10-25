@@ -127,8 +127,8 @@ footer a{color:var(--muted)}
 }
 @media(max-width:899px){
  html{--pin:40dvh;--preview-compact:clamp(72px, 19dvh, calc(var(--pin) - 108px));--slotbar:calc((0.82 * (100vw - 44px) - 20px) / 3 + 8px)}
- .stage{position:sticky;top:var(--bar, 48px);z-index:20;height:var(--pin);margin-left:-22px;margin-right:-22px;border-radius:0;padding:6px 8px;display:flex;align-items:center;justify-content:center;background:var(--stage);box-shadow:0 1px 0 #e8e8ed;transition:height .32s ease}
- .mock{width:min(100%, calc((var(--pin) - 12px) * var(--aw) / var(--ah)));max-height:calc(var(--pin) - 12px);height:auto;transition:max-height .32s ease, width .32s ease}
+ .stage{position:sticky;top:var(--bar, 48px);z-index:20;height:var(--pin);margin-left:-22px;margin-right:-22px;border-radius:0;padding:6px 8px;display:flex;align-items:center;justify-content:center;background:var(--stage);box-shadow:0 1px 0 #e8e8ed;transition:height .32s ease,padding .32s ease}
+ .mock{width:min(100%, calc((var(--pin) - 12px) * var(--aw) / var(--ah)));max-height:calc(var(--pin) - 12px);height:auto;transition:max-height .32s ease, width .32s ease, height .32s ease}
  .buy{gap:0}
  .choices{padding-top:0}
  html{scroll-padding-top:calc(var(--bar, 48px) + var(--pin) + var(--slotbar) + 88px)}
@@ -139,8 +139,8 @@ footer a{color:var(--muted)}
  .slotbar .slots{margin:8px auto}
  .kb{display:block;margin-top:0}
  #grid{height:auto;margin-top:8px;overflow:visible}
- html.compact .stage{height:var(--preview-compact)}
- html.compact .mock{width:min(100%, calc((var(--preview-compact) - 12px) * var(--aw) / var(--ah)));max-height:calc(var(--preview-compact) - 12px)}
+ html.compact .stage{height:var(--preview-compact);padding:0;align-items:flex-start;justify-content:center}
+ html.compact .mock{width:min(100%, calc(var(--preview-compact) * var(--aw) / var(--ah)));max-width:100%;height:auto;max-height:var(--preview-compact);align-self:flex-start;margin:0 auto}
  html.compact #emoji-choice h3,html.compact #emoji-choice > .note{display:none}
  html.compact .slotbar{position:sticky;top:calc(var(--bar, 48px) + var(--preview-compact));z-index:19;margin-left:-22px;margin-right:-22px;padding:0 22px 2px;background:#fff;box-shadow:0 1px 0 #e8e8ed}
  html.compact .slotbar .slots{margin:0 auto}
