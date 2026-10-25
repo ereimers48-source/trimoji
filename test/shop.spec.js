@@ -583,11 +583,13 @@ test('preview sits with the choices and the bag button stays in the page', async
     expect(frame.pinH / frame.vh).toBeLessThan(0.4);
     expect(frame.pinH / frame.vh).toBeLessThan(0.55);
     expect(frame.mock.top).toBeGreaterThanOrEqual(frame.stageTop - 1);
+    expect(frame.mock.top - frame.stageTop).toBeLessThan(2);
     expect(frame.mock.bottom).toBeLessThanOrEqual(frame.stageBottom + 1);
+    expect(frame.stageBottom - frame.mock.bottom).toBeLessThan(2);
     expect(frame.mock.bottom).toBeLessThanOrEqual(frame.vh + 1);
     expect(frame.mock.left).toBeGreaterThanOrEqual(-1);
     expect(frame.mock.right).toBeLessThanOrEqual(frame.vw + 1);
-    expect(frame.mock.height).toBeGreaterThan(frame.stageH * 0.7);
+    expect(frame.mock.height).toBeGreaterThan(frame.stageH * 0.97);
     expect(frame.fit).toBe('contain');
     expect(frame.logos.length).toBe(3);
     for (const logo of frame.logos) {
@@ -750,6 +752,80 @@ test('preview sits with the choices and the bag button stays in the page', async
       expect(logo.bottom).toBeLessThanOrEqual(stuck.bottom + 1);
       expect(logo.left).toBeGreaterThanOrEqual(stuck.left - 1);
       expect(logo.right).toBeLessThanOrEqual(stuck.right + 1);
+    }
+  }
+  expect(errors, errors.join('\n')).toEqual([]);
+});
+
+test('compact preview fills the phone band for every mockup', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.use.isMobile !== true, 'sticky compact preview is the phone layout');
+  const errors = track(page);
+  await page.goto('/shop-preview');
+  await expect(page.locator('#mock img.blank')).toBeVisible();
+  await page.evaluate(() => { document.documentElement.style.scrollBehavior = 'auto'; });
+  await page.addStyleTag({ content: '*,*::before,*::after{transition:none !important;animation:none !important}' });
+  const products = ['tee', 'hoodie', 'mug', 'hat', 'case'];
+  for (const product of products) {
+    await press(page.locator(`#prods button[data-value="${product}"]`), testInfo);
+    const colors = page.locator('#cols button');
+    const count = await colors.count();
+    expect(count, product).toBeGreaterThan(0);
+    for (let i = 0; i < count; i += 1) {
+      await press(colors.nth(i), testInfo);
+      await page.locator('#colorhead').evaluate((el) => el.scrollIntoView({ block: 'start', inline: 'nearest' }));
+      await expect.poll(() => page.locator('#mock img.blank').evaluate((el) => el.naturalWidth)).toBeGreaterThan(100);
+      const frame = await page.evaluate(() => {
+        const stage = document.querySelector('#stage').getBoundingClientRect();
+        const mock = document.querySelector('#mock').getBoundingClientRect();
+        const img = document.querySelector('#mock img.blank');
+        const box = img.getBoundingClientRect();
+        const slots = document.querySelector('#slots').getBoundingClientRect();
+        const logos = [...document.querySelectorAll('#mock image')].map((el) => el.getBoundingClientRect());
+        return {
+          product: document.querySelector('#mock').dataset.product,
+          compact: document.documentElement.classList.contains('compact'),
+          sticky: getComputedStyle(document.querySelector('#stage')).position,
+          fit: getComputedStyle(img).objectFit,
+          stageTop: stage.top,
+          stageBottom: stage.bottom,
+          stageH: stage.height,
+          vh: window.innerHeight,
+          vw: window.innerWidth,
+          mock: { top: mock.top, bottom: mock.bottom, left: mock.left, right: mock.right, width: mock.width, height: mock.height },
+          img: { top: box.top, bottom: box.bottom, left: box.left, right: box.right, width: box.width, height: box.height },
+          natural: img.naturalWidth && img.naturalHeight ? img.naturalWidth / img.naturalHeight : 0,
+          slotsTop: slots.top,
+          slotsW: [...document.querySelectorAll('#slots .slot')].map((el) => el.getBoundingClientRect().width),
+          logos: logos.map((r) => ({ top: r.top, bottom: r.bottom, left: r.left, right: r.right, width: r.width, height: r.height })),
+        };
+      });
+      const label = `${product} color ${i}`;
+      expect(frame.compact, label).toBeTruthy();
+      expect(frame.sticky, label).toBe('sticky');
+      expect(frame.product, label).toBe(product);
+      expect(frame.fit, label).toBe('contain');
+      expect(frame.stageH / frame.vh, label).toBeGreaterThan(0.12);
+      expect(frame.stageH / frame.vh, label).toBeLessThan(0.22);
+      expect(frame.img.top - frame.stageTop, label).toBeLessThan(2);
+      expect(frame.stageBottom - frame.img.bottom, label).toBeLessThan(2);
+      expect(frame.img.height, label).toBeGreaterThan(frame.stageH * 0.97);
+      expect(frame.img.left, label).toBeGreaterThanOrEqual(-1);
+      expect(frame.img.right, label).toBeLessThanOrEqual(frame.vw + 1);
+      expect(frame.natural, label).toBeGreaterThan(0);
+      expect(Math.abs(frame.img.width / frame.img.height - frame.natural), label).toBeLessThan(0.03);
+      expect(Math.abs(frame.mock.width / frame.mock.height - frame.natural), label).toBeLessThan(0.03);
+      expect(frame.slotsTop, label).toBeGreaterThanOrEqual(frame.stageBottom - 2);
+      expect(frame.slotsW, label).toHaveLength(3);
+      for (const width of frame.slotsW) expect(width, label).toBeGreaterThan(72);
+      expect(frame.logos, label).toHaveLength(3);
+      for (const logo of frame.logos) {
+        expect(logo.width, label).toBeGreaterThan(4);
+        expect(logo.height, label).toBeGreaterThan(4);
+        expect(logo.top, label).toBeGreaterThanOrEqual(frame.img.top - 1);
+        expect(logo.bottom, label).toBeLessThanOrEqual(frame.img.bottom + 1);
+        expect(logo.left, label).toBeGreaterThanOrEqual(frame.img.left - 1);
+        expect(logo.right, label).toBeLessThanOrEqual(frame.img.right + 1);
+      }
     }
   }
   expect(errors, errors.join('\n')).toEqual([]);
