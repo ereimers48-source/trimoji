@@ -975,6 +975,13 @@ test('the static shop asks the server for checkout and test mode', () => {
   assert.match(html, /DOMParser/);
   assert.match(html, /xlink:href/);
     assert.match(html, /function all\(\)\{slots\(\);controls\(\);draw\(\);syncProduct\(\)\}/);
+  assert.match(html, /id="prod-choice"/);
+  assert.match(html, /id="dock"/);
+  assert.match(html, /html\.dock-on \.dock\{[^}]*env\(safe-area-inset-bottom\)/);
+  assert.ok(html.indexOf('id="emoji-choice"') < html.indexOf('id="stage"'));
+  assert.ok(html.indexOf('id="stage"') < html.indexOf('id="prod-choice"'));
+  assert.ok(html.indexOf('id="prod-choice"') < html.indexOf('id="lay"'));
+  assert.doesNotMatch(html, /Pick three/);
   assert.match(html, /Trucker hat/);
   assert.match(html, /Tough phone case/);
   assert.match(html, /function caseLogoSVG\(\)\{const W=1392,H=2220,cam=0\.28,inset=0\.16/);

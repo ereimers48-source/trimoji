@@ -46,6 +46,7 @@ a{color:var(--ink)}
 .bag b{font-weight:600}
 .skip{position:absolute;left:-999px;top:8px;background:#fff;color:var(--ink);padding:8px 12px;z-index:80;border-radius:8px}
 .skip:focus{left:8px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .hero{padding:56px 22px 0;text-align:center}
 .hero h1{margin:0 auto;max-width:14ch;font-size:min(5.4rem, 12vw);font-weight:600;letter-spacing:-.045em;line-height:1.4}
 .btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:12px 28px;border-radius:980px;border:0;background:var(--accent);color:#fff;font-weight:500;font-size:1.05rem;text-decoration:none;line-height:1.2}
@@ -111,18 +112,28 @@ table.chart th,table.chart td{text-align:left;padding:8px 8px 8px 0;border-botto
 .tabs button{border:1px solid var(--line);background:#fff;border-radius:980px;min-height:44px;padding:8px 12px;font-size:.85rem;font-weight:500;flex:0 0 auto}
 .tabs button.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);color:var(--accent)}
 .opts{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 0}
-#prods{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0 0}
-#prods .opt{width:100%;min-height:64px;border-radius:14px;text-align:left;padding:14px 16px;font-size:1.02rem;line-height:1.45}
+#prods{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin:14px 0 0}
+#prods .opt{width:100%;min-width:0;min-height:64px;border-radius:14px;text-align:left;padding:14px 16px;font-size:1.02rem;line-height:1.45}
 #cols{display:grid;gap:10px;justify-content:start;margin-top:14px;grid-template-columns:repeat(4, 44px)}
 #cols:has(> button:nth-child(5):last-child){grid-template-columns:repeat(5, 44px)}
 .opt{border:1px solid var(--line);background:#fff;border-radius:980px;padding:8px 16px;font-weight:500;min-height:44px;line-height:1.45}
 .opt.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);color:var(--accent)}
+.look{display:contents}
+#prod-choice{border-top:0;padding-top:0}
+#prods .opt{display:flex;align-items:center;justify-content:space-between;gap:8px;text-align:left}
+#prods .nm{flex:1 1 auto;min-width:0;overflow-wrap:anywhere}
+#prods .amt{flex:0 0 auto;white-space:nowrap;color:var(--muted);font-weight:600;font-variant-numeric:tabular-nums}
+#prods .opt.on .amt{color:var(--accent)}
+#emoji-choice{border-top:0;margin-top:0;padding-top:0}
 .sw{width:44px;height:44px;border-radius:50%;border:1px solid var(--line);padding:0;background:#fff}
 .sw.on{box-shadow:0 0 0 2px #fff, 0 0 0 4px var(--accent)}
 label{display:block;margin-top:4px;font-size:.95rem;font-weight:500;line-height:1.4}
 input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
 .buybar{display:flex;flex-direction:column;align-items:stretch;gap:12px;margin-top:8px;position:static}
 .price{margin:0;font-size:2rem;font-weight:600;letter-spacing:-.03em;line-height:1.1;font-variant-numeric:tabular-nums}
+.dock-slot{min-height:52px}
+.dock{display:flex;flex-direction:column;align-items:stretch}
+.dock-meta{display:none;margin:0;min-width:0}
 #addbtn,#savedesign{width:100%;min-height:52px}
 .btn.ghost{background:#fff;color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
 #pay{width:100%}
@@ -163,26 +174,36 @@ footer a{color:var(--muted)}
  .mock{width:min(100%, calc((var(--pin) - 12px) * var(--aw) / var(--ah)));max-height:calc(var(--pin) - 12px);height:auto;transition:max-height .32s ease, width .32s ease, height .32s ease}
  .buy{gap:0}
  .choices{padding-top:0}
- html{scroll-padding-top:calc(var(--bar, 48px) + var(--pin) + var(--slotbar) + 88px)}
- html.compact{scroll-padding-top:calc(var(--bar, 48px) + var(--preview-compact) + var(--slotbar) + 16px)}
- #emoji-choice{display:block;height:auto;overflow:visible;padding:8px 0 0}
+ html{scroll-padding-top:calc(var(--bar, 48px) + 12px)}
+ html.compact{scroll-padding-top:calc(var(--bar, 48px) + var(--preview-compact) + 16px)}
+ html.compact .choice,html.compact .choice h3,html.compact .choice button,html.compact .choice input,html.compact .choice select{scroll-margin-top:calc(var(--bar, 48px) + var(--preview-compact) + 12px)}
+ #emoji-choice{display:block;height:auto;overflow:visible;margin-top:0;padding:4px 0 0}
  #emoji-choice h3{font-size:1.15rem;margin:0 0 6px;line-height:1.5}
+ .stage{box-shadow:none}
+ #prod-choice{background:var(--stage);margin-left:-22px;margin-right:-22px;padding:0 22px 14px;box-shadow:0 1px 0 #e8e8ed}
+ #prod-choice h3{font-size:1.15rem;margin:0 0 2px}
+ html.dock-on{scroll-padding-bottom:calc(var(--dock, 72px) + 8px)}
+ html.dock-on .choices button:not(#addbtn),html.dock-on .choices input,html.dock-on .choices select,html.dock-on .choices a{scroll-margin-bottom:calc(var(--dock, 72px) + 10px)}
+ html.dock-on .dock{position:fixed;z-index:40;left:0;right:0;bottom:0;flex-direction:row;align-items:center;gap:12px;padding:8px 22px calc(8px + env(safe-area-inset-bottom));background:#fff;border-top:1px solid #e8e8ed}
+ html.dock-on .dock-meta{display:flex;flex:1 1 auto;flex-direction:column;gap:1px;min-width:0}
+ html.dock-on #dockname{font-size:.92rem;font-weight:600;letter-spacing:-.02em;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ html.dock-on #dockprice{font-size:1.15rem;font-weight:600;letter-spacing:-.03em;line-height:1.15;font-variant-numeric:tabular-nums}
+ html.dock-on #addbtn{width:auto;min-height:44px;min-width:44px;padding:10px 18px;flex:0 0 auto}
  #emoji-choice .note{font-size:.9rem;line-height:1.45;margin:0}
  .slotbar .slots{margin:8px auto}
  .kb{display:block;margin-top:0}
  #grid{height:auto;margin-top:8px;overflow:visible}
- html.compact .stage{height:var(--preview-compact);padding:0;align-items:flex-start;justify-content:center}
+ html.compact .stage{height:var(--preview-compact);padding:0;align-items:flex-start;justify-content:center;box-shadow:none}
  html.compact .mock{width:min(100%, calc(var(--preview-compact) * var(--aw) / var(--ah)));max-width:100%;height:auto;max-height:var(--preview-compact);align-self:flex-start;margin:0 auto}
- html.compact #emoji-choice h3,html.compact #emoji-choice > .note{display:none}
- html.compact .slotbar{position:sticky;top:calc(var(--bar, 48px) + var(--preview-compact));z-index:19;margin-left:-22px;margin-right:-22px;padding:0 22px 2px;background:#fff;box-shadow:0 1px 0 #e8e8ed}
- html.compact .slotbar .slots{margin:0 auto}
 }
 @media(min-width:900px){
  .hero{padding:64px 6vw 0}
  #shop{padding:40px 6vw 72px}
- .buy{display:grid;grid-template-columns:minmax(320px, 1.05fr) minmax(340px, .95fr);gap:56px;align-items:start}
+ .buy{display:flex;flex-direction:column;gap:36px}
+ .look{display:grid;grid-template-columns:minmax(300px,1.15fr) minmax(280px,.85fr);gap:48px;align-items:start}
  .stage{position:sticky;top:calc(var(--bar, 64px) + 16px);align-self:start}
  .mock{width:min(100%, calc((100dvh - var(--bar, 64px) - 28px) * var(--aw) / var(--ah)));max-height:calc(100dvh - var(--bar, 64px) - 28px);height:auto}
+ #prod-choice{padding-top:0;padding-bottom:0}
  .choices{padding-top:0}
  #emoji-choice{display:block;height:auto;overflow:visible}
  .kb{display:block}
@@ -205,9 +226,6 @@ footer a{color:var(--muted)}
 <main id="shop">
 <h2>Build it.</h2>
 <div class="buy">
-<div class="stage" id="stage">
-<div class="mock" id="mock" data-fit="panel" data-product="tee" data-ink="light" style="--px:30.2%;--py:23.5%;--pw:38.5%;--ph:31.3%;--rx:4deg;--ry:-3deg;--swatch:#ffffff"><img class="blank" alt="White T-shirt" data-key="tee:White" src="assets/products/tee/white-520.webp" srcset="assets/products/tee/white-360.webp 360w, assets/products/tee/white-520.webp 520w" sizes="(min-width: 900px) 460px, 100vw" width="520" height="640" decoding="async" fetchpriority="high"><div class="print"></div></div>
-</div>
 <div class="choices">
 <div id="emoji-choice">
 <h3>Emojis</h3>
@@ -218,13 +236,18 @@ footer a{color:var(--muted)}
 <p class="sr" id="triosay" aria-live="polite"></p>
 </div>
 <div class="kb"><input id="q" placeholder="Search emoji" autocomplete="off" aria-label="Search emoji"><div class="tabs" id="tabs"></div><div class="grid" id="grid"></div></div>
+<div class="look" id="look">
+<div class="stage" id="stage">
+<div class="mock" id="mock" data-fit="panel" data-product="tee" data-ink="light" style="--px:30.2%;--py:23.5%;--pw:38.5%;--ph:31.3%;--rx:4deg;--ry:-3deg;--swatch:#ffffff"><img class="blank" alt="White T-shirt" data-key="tee:White" src="assets/products/tee/white-520.webp" srcset="assets/products/tee/white-360.webp 360w, assets/products/tee/white-520.webp 520w" sizes="(min-width: 900px) 460px, 100vw" width="520" height="640" decoding="async" fetchpriority="high"><div class="print"></div></div>
+</div>
+<section class="choice" id="prod-choice">
+<h3>Product</h3>
+<div class="opts" id="prods"></div>
+</section>
+</div>
 <section class="choice">
 <h3>Layout</h3>
 <div class="opts" id="lay"></div>
-</section>
-<section class="choice">
-<h3>Product</h3>
-<div class="opts" id="prods"></div>
 </section>
 <section class="choice">
 <h3 id="colorhead">Color</h3>
@@ -244,7 +267,12 @@ footer a{color:var(--muted)}
 <div class="buybar" id="buybar">
 <p class="price" id="price"></p>
 <p class="note" id="unavail" hidden></p>
+<div class="dock-slot" id="dockhome">
+<div class="dock" id="dock">
+<p class="dock-meta"><span id="dockname"></span><span id="dockprice"></span></p>
 <button class="btn" id="addbtn" type="button">Add to Bag</button>
+</div>
+</div>
 <button class="btn ghost" id="savedesign" type="button" hidden>Save design</button>
 <p class="note" id="saveprompt"><a id="savelink" href="/account">Sign in</a> to save this design.</p>
 <p class="note">Custom-made to order. See our <a href="/returns">Returns policy</a>.</p>
@@ -466,16 +494,25 @@ function draw(){szv.textContent=sz.value+'%';applyPhoto();
  else if(S.prod=='case'){const phone=caseLogoSVG();mountMock(phone.markup,0,0,0,phone.vb)}
  else{const art=apparelLogoSVG();mountMock(art.markup,0,0,0,art.vb)}
  draws+=1;if(draws>1&&!reduceMotion&&document.activeElement?.id!=='sz')nudge();
- if(!PRODS[S.prod].available)price.innerHTML='<span class="note">Unavailable</span>';
- else price.innerHTML='$'+PRODS[S.prod].p.toFixed(2);schedulePreview()}
+ paintQuote();schedulePreview()}
+function quoteAmount(){const p=PRODS[S.prod];return p.available?p.p:null}
+function paintQuote(){const p=PRODS[S.prod];const amount=quoteAmount();const text=amount==null?'':'$'+amount.toFixed(2);
+ if(amount==null)price.innerHTML='<span class="note">Unavailable</span>';else price.textContent=text;
+ const name=document.getElementById('dockname');const cost=document.getElementById('dockprice');
+ if(name)name.textContent=p.n;if(cost)cost.textContent=amount==null?'Unavailable':text}
 function setLay(v){S.lay=v;all()}
 function setProd(v){S.prod=v;const p=PRODS[v];
  if(p.colors&&!p.colors.includes(COLS[S.col][0])){const idx=COLS.findIndex(c=>c[0]===p.colors[0]);if(idx>=0)S.col=idx}
  if(!p.sizes.includes(S.size))S.size=p.defaultSize&&p.sizes.includes(p.defaultSize)?p.defaultSize:p.sizes[Math.min(1,p.sizes.length-1)];
  all()}
 function setSize(v){S.size=v;all()}
+function productOpts(){const el=document.getElementById('prods');
+ const rows=Object.entries(PRODS).map(([k,v])=>[k,v.available?v.n:v.n+' · soon',v.available?'$'+v.p:'']);
+ const key=rows.map(r=>r.join('\0')).join('\n');
+ if(el.dataset.key!==key){el.dataset.key=key;el.innerHTML=rows.map(([k,name,amt])=>`<button type="button" class="opt" data-value="${esc(k)}"><span class="nm">${esc(name)}</span>${amt?` <span class="amt">${esc(amt)}</span>`:''}</button>`).join('')}
+ el.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.value===S.prod))}
 function controls(){const chartBtn=document.getElementById('sizechartbtn');if(chartBtn)chartBtn.hidden=!(S.prod==='tee'||S.prod==='hoodie');ensureOpts('lay',[['row','Row'],['triangle','Triangle'],['stacked','Stacked']],S.lay);
- ensureOpts('prods',Object.entries(PRODS).map(([k,v])=>[k,v.available?v.n:v.n+' · soon']),S.prod);
+ productOpts();
  const sizesEl=document.getElementById('sizes');
  const colorHead=document.getElementById('colorhead');const sizeHead=document.getElementById('sizehead');
  if(S.prod==='case'){if(colorHead)colorHead.textContent='Finish';if(sizeHead)sizeHead.textContent='Model';
@@ -493,7 +530,8 @@ function controls(){const chartBtn=document.getElementById('sizechartbtn');if(ch
  if(cols.dataset.key!==key){cols.dataset.key=key;cols.innerHTML=COLS.map((c,i)=>allowed.includes(c[0])?`<button type="button" class="sw" data-col="${i}" title="${esc(c[0])}" style="background:${c[1]}"></button>`:'').join('')}
  cols.querySelectorAll('button').forEach(b=>b.classList.toggle('on',Number(b.dataset.col)===S.col))}
 function syncProduct(){const p=PRODS[S.prod];const add=document.getElementById('addbtn');
- if(add){add.disabled=!p.available;add.textContent=p.available?'Add to Bag':'Unavailable'}
+ if(add){add.disabled=!p.available;add.textContent=p.available?'Add to Bag':'Unavailable';
+  add.setAttribute('aria-label',p.available?'Add '+p.n+' to bag, $'+p.p.toFixed(2):'Unavailable')}
  const note=document.getElementById('unavail');if(note){note.hidden=!!p.available;note.textContent=p.available?'':p.reason}}
 function all(){slots();controls();draw();syncProduct()}
 function b64urlDecode(s){const pad=s.length%4?'='.repeat(4-(s.length%4)):'';const bin=atob(String(s).replace(/-/g,'+').replace(/_/g,'/')+pad);const bytes=Uint8Array.from(bin,c=>c.charCodeAt(0));return new TextDecoder().decode(bytes)}
@@ -527,10 +565,12 @@ function loadAccountState(){armSave();fetch('/api/account',{headers:{accept:'app
 function toast(t){const el=document.getElementById('toast');el.innerHTML=twx(t);el.style.display='block';placeToast();clearTimeout(el._t);el._t=setTimeout(()=>{el.style.display='none';el.style.bottom='20px'},3200)}
 function dockOffset(){const probe=document.getElementById('safe-b');return probe?probe.offsetHeight:0}
 function placeToast(){const el=document.getElementById('toast');const drawer=document.getElementById('drawer');if(!el||!drawer)return;
- const base=20+dockOffset();
- if(el.style.display==='none'||!drawer.classList.contains('open')){el.style.bottom=base+'px';return}
- const sum=drawer.querySelector('.sum').getBoundingClientRect();
- el.style.bottom=Math.max(base,Math.round(innerHeight-sum.top+12))+'px'}
+ const dock=document.getElementById('dock');const dockOn=document.documentElement.classList.contains('dock-on')&&dock;
+ const base=20+dockOffset();let bottom=dockOn?Math.max(base,dock.offsetHeight+8):base;
+ if(drawer.classList.contains('open')&&el.style.display!=='none'){const sum=drawer.querySelector('.sum').getBoundingClientRect();bottom=Math.max(base,Math.round(innerHeight-sum.top+12))}
+ else if(dock&&el.style.display!=='none'){el.style.bottom=bottom+'px';const dockBox=dock.getBoundingClientRect();const toastBox=el.getBoundingClientRect();
+  if(toastBox.height>2&&dockBox.height>2&&toastBox.bottom>dockBox.top+2&&toastBox.top<dockBox.bottom-2&&dockBox.top<innerHeight&&dockBox.bottom>0)bottom=Math.max(bottom,Math.round(innerHeight-dockBox.top)+8)}
+ el.style.bottom=bottom+'px'}
 function money(n){return '$'+n.toFixed(2)}
 function slotList(){return S.pick.map(e=>e||null)}
 function sameDesign(x){return x.product===S.prod&&x.color===COLS[S.col][0]&&x.size===S.size&&x.layout===S.lay&&x.logoSize===Number(sz.value)&&x.emojis.map(e=>e||'').join('\0')===slotList().map(e=>e||'').join('\0')}
@@ -557,7 +597,7 @@ function clearBackgroundInert(){for(const el of document.body.children)el.remove
 function toggleCart(o){const open=o===true?true:o===false?false:!drawer.classList.contains('open');
  if(open){const current=document.activeElement;cartReturn=current&&current!==document.body?current:document.getElementById('cartbtn');drawer.classList.add('open');drawer.removeAttribute('inert');drawer.setAttribute('aria-hidden','false');setBackgroundInert(drawer);const close=document.getElementById('closecart');if(close)close.focus()}
  else{const back=cartReturn;cartReturn=null;drawer.classList.remove('open');drawer.setAttribute('aria-hidden','true');clearBackgroundInert();if(back&&document.contains(back)&&typeof back.focus==='function')back.focus()}
- requestAnimationFrame(placeToast)}
+ syncDock();requestAnimationFrame(placeToast)}
 function openSizeChart(){const box=document.getElementById('sizechart');if(!box||drawer.classList.contains('open'))return;const current=document.activeElement;chartReturn=current&&current!==document.body?current:document.getElementById('sizechartbtn');box.hidden=false;box.removeAttribute('inert');box.setAttribute('aria-hidden','false');setBackgroundInert(box);const close=document.getElementById('sizechart-close');if(close)close.focus()}
 function closeSizeChart(){const box=document.getElementById('sizechart');if(!box||box.hidden)return;const back=chartReturn;chartReturn=null;box.hidden=true;box.setAttribute('aria-hidden','true');clearBackgroundInert();if(back&&document.contains(back)&&typeof back.focus==='function')back.focus()}
 function schedulePreview(){}
@@ -570,7 +610,23 @@ async function checkout(){if(!S.cart.length)return toast('Your bag is empty');
   location.href=data.url}catch(e){toast('This preview can’t take payment. Checkout runs on the Vercel deployment.')}
  finally{pay.disabled=false;pay.textContent=label}}
 function nudge(){mock.classList.remove('bump');void mock.offsetWidth;mock.classList.add('bump')}
-function fitBar(){const bar=document.querySelector('.topbar');if(!bar)return;document.documentElement.style.setProperty('--bar',bar.offsetHeight+'px');const phone=window.matchMedia('(max-width: 899px)').matches;document.documentElement.style.scrollPaddingTop=phone?'':(bar.offsetHeight+12)+'px';syncPin()}
+function dockZoneTop(){const dock=document.getElementById('dock');const on=document.documentElement.classList.contains('dock-on');
+ const h=on&&dock?dock.offsetHeight:72+dockOffset();return innerHeight-h}
+function inDockZone(el){if(!el)return false;const r=el.getBoundingClientRect();if(r.width<2||r.height<2)return false;
+ const top=dockZoneTop();return r.bottom>top+6&&r.top<innerHeight-4}
+function syncDock(){const root=document.documentElement;const phone=matchMedia('(max-width:899px)').matches;
+ const dock=document.getElementById('dock');const home=document.getElementById('dockhome');const footer=document.querySelector('footer');
+ const stage=document.getElementById('stage');const bar=document.querySelector('.topbar');const drawer=document.getElementById('drawer');
+ if(!dock||!home||!footer||!stage||!bar||!drawer)return;
+ const barBottom=bar.getBoundingClientRect().bottom;const stageTop=stage.getBoundingClientRect().top;
+ const stuck=stageTop<=barBottom+4&&stageTop>barBottom-stage.offsetHeight*0.65;
+ const homeTop=home.getBoundingClientRect().top;const limit=dockZoneTop();
+ const blocked=inDockZone(document.getElementById('slots'))||inDockZone(document.getElementById('prods'))||inDockZone(stage)||inDockZone(footer);
+ const show=phone&&!drawer.classList.contains('open')&&stuck&&homeTop>limit&&!blocked;
+ root.classList.toggle('dock-on',show);
+ if(show)root.style.setProperty('--dock',dock.offsetHeight+'px');else root.style.removeProperty('--dock');
+ placeToast()}
+function fitBar(){const bar=document.querySelector('.topbar');if(!bar)return;document.documentElement.style.setProperty('--bar',bar.offsetHeight+'px');const phone=window.matchMedia('(max-width: 899px)').matches;document.documentElement.style.scrollPaddingTop=phone?'':(bar.offsetHeight+12)+'px';syncPin();syncDock()}
 function syncPin(){const root=document.documentElement;const phone=window.matchMedia('(max-width: 899px)').matches;if(!phone){root.classList.remove('compact');return}const bar=document.querySelector('.topbar');const heading=document.querySelector('#shop h2');if(!bar||!heading)return;const passed=heading.getBoundingClientRect().bottom<bar.getBoundingClientRect().bottom+1;root.classList.toggle('compact',passed)}
 function loadShopConfig(){fetch('/api/config',{headers:{accept:'application/json'}}).then(r=>r.ok?r.json():null).then(d=>{
  if(d&&d.stripeTestMode===true){const el=document.getElementById('testmode');if(el)el.hidden=false}fitBar()}).catch(()=>{})}
@@ -604,8 +660,9 @@ mock.querySelector('img.blank').addEventListener('error',()=>mock.classList.add(
 mock.querySelector('img.blank').addEventListener('load',()=>mock.classList.remove('flat'));
 applyIncomingDesign();preloadPhotos();tabs();renderGrid();all();markSelected();cart();loadShopConfig();loadAccountState();fitBar();
 new ResizeObserver(()=>fitBar()).observe(document.querySelector('.topbar'));
+new ResizeObserver(()=>syncDock()).observe(document.getElementById('stage'));
 let pinFrame=0;
-addEventListener('scroll',()=>{if(pinFrame)return;pinFrame=requestAnimationFrame(()=>{pinFrame=0;syncPin()})},{passive:true});
-addEventListener('resize',()=>syncPin());
+addEventListener('scroll',()=>{if(pinFrame)return;pinFrame=requestAnimationFrame(()=>{pinFrame=0;syncPin();syncDock()})},{passive:true});
+addEventListener('resize',()=>{syncPin();syncDock()});
 
 </script></body></html>

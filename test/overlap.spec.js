@@ -152,6 +152,8 @@ test('text stays apart across phone, tablet, and desktop widths', async ({ page 
       }, font);
       const found = await page.evaluate(scan, 'page');
       for (const item of found) problems.push(`${width}x${height} ${font}px: ${item}`);
+      const dockFixed = await page.evaluate(() => getComputedStyle(document.getElementById('dock')).position === 'fixed');
+      if (dockFixed) problems.push(`${width}x${height} ${font}px: buy dock is fixed over the top of the page`);
       if (width <= 430 && height > width) {
         await page.evaluate(async () => {
           document.getElementById('cartbtn').click();
@@ -190,6 +192,116 @@ test('text stays apart across phone, tablet, and desktop widths', async ({ page 
       }
     }
   }
+
+  function dockReport() {
+    const dockEl = document.getElementById('dock');
+    syncDock();
+    const cs = getComputedStyle(dockEl);
+    const dock = dockEl.getBoundingClientRect();
+    const fixed = cs.position === 'fixed';
+    const box = (sel) => {
+      const el = document.querySelector(sel);
+      if (!el) return null;
+      const r = el.getBoundingClientRect();
+      return { top: r.top, bottom: r.bottom, left: r.left, right: r.right, width: r.width, height: r.height };
+    };
+    const overlap = (a, b) => {
+      if (!a || !b || a.height < 2 || b.height < 2 || a.width < 2 || b.width < 2) return 0;
+      const iw = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+      const ih = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+      return iw > 2 && ih > 2 ? Math.round(ih) : 0;
+    };
+    const dockBox = { top: dock.top, bottom: dock.bottom, left: dock.left, right: dock.right, width: dock.width, height: dock.height };
+    const adds = [...document.querySelectorAll('button')].filter((el) => {
+      if (el.textContent.trim() !== 'Add to Bag') return false;
+      const r = el.getBoundingClientRect();
+      const style = getComputedStyle(el);
+      return style.visibility !== 'hidden' && style.display !== 'none' && r.width > 0 && r.height > 0 && r.bottom > 0 && r.top < window.innerHeight;
+    });
+    const footerLink = document.querySelector('footer nav a');
+    const linkBox = footerLink.getBoundingClientRect();
+    const linkHit = document.elementFromPoint(linkBox.left + 12, Math.min(window.innerHeight - 4, linkBox.top + linkBox.height / 2));
+    return {
+      fixed,
+      on: document.documentElement.classList.contains('dock-on'),
+      stage: overlap(dockBox, box('#stage')),
+      slots: overlap(dockBox, box('#slots')),
+      prods: overlap(dockBox, box('#prods')),
+      footer: overlap(dockBox, box('footer')),
+      bar: overlap(dockBox, box('.topbar')),
+      pay: overlap(dockBox, box('#pay')),
+      adds: adds.length,
+      price: document.getElementById('dockprice').textContent,
+      linkCovered: fixed && linkBox.top < window.innerHeight && linkBox.bottom > 0 && !(footerLink.contains(linkHit)),
+      safePad: cs.paddingBottom,
+    };
+  }
+
+  for (const [width, height] of [[390, 844], [375, 667], [430, 932], [768, 1024], [320, 640], [844, 390]]) {
+    await page.setViewportSize({ width, height });
+    await page.evaluate(async () => {
+      document.documentElement.style.fontSize = '16px';
+      document.documentElement.style.setProperty('scroll-behavior', 'auto', 'important');
+      document.getElementById('testmode').hidden = false;
+      const drawer = document.getElementById('drawer');
+      if (drawer.classList.contains('open')) document.getElementById('closecart').click();
+      fitBar();
+      const bar = document.querySelector('.topbar').getBoundingClientRect().bottom;
+      const stage = document.getElementById('stage');
+      window.scrollTo(0, stage.getBoundingClientRect().top + window.scrollY - bar);
+      syncPin();
+      await new Promise((resolve) => {
+        let last = -1;
+        let stable = 0;
+        let frames = 0;
+        function tick() {
+          const next = stage.getBoundingClientRect().height;
+          if (Math.abs(next - last) < 0.5) stable += 1;
+          else stable = 0;
+          last = next;
+          frames += 1;
+          if (stable >= 4 || frames > 90) resolve();
+          else requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+      });
+      syncDock();
+    });
+    const stuck = await page.evaluate(dockReport);
+    const label = `${width}x${height}`;
+    if (stuck.fixed) {
+      for (const part of ['stage', 'slots', 'prods', 'footer', 'bar']) {
+        if (stuck[part]) problems.push(`${label}: buy dock overlaps ${part} by ${stuck[part]}px`);
+      }
+      if (stuck.adds !== 1) problems.push(`${label}: ${stuck.adds} Add to Bag buttons on screen`);
+      if (!/\$\d+\.\d\d/.test(stuck.price)) problems.push(`${label}: dock price is "${stuck.price}"`);
+    }
+    if (width === 390 && height === 844 && !stuck.fixed) problems.push(`${label}: buy dock is not fixed while the preview is pinned`);
+    await page.evaluate(() => {
+      window.scrollTo(0, document.documentElement.scrollHeight);
+      syncPin();
+      syncDock();
+    });
+    const bottom = await page.evaluate(dockReport);
+    if (bottom.footer) problems.push(`${label} bottom: buy dock overlaps the footer by ${bottom.footer}px`);
+    if (bottom.fixed && bottom.linkCovered) problems.push(`${label} bottom: buy dock covers a footer link`);
+    if (bottom.adds > 1) problems.push(`${label} bottom: ${bottom.adds} Add to Bag buttons on screen`);
+  }
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = '16px';
+    const bar = document.querySelector('.topbar').getBoundingClientRect().bottom;
+    const stage = document.getElementById('stage');
+    window.scrollTo(0, stage.getBoundingClientRect().top + window.scrollY - bar);
+    syncPin();
+    syncDock();
+    document.getElementById('cartbtn').click();
+  });
+  const cartDock = await page.evaluate(dockReport);
+  if (cartDock.fixed) problems.push('390x844 cart: buy dock stays fixed over the bag');
+  if (cartDock.pay) problems.push(`390x844 cart: buy dock overlaps checkout by ${cartDock.pay}px`);
+  await page.evaluate(() => document.getElementById('closecart').click());
 
   expect(problems, problems.join('\n')).toEqual([]);
 });
