@@ -10,6 +10,10 @@ test('a story stays private until an admin approves it', async ({ page }, testIn
   await expect(page.locator('h1')).toHaveText('Your 3 emojis, your story');
   await expect(page.locator('.lede')).toHaveText('Real stories from real people. Written by you, not by AI.');
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/);
+  await expect(page.locator('meta[name="description"]')).toHaveCount(0);
+  await expect(page.locator('meta[property="og:title"]')).toHaveCount(0);
+  await expect(page.locator('meta[property="og:image"]')).toHaveCount(0);
+  await expect(page.locator('meta[name="twitter:card"]')).toHaveCount(0);
   await expect(page.locator('#empty')).toContainText('yours can be the first');
   if (await page.locator('#list article').count() === 0) await expect(page.locator('#empty')).toBeVisible();
   await expect(page.locator('footer nav a')).toHaveText(['Privacy', 'Terms', 'Shipping', 'Returns', 'Contact', 'Stories']);
