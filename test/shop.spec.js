@@ -952,7 +952,9 @@ test('policy pages are linked from the shop and the bag', async ({ page }) => {
   await expect(page.locator('#lines')).toContainText('Tough phone case');
   await expect(page.locator('#lines')).toContainText('Glossy');
   await expect(page.locator('#lines')).toContainText('iPhone 16');
-  await expect(page.locator('#sum')).toContainText('Total $34.99');
+  await expect(page.locator('#sum')).toContainText('Shipping $5.99');
+  await expect(page.locator('#sum')).toContainText('Tax $2.17');
+  await expect(page.locator('#sum')).toContainText('Total $37.16');
   await expect(page.locator('main')).not.toContainText('secret@example.com');
   await expect(page.locator('main')).not.toContainText('1 Secret St');
   await expect(page.locator('footer nav a[href="/shipping"]')).toBeVisible();

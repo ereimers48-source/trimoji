@@ -30,6 +30,7 @@ export async function POST(request) {
       stripe: runtime.createStripe(key),
       siteUrl: resolveSiteUrl(process.env.SITE_URL),
       customerEmail: signedIn?.email,
+      env: process.env,
     });
     return withCors(request, Response.json({ url: session.url }));
   } catch (err) {

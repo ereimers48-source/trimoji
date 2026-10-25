@@ -6,8 +6,8 @@
     "node": ">=20"
   },
   "scripts": {
-    "test": "node --test test/sanity.test.js test/stories.test.js test/accounts.test.js && playwright test",
-    "test:unit": "node --test test/sanity.test.js test/stories.test.js test/accounts.test.js",
+    "test": "node --test test/sanity.test.js test/stories.test.js test/accounts.test.js test/order-mail.test.js && playwright test",
+    "test:unit": "node --test test/sanity.test.js test/stories.test.js test/accounts.test.js test/order-mail.test.js",
     "test:browser": "playwright test"
   },
   "dependencies": {
