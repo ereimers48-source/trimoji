@@ -209,6 +209,11 @@ const server = createServer(async (req, res) => {
       res.end();
       return;
     }
+    if (url.pathname === '/_vercel/insights/script.js') {
+      res.writeHead(200, { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-store' });
+      res.end('/* Vercel serves this script in production. Local tests keep the queue as a no-op. */\n');
+      return;
+    }
     if (url.pathname === '/api/config' && req.method === 'GET') {
       await send(res, await configGet());
       return;

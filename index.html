@@ -225,7 +225,12 @@ footer a{color:var(--muted)}
  html{scroll-behavior:auto}
  *,*::before,*::after{animation:none !important;transition:none !important}
 }
-</style></head><body>
+</style>
+<script>
+window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+</head><body>
 <a class="skip" href="#shop">Skip to the shop</a>
 <div class="topbar">
 <div id="testmode" hidden>Test mode</div>
@@ -387,6 +392,7 @@ const PRODS={
 };
 const COLS=[['White','#ffffff'],['Black','#1f1f24'],['Heather','#b9b9c0'],['Navy','#1f2a4d'],['Lilac','#cbb8f5'],['Pink','#f7c6d9'],['Sage','#b6cdb1'],['Charcoal','#554b56'],['Glossy','#ffffff'],['Matte','#ececee']];
 const reduceMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function track(name,props){try{if(typeof name!=='string'||typeof window.va!=='function')return;const data={};if(props&&typeof props==='object'){for(const [key,value] of Object.entries(props)){if(typeof value==='number'&&Number.isFinite(value))data[key]=value;else if(typeof value==='boolean')data[key]=value;else if(typeof value==='string'&&value.length<=64&&!value.includes('@'))data[key]=value}}window.va('event',Object.keys(data).length?{name,data}:{name})}catch(e){}}
 let cat='fu',gridKey='',draws=0;
 function tabs(){const root=document.getElementById('tabs');
  if(root.childElementCount!==CATS.length)root.innerHTML=CATS.map(c=>`<button type="button" data-cat="${c[0]}" aria-pressed="false">${esc(c[1])}</button>`).join('');
@@ -405,7 +411,7 @@ function useCount(e){let n=0;for(const x of S.pick)if(x===e)n++;return n}
 function countBadge(e){const n=useCount(e);return n>1?`<span class="count" aria-label="Used ${n} times">×${n}</span>`:''}
 function markSelected(){document.querySelectorAll('#grid button[data-emoji]').forEach(b=>{b.classList.remove('sel');const n=useCount(b.dataset.emoji);let badge=b.querySelector('.count');if(n>1){if(!badge){badge=document.createElement('span');badge.className='count';b.appendChild(badge)}badge.textContent='×'+n;badge.setAttribute('aria-label','Used '+n+' times')}else if(badge)badge.remove()})}
 function nextEmpty(from){for(let step=1;step<=3;step++){const i=(from+step)%3;if(!S.pick[i])return i}return from}
-function pick(e,from){if(!e)return;const i=S.slot;const chip=document.querySelector('#slots .slot[data-slot="'+i+'"] img.em');const previous=chip?(chip.currentSrc||chip.src):'';globalThis.TrimojiEmojiGlide?.cancel();S.pick[i]=e;S.slot=nextEmpty(i);all();markSelected();globalThis.TrimojiEmojiGlide?.play(i,{from:from||null,previous})}
+function pick(e,from){if(!e)return;const i=S.slot;const chip=document.querySelector('#slots .slot[data-slot="'+i+'"] img.em');const previous=chip?(chip.currentSrc||chip.src):'';globalThis.TrimojiEmojiGlide?.cancel();S.pick[i]=e;track('emoji_picked',{slot:i});S.slot=nextEmpty(i);all();markSelected();globalThis.TrimojiEmojiGlide?.play(i,{from:from||null,previous})}
 function takeEmoji(pool,emoji){const i=pool.findIndex(node=>node.alt===emoji);if(i>=0)return pool.splice(i,1)[0];const holder=document.createElement('div');holder.innerHTML=img(emoji,false);return holder.firstElementChild}
 function slots(){const root=document.getElementById('slots');
  if(root.childElementCount!==3||!root.querySelector('.slot-pick'))root.innerHTML=[0,1,2].map(i=>`<div class="slot" data-slot="${i}"><button type="button" class="slot-pick" data-slot="${i}"></button></div>`).join('');
@@ -531,7 +537,7 @@ function paintQuote(){const p=PRODS[S.prod];const amount=quoteAmount();const tex
  const name=document.getElementById('dockname');const cost=document.getElementById('dockprice');
  if(name)name.textContent=p.n;if(cost)cost.textContent=amount==null?'Unavailable':text}
 function setLay(v){S.lay=v;all()}
-function setProd(v){S.prod=v;const p=PRODS[v];
+function setProd(v){S.prod=v;track('product_chosen',{product:v});const p=PRODS[v];
  if(p.colors&&!p.colors.includes(COLS[S.col][0])){const idx=COLS.findIndex(c=>c[0]===p.colors[0]);if(idx>=0)S.col=idx}
  if(!p.sizes.includes(S.size))S.size=p.defaultSize&&p.sizes.includes(p.defaultSize)?p.defaultSize:p.sizes[Math.min(1,p.sizes.length-1)];
  all()}
@@ -614,7 +620,7 @@ function addCart(){const d=chosenSpec();const slots=d.emojis;if(!slots.some(Bool
  const found=S.cart.find(x=>sameDesign(x));
  if(found){if(found.quantity>=10)return toast('10 is the most of one design.');found.quantity+=1}
  else{if(S.cart.length>=8)return toast('The bag holds 8 designs.');S.cart.push({product:d.product,emojis:slots.slice(),slots:slots.slice(),layout:d.layout,logoSize:d.logoSize,color:d.color,size:d.size,quantity:1,n:d.n,displayPrice:d.displayPrice})}
- cart();toast('Added to your bag.');toggleCart(true)}
+ track('add_to_bag',{product:d.product});cart();toast('Added to your bag.');toggleCart(true)}
 function setQty(i,delta){const line=S.cart[i];if(!line)return;const next=line.quantity+delta;
  if(next<=0){S.cart.splice(i,1);cart();return}
  if(next>10){toast('10 is the most of one design.');return}
@@ -633,7 +639,7 @@ function addStickerSheet(i){const line=S.cart[i];const p=PRODS.sticker;if(!line|
  if(S.cart.some(x=>x.product==='sticker'&&trioKey(x.emojis)===key)){cart();return}
  if(S.cart.length>=8)return toast('The bag holds 8 designs.');
  S.cart.push({product:'sticker',emojis:slots.slice(),slots:slots.slice(),layout:'triangle',logoSize:100,color:p.colors[0],size:p.sizes[0],quantity:1,n:p.n,displayPrice:p.p});
- cart()}
+ track('add_to_bag',{product:'sticker'});cart()}
 function cart(){cc.textContent=String(S.cart.reduce((a,x)=>a+x.quantity,0));items.innerHTML=S.cart.map((x,i)=>{const detail=x.product==='sticker'?'15 stickers':`${esc(x.color)} · ${esc(x.size)} · ${esc(x.layout)}`;return `<div class="item"><span class="e">${marks(x.emojis)}</span><div class="meta"><b>${esc(x.n)}</b><div class="note">${detail}</div></div><div class="qty" role="group" aria-label="Quantity"><button type="button" class="opt" data-qty="-1" data-line="${i}" aria-label="Decrease quantity">−</button><b>${x.quantity}</b><button type="button" class="opt" data-qty="1" data-line="${i}" aria-label="Increase quantity">+</button></div><b class="cost">${money(x.displayPrice*x.quantity)}</b><button type="button" class="opt" data-remove="${i}" aria-label="Remove">✕</button>${crossSell(x,i)}</div>`}).join('')||'<p class="note">Your bag is empty.</p>';
  const subtotal=S.cart.reduce((a,x)=>a+x.displayPrice*x.quantity,0);const ship=subtotal<=0?0:(subtotal>=60?0:5.99);
  document.getElementById('sub').textContent=money(subtotal);
@@ -650,6 +656,7 @@ function openSizeChart(){const box=document.getElementById('sizechart');if(!box|
 function closeSizeChart(){const box=document.getElementById('sizechart');if(!box||box.hidden)return;const back=chartReturn;chartReturn=null;box.hidden=true;box.setAttribute('aria-hidden','true');clearBackgroundInert();if(back&&document.contains(back)&&typeof back.focus==='function')back.focus()}
 function schedulePreview(){}
 async function checkout(){if(!S.cart.length)return toast('Your bag is empty');
+ track('checkout_started',{items:S.cart.reduce((a,x)=>a+x.quantity,0)});
  const pay=document.getElementById('pay');pay.disabled=true;const label=pay.textContent;pay.textContent='Redirecting…';
  const items=S.cart.map(({product,color,size,quantity,emojis,slots,layout,logoSize})=>({product,color,size,quantity,emojis,slots:slots||emojis,layout,logoSize}));
  try{const res=await fetch('/api/checkout',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({items})});
@@ -710,7 +717,7 @@ document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;const box=doc
 document.getElementById('pay').addEventListener('click',checkout);
 mock.querySelector('img.blank').addEventListener('error',()=>mock.classList.add('flat'));
 mock.querySelector('img.blank').addEventListener('load',()=>mock.classList.remove('flat'));
-applyIncomingDesign();preloadPhotos();tabs();renderGrid();all();markSelected();cart();loadShopConfig();loadAccountState();fitBar();
+applyIncomingDesign();preloadPhotos();tabs();renderGrid();all();markSelected();cart();loadShopConfig();loadAccountState();fitBar();track('builder_opened');
 new ResizeObserver(()=>fitBar()).observe(document.querySelector('.topbar'));
 new ResizeObserver(()=>syncDock()).observe(document.getElementById('stage'));
 let pinning=false;
