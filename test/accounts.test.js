@@ -485,7 +485,7 @@ test('checkout uses the signed-in email from the session cookie', async () => {
     checkout: { sessions: { async create(params) { calls.push(params); return { id: 'cs_test_123', url: 'https://checkout.stripe.com/c/pay/cs_test_123' }; } } },
   });
   try {
-    const cookie = signSession('ada@example.com', SECRET, NOW);
+    const cookie = signSession('ada@example.com', SECRET, Date.now());
     await store.putUser(hashEmail('ada@example.com'), {
       email: 'ada@example.com', name: '', address: null, designs: [], orders: [],
     });

@@ -39,6 +39,7 @@ button{font:inherit;cursor:pointer;color:inherit}
 a{color:var(--ink)}
 .topbar{position:sticky;top:0;z-index:30;background:#fff;padding-top:env(safe-area-inset-top)}
 #testmode{background:#f5f5f7;color:var(--ink);text-align:center;font-size:.8rem;font-weight:500;line-height:1.4;padding:8px 16px}
+#sale{margin:0;background:#1d1d1f;color:#f5f5f7;text-align:center;font-size:.8rem;font-weight:500;line-height:1.4;padding:8px 16px}
 .nav{display:flex;align-items:center;justify-content:space-between;gap:4px 12px;min-height:48px;padding:0 22px;border-bottom:1px solid #e8e8ed;flex-wrap:wrap}
 .logo{font-weight:600;font-size:1.05rem;letter-spacing:-.03em;text-decoration:none;line-height:1}
 .nav-links{display:flex;align-items:center;gap:0;flex-wrap:wrap}
@@ -234,6 +235,7 @@ window.va = window.va || function () { (window.vaq = window.vaq || []).push(argu
 <a class="skip" href="#shop">Skip to the shop</a>
 <div class="topbar">
 <div id="testmode" hidden>Test mode</div>
+<p id="sale" hidden></p>
 <nav class="nav" aria-label="Shop"><a class="logo" href="/">Trimoji</a><div class="nav-links"><a href="#shop">Shop</a><a href="/account">Account</a><button class="bag" type="button" id="cartbtn">Bag (<b id="cc">0</b>)</button></div></nav>
 </div>
 <section class="hero">
@@ -725,4 +727,16 @@ function runPin(){if(pinning)return;pinning=true;try{syncPin();syncDock()}finall
 addEventListener('scroll',runPin,{passive:true});
 addEventListener('resize',runPin);
 
-</script></body></html>
+</script>
+<script type="module">
+import { promoWindowOpen, saleBannerText } from '/lib/promo-window.js';
+const el = document.getElementById('sale');
+if (el) {
+  el.textContent = saleBannerText();
+  if (promoWindowOpen(new Date())) {
+    el.hidden = false;
+    if (typeof globalThis.fitBar === 'function') globalThis.fitBar();
+  }
+}
+</script>
+</body></html>

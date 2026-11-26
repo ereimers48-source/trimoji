@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import { inflateSync } from 'node:zlib';
 import { stickerSheetEnabled } from '../lib/config.js';
 import { createCheckoutSession } from '../lib/checkout.js';
+import { PROMO_WINDOW_SAMPLE_ISO } from '../lib/promo-window.js';
 import { decodeDesign, encodeDesign } from '../lib/design.js';
 import { HttpError } from '../lib/http.js';
 import { orderConfirmationMessage, shipmentMessage } from '../lib/order-mail.js';
@@ -243,7 +244,12 @@ test('sticker variant, checkout, and Printful order use 12917', async () => {
   assert.equal(stickerSheetEnabled({ STICKER_SHEET_ENABLED: 'NO' }), false);
 
   const stripe = fakeStripe();
-  await createCheckoutSession({ items: [sampleItem()], stripe, siteUrl: SITE });
+  await createCheckoutSession({
+    items: [sampleItem()],
+    stripe,
+    siteUrl: SITE,
+    now: new Date(PROMO_WINDOW_SAMPLE_ISO),
+  });
   const params = stripe.calls[0];
   assert.equal(params.allow_promotion_codes, true);
   assert.equal(params.line_items.length, 1);
