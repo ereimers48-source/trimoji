@@ -124,6 +124,8 @@ test('text stays apart across phone, tablet, and desktop widths', async ({ page 
   await expect(page.locator('#mock image').first()).toBeVisible();
   await page.evaluate(() => {
     document.getElementById('testmode').hidden = false;
+        const sale = document.getElementById('sale');
+        if (sale) sale.hidden = false;
     fitBar();
   });
   await page.locator('#addbtn').click();
@@ -143,6 +145,8 @@ test('text stays apart across phone, tablet, and desktop widths', async ({ page 
       await page.evaluate(async (px) => {
         document.documentElement.style.fontSize = `${px}px`;
         document.getElementById('testmode').hidden = false;
+        const sale = document.getElementById('sale');
+        if (sale) sale.hidden = false;
         document.documentElement.style.setProperty('scroll-behavior', 'auto', 'important');
         if (document.activeElement) document.activeElement.blur();
         window.scrollTo(0, 0);
@@ -177,6 +181,8 @@ test('text stays apart across phone, tablet, and desktop widths', async ({ page 
         const placed = await page.evaluate(async ({ px, sel }) => {
           document.documentElement.style.fontSize = `${px}px`;
           document.getElementById('testmode').hidden = false;
+        const sale = document.getElementById('sale');
+        if (sale) sale.hidden = false;
           document.documentElement.style.setProperty('scroll-behavior', 'auto', 'important');
           fitBar();
           if (document.fonts && document.fonts.ready) await document.fonts.ready;
@@ -243,6 +249,8 @@ test('text stays apart across phone, tablet, and desktop widths', async ({ page 
       document.documentElement.style.fontSize = '16px';
       document.documentElement.style.setProperty('scroll-behavior', 'auto', 'important');
       document.getElementById('testmode').hidden = false;
+        const sale = document.getElementById('sale');
+        if (sale) sale.hidden = false;
       const drawer = document.getElementById('drawer');
       if (drawer.classList.contains('open')) document.getElementById('closecart').click();
       fitBar();

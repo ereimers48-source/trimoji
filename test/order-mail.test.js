@@ -4,6 +4,7 @@ import { test } from 'node:test';
 import Stripe from 'stripe';
 import { POST as printfulWebhookPost } from '../api/printful-webhook.js';
 import { SHIPPING_TAX_CODE, createCheckoutSession, stripeTaxEnabled } from '../lib/checkout.js';
+import { PROMO_WINDOW_SAMPLE_ISO } from '../lib/promo-window.js';
 import {
   orderConfirmationMessage,
   orderIdempotencyKey,
@@ -199,6 +200,7 @@ test('stripe tax stays exclusive and can be switched off', async () => {
     stripe,
     siteUrl: SITE,
     env: {},
+    now: new Date(PROMO_WINDOW_SAMPLE_ISO),
   });
   const taxed = stripe.calls[0];
   assert.deepEqual(taxed.automatic_tax, { enabled: true });

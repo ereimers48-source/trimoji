@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import Stripe from 'stripe';
 import { createCheckoutSession, promoCodesEnabled } from '../lib/checkout.js';
+import { PROMO_WINDOW_SAMPLE_ISO } from '../lib/promo-window.js';
 import { orderConfirmationMessage } from '../lib/order-mail.js';
 import { discountFromSession, formatDiscountLine, publicOrder, settledPaymentStatus } from '../lib/order.js';
 import { buildPrintfulOrder, printfulExternalId } from '../lib/printful.js';
@@ -201,6 +202,7 @@ test('promotion codes stay on with tax and can be switched off', async () => {
     stripe,
     siteUrl: SITE,
     env: {},
+    now: new Date(PROMO_WINDOW_SAMPLE_ISO),
   });
   const params = stripe.calls[0];
   assert.equal(params.allow_promotion_codes, true);
@@ -217,6 +219,7 @@ test('promotion codes stay on with tax and can be switched off', async () => {
     stripe: off,
     siteUrl: SITE,
     env: { PROMO_CODES_ENABLED: 'no', STRIPE_TAX_ENABLED: 'false' },
+    now: new Date(PROMO_WINDOW_SAMPLE_ISO),
   });
   assert.equal(off.calls[0].allow_promotion_codes, undefined);
   assert.equal(off.calls[0].automatic_tax, undefined);

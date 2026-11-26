@@ -1,8 +1,21 @@
 # Promotion codes
 
-Coupons and promotion codes live in the Stripe Dashboard. This repo does not keep a list of codes. Checkout asks Stripe to show the code field unless `PROMO_CODES_ENABLED` is `false`, `0`, `no`, or `off` (any other value, including unset, leaves it on).
+Coupons and promotion codes live in the Stripe Dashboard. This repo does not keep a list of codes. Checkout asks Stripe to show the code field during the window in `lib/promo-window.js`, unless `PROMO_CODES_ENABLED` is `false`, `0`, `no`, or `off`.
 
 Use the same Dashboard mode as the secret key. Test mode for `sk_test_…`, live mode for `sk_live_…`. A code created in one mode does not work in the other.
+
+## Scheduled window
+
+Stripe promotion codes have an expiry and no start time. The shop leaves `allow_promotion_codes` off until the window opens, and leaves it off again when the window ends. That is what stops a code from being redeemed early. The session never sends `discounts` in the same call. Stripe rejects a Checkout Session that sets both.
+
+The current window is Black Friday, in `America/Los_Angeles`. Those dates are PST (UTC−8):
+
+- Opens Fri Nov 27, 2026, 12:00:00 AM PT (`2026-11-27T08:00:00.000Z`)
+- Stays open through Mon Nov 30, 2026, 11:59:59 PM PT (`2026-12-01T07:59:59.999Z`)
+
+Edit the start and end in `lib/promo-window.js` and redeploy to change it. The shop banner uses that same window in the browser. It reads: Black Friday: 15% off everything with code HOLIDAY15 · ends Mon 11/30 11:59 PM PT.
+
+`HOLIDAY15` is 15% off, duration once. Create the coupon and the promotion code in the Dashboard for the same mode as `STRIPE_SECRET_KEY`. Set the promotion code expiry to `2026-12-01T07:59:59Z`. If the coupon has a redeem-by date, it cannot be earlier than that expiry. Creating the code before Friday is safe: the field stays hidden until the window opens. `PROMO_CODES_ENABLED=false` still hides the field during the window. While the field is on, any other active code in that same mode can be entered too.
 
 ## Create a coupon
 
@@ -24,9 +37,9 @@ On the create-coupon page, open **Use customer-facing promotion codes** (after t
 - **Eligible for first-time order only.** Turn this on to limit the code to customers with no successful payment on the Stripe account. A payment that was started and not finished still counts as not first-time.
 - **Require minimum order value.** Turn this on and enter a USD minimum. Stripe checks it when the code is redeemed. The shop's $60 free-shipping rule is separate and is not this field.
 
-Save the coupon. The code is active immediately. Checkout will accept it on the next session. No deploy is required for a new code.
+Save the coupon. During the scheduled window, Checkout accepts the code on the next session. No deploy is required for a new code. Before the window opens, Checkout does not show the field.
 
-To stop a code, deactivate that promotion code in the Dashboard. To turn the field off for every session, set `PROMO_CODES_ENABLED` to `false` and redeploy.
+To stop a code, deactivate that promotion code in the Dashboard. To turn the field off for every session, set `PROMO_CODES_ENABLED` to `false` and redeploy. The field also stays off outside the dates in `lib/promo-window.js`.
 
 ## What Checkout does with a code
 
